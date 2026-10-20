@@ -19,7 +19,8 @@ node scripts/figure-points.mjs <id>      # prints where each joint lands in each
 - `src/data/routines.js`: the five routines, step by step.
 - `src/animations/exercises/<id>.js`: one animation per exercise, named like its id. Each file lists poses (an angle per body segment), a timeline with the trainer's tempo, phase names, and equipment.
 - `src/animations/engine/`: turns those files into SVG and CSS keyframes (`kinematics.js`), with helpers for writing poses (`helpers.js`) and the renderer (`Figure.jsx`).
-- `src/screens/`: the four screens. `src/App.jsx` picks one based on the URL hash.
+- `src/store/`: your personal data (own routines and the workout log). Today it is saved on the device (localStorage) behind async functions shaped like a future database API; to add accounts and a backend later, only these files change.
+- `src/screens/`: the screens (exercise list and detail, routine list and detail, routine editor, workout log). `src/App.jsx` picks one based on the URL hash.
 - `src/styles.css`: all app styles; colors are the custom properties at the top.
 
 To add an exercise, copy a block in `exercises.js`, copy a similar animation file with the new id, and run the check script.

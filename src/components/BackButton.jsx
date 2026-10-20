@@ -5,11 +5,15 @@
  * around inside the app, it behaves like the phone's back button. If you
  * opened this page directly (a bookmark, a shared link), there is nothing to
  * go back to, so it jumps to `fallback` instead (the list page).
+ *
+ * `confirmMessage`: when set (e.g. the editor has unsaved changes), asks
+ * first and only leaves if you accept.
  */
 import { hasInAppHistory } from "../hooks/useHashRoute.js";
 
-export default function BackButton({ fallback = "#/" }) {
+export default function BackButton({ fallback = "#/", confirmMessage = null }) {
   function goBack() {
+    if (confirmMessage && !window.confirm(confirmMessage)) return;
     if (hasInAppHistory()) {
       window.history.back();
     } else {

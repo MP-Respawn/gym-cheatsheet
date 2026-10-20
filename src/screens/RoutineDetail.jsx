@@ -1,16 +1,22 @@
 /*
  * RoutineDetail.jsx: one routine (#/rutina/<id>)
  *
+ * Works for the trainer's routines and for yours: App.jsx finds the routine
+ * and passes it in, with `isMine` telling which kind it is.
+ *
  * Lists the steps in order. A step can hold one exercise or several done
  * together (superset / circuit). For each exercise you see its animation,
- * its name (tap to open the detail), the prescription and the trainer's note.
+ * its name (tap to open the detail), the prescription and the note.
+ *
+ * Buttons: "Entrenar" opens the workout log (or "Continuar" if one is in
+ * progress); "Editar" only shows on your own routines.
  *
  * "Modo gym" switch: bigger text and animations, and hides descriptions and
  * notes, so only the name, the prescription and the animation remain. Its
  * on/off state comes from App.jsx, which also remembers it between visits.
  */
 import { getExercise } from "../data/exercises.js";
-import { getRoutine } from "../data/routines.js";
+import { useActiveSession } from "../store/useStore.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
 
@@ -21,8 +27,8 @@ function stepKind(count) {
   return null;
 }
 
-export default function RoutineDetail({ id, gymMode, onGymModeChange }) {
-  const routine = getRoutine(id);
+export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChange }) {
+  const active = useActiveSession(routine?.id);
 
   if (!routine) {
     return (
@@ -55,9 +61,21 @@ export default function RoutineDetail({ id, gymMode, onGymModeChange }) {
       </div>
 
       <div className="content">
-        <p className="routine-block">{routine.block}</p>
+        <p className="routine-block">{isMine ? "Mi rutina" : routine.block}</p>
         <h1 className="detail-title">{routine.name}</h1>
-        <p className="routine-focus hide-in-gym">{routine.focus}</p>
+        {routine.focus && <p className="routine-focus hide-in-gym">{routine.focus}</p>}
+
+        {/* Train (log weights) and, for your own routines, edit */}
+        <div className="routine-actions">
+          <a className="primary-button" href={`#/rutina/${routine.id}/entrenar`}>
+            {active ? "Continuar entrenamiento" : "Entrenar"}
+          </a>
+          {isMine && (
+            <a className="secondary-button" href={`#/rutina/${routine.id}/editar`}>
+              Editar
+            </a>
+          )}
+        </div>
 
         <ol className="steps">
           {routine.steps.map((step, index) => {

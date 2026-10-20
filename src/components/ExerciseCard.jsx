@@ -1,16 +1,20 @@
 /*
  * ExerciseCard.jsx
  *
- * One row in the exercise list: animation thumbnail on the left, then the
- * name, the muscle group and a one-line description. The whole card is a
- * link, so tapping anywhere on it opens the exercise detail.
+ * One row in an exercise list: animation thumbnail on the left, then the
+ * name, the muscle group and a one-line description.
+ *
+ * Two modes:
+ *   - default: the card is a link that opens the exercise detail
+ *   - with `onSelect`: the card is a button (used by the exercise picker in
+ *     the routine editor); `disabled` greys it out (already in the step)
  */
 import { groupLabel } from "../data/exercises.js";
 import ExerciseAnimation from "./ExerciseAnimation.jsx";
 
-export default function ExerciseCard({ exercise }) {
-  return (
-    <a className="card" href={`#/ejercicio/${exercise.id}`}>
+export default function ExerciseCard({ exercise, onSelect, disabled = false }) {
+  const content = (
+    <>
       <ExerciseAnimation id={exercise.id} className="thumb" />
       <div className="card-text">
         <span className="card-title">{exercise.name}</span>
@@ -21,6 +25,20 @@ export default function ExerciseCard({ exercise }) {
         </span>
         <span className="card-desc">{exercise.description}</span>
       </div>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button type="button" className="card card-button" disabled={disabled} onClick={() => onSelect(exercise.id)}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <a className="card" href={`#/ejercicio/${exercise.id}`}>
+      {content}
     </a>
   );
 }

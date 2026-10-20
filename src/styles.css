@@ -12,6 +12,7 @@
  *   5. Exercise detail
  *   6. Routines
  *   7. Modo gym
+ *   7b. Your routines: forms, buttons, editor, picker, workout log, history
  *   8. Bottom tab bar
  */
 
@@ -652,6 +653,378 @@ ol {
 .gym-mode .step-ex-prescription {
   font-size: 19px;
   color: var(--accent);
+}
+
+/* ---------- 7b. Your routines, editor, workout log, history ---------- */
+
+/* Title shown next to "Volver" on the editor and the workout log */
+.top-bar-title {
+  margin-right: auto;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.hint.warning {
+  color: var(--band-color);
+}
+
+/* Form fields: a small label above a big input */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px stops iPhones from zooming in */
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* Buttons */
+.primary-button,
+.secondary-button,
+.danger-button,
+.add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.secondary-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.add-button {
+  border: 1.5px dashed var(--border);
+  background: none;
+  color: var(--accent);
+}
+
+.danger-button {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  background: none;
+  color: #ff8a8a;
+}
+
+.text-button {
+  min-height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-button.small {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+}
+
+.icon-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* "Entrenar" / "Editar" on the routine page */
+.routine-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.routine-actions .secondary-button {
+  width: auto;
+  flex: none;
+}
+
+/* Bar stuck to the bottom (above the tab bar) with the main action */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom));
+  z-index: 15;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.action-error {
+  margin-bottom: 8px;
+  color: #ff8a8a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Leave room so the last content is not hidden behind the action bar */
+.has-action-bar .content {
+  padding-bottom: 88px;
+}
+
+/* Editor step cards */
+.step-tools {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.edit-exercises {
+  list-style: none;
+  padding: 0;
+}
+
+.edit-exercise {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  font-weight: 650;
+}
+
+.edit-exercise + .edit-exercise {
+  border-top: 1px solid var(--border);
+}
+
+.list-section .add-button,
+.steps + .add-button {
+  margin-top: 4px;
+}
+
+/* Exercise picker: full-screen panel over everything */
+.picker {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+.picker-head {
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.picker-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 8px;
+}
+
+.picker-title {
+  font-size: 18px;
+}
+
+.picker-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Card used as a button inside the picker */
+.card-button {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.card-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Workout log */
+.log-exercise + .log-exercise {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.log-exercise-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.log-last {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.set-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.set-number {
+  flex: none;
+  width: 22px;
+  text-align: center;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.set-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.set-input {
+  padding-right: 44px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* "kg" / "reps" written inside the box, on the right */
+.set-unit {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.log-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.gym-mode .set-input {
+  min-height: 56px;
+  font-size: 22px;
+}
+
+/* History on the exercise page */
+.history-best {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.history {
+  list-style: none;
+  padding: 0;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.history-date {
+  grid-row: span 2;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.history-sets {
+  font-weight: 700;
+}
+
+.history-routine {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Backup section on the routines tab */
+.data-section {
+  margin-top: 32px;
+}
+
+.data-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 /* ---------- 8. Bottom tab bar ---------- */

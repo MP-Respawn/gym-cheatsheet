@@ -7,7 +7,10 @@
  *   #/                  -> home, exercise list
  *   #/ejercicio/<id>    -> one exercise
  *   #/rutinas           -> routine list
- *   #/rutina/<id>       -> one routine
+ *   #/rutina/<id>       -> one routine (the trainer's or yours)
+ *   #/rutina/nueva      -> create your own routine
+ *   #/rutina/<id>/editar   -> edit one of your routines
+ *   #/rutina/<id>/entrenar -> log weights while doing a routine
  *
  * The hook returns { name, id } for the current page and re-renders the
  * component whenever the hash changes (a tapped link, the back button...).
@@ -17,9 +20,14 @@ import { useEffect, useState } from "react";
 // Turns "#/ejercicio/peso-muerto" into { name: "exercise", id: "peso-muerto" }.
 export function parseHash(hash) {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const [first, second] = parts.map(decodeURIComponent);
+  const [first, second, third] = parts.map(decodeURIComponent);
 
   if (first === "ejercicio" && second) return { name: "exercise", id: second };
+  // Your own routines: #/rutina/nueva, #/rutina/<id>/editar
+  if (first === "rutina" && second === "nueva") return { name: "routine-new" };
+  if (first === "rutina" && second && third === "editar") return { name: "routine-edit", id: second };
+  // Workout log for any routine: #/rutina/<id>/entrenar
+  if (first === "rutina" && second && third === "entrenar") return { name: "routine-train", id: second };
   if (first === "rutina" && second) return { name: "routine", id: second };
   if (first === "rutinas") return { name: "routines" };
   return { name: "home" };

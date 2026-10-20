@@ -15,6 +15,9 @@ import ExerciseList from "./screens/ExerciseList.jsx";
 import ExerciseDetail from "./screens/ExerciseDetail.jsx";
 import RoutineList from "./screens/RoutineList.jsx";
 import RoutineDetail from "./screens/RoutineDetail.jsx";
+import RoutineEditor from "./screens/RoutineEditor.jsx";
+import WorkoutLog from "./screens/WorkoutLog.jsx";
+import { useAnyRoutine } from "./store/useStore.js";
 
 const GYM_MODE_KEY = "gym-mode";
 
@@ -57,14 +60,25 @@ export default function App() {
     window.scrollTo(0, isList ? (savedScroll[hash] ?? 0) : 0);
   }, [route]);
 
+  // Routine pages need the routine itself: the trainer's (in the code) or
+  // yours (on the device). Looked up here so every routine screen shares it.
+  const { routine, isMine } = useAnyRoutine(route.id ?? "");
+
   // Pick the screen for the current route.
   let screen;
   if (route.name === "exercise") {
     screen = <ExerciseDetail id={route.id} />;
   } else if (route.name === "routines") {
     screen = <RoutineList />;
-  } else if (route.name === "routine") {
-    screen = <RoutineDetail id={route.id} gymMode={gymMode} onGymModeChange={changeGymMode} />;
+  } else if (route.name === "routine-new") {
+    screen = <RoutineEditor key="new" />;
+  } else if (route.name === "routine-edit") {
+    screen = <RoutineEditor key={route.id} id={route.id} />;
+  } else if (route.name === "routine-train" && routine) {
+    screen = <WorkoutLog key={route.id} routine={routine} gymMode={gymMode} />;
+  } else if (route.name === "routine" || route.name === "routine-train") {
+    // (a workout for a routine that does not exist falls here: "not found")
+    screen = <RoutineDetail routine={routine} isMine={isMine} gymMode={gymMode} onGymModeChange={changeGymMode} />;
   } else {
     screen = (
       <ExerciseList
@@ -77,7 +91,7 @@ export default function App() {
   }
 
   // Exercise pages belong to the first tab, routine pages to the second.
-  const activeTab = route.name === "routines" || route.name === "routine" ? "routines" : "exercises";
+  const activeTab = route.name.startsWith("routine") ? "routines" : "exercises";
 
   return (
     <div className="app">

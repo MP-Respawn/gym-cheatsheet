@@ -3,15 +3,35 @@
  *
  * From top to bottom: back button, big animation, name, group tags,
  * description, technique cues as a checklist, the prescription in a
- * highlighted box, alternatives for when the machine is busy, equipment,
- * and finally a small link to search the exercise on YouTube.
+ * highlighted box, alternatives for when the machine is busy, your own
+ * history (weights you logged), equipment, and finally a small link to
+ * search the exercise on YouTube.
  */
 import { getExercise, groupLabel } from "../data/exercises.js";
+import { useExerciseHistory } from "../store/useStore.js";
+import { formatSet, formatSets } from "../store/workouts.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
 
+// "12 oct" style dates for the history list.
+const shortDate = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" });
+
+// The heaviest set ever logged (more reps breaks a tie), or null.
+function bestSet(history) {
+  let best = null;
+  for (const entry of history) {
+    for (const set of entry.sets) {
+      if (set.kg == null) continue;
+      if (!best || set.kg > best.kg || (set.kg === best.kg && (set.reps ?? 0) > (best.reps ?? 0))) best = set;
+    }
+  }
+  return best;
+}
+
 export default function ExerciseDetail({ id }) {
   const exercise = getExercise(id);
+  const history = useExerciseHistory(id);
+  const best = bestSet(history);
 
   // Unknown id in the URL (typo, old bookmark): say so instead of crashing.
   if (!exercise) {
@@ -79,6 +99,25 @@ export default function ExerciseDetail({ id }) {
                 </a>
               ))}
             </div>
+          </>
+        )}
+
+        {/* Your logged sets for this exercise, newest first (last 5 sessions) */}
+        <h2 className="block-title">Tu historial</h2>
+        {history.length === 0 ? (
+          <p className="hint">Todavía no lo registraste. Tocá "Entrenar" en una rutina para cargar tus pesos.</p>
+        ) : (
+          <>
+            {best && <p className="history-best">Mejor serie: {formatSet(best)}</p>}
+            <ul className="history">
+              {history.slice(0, 5).map((entry) => (
+                <li key={entry.sessionId} className="history-row">
+                  <span className="history-date">{shortDate.format(new Date(entry.date))}</span>
+                  <span className="history-sets">{formatSets(entry.sets)}</span>
+                  <span className="history-routine">{entry.routineName}</span>
+                </li>
+              ))}
+            </ul>
           </>
         )}
 

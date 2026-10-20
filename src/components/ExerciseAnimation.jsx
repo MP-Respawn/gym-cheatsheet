@@ -1,22 +1,58 @@
 /*
  * ExerciseAnimation.jsx
  *
- * Shows the stick-figure animation for an exercise. It looks up the
- * exercise's `pattern` in the animation registry and draws that component
- * inside a box. The box's size comes from the CSS class you pass:
- *   "thumb"  80 x 80 thumbnail in lists
- *   "hero"   full-width, 240px tall, on the detail page
- *   "step"   size used inside routines (bigger in Modo gym)
+ * Shows the stick-figure animation of one exercise (looked up by its id)
+ * inside a box. The size comes from the CSS class you pass:
+ *   "thumb"      80 x 80 thumbnail in lists
+ *   "hero"       full-width, 240px tall, on the detail page
+ *   "step-anim"  inside routines (bigger in Modo gym)
+ *
+ * With `phases`, it also shows the names of the phases under the figure
+ * ("Bajada lenta", "Subida explosiva"...), lighting up each one while it
+ * happens.
+ *
+ * Thumbnails that scroll off screen pause their animation (IntersectionObserver),
+ * so a long list does not keep dozens of figures moving out of sight.
  */
-import { ANIMATIONS } from "../animations/index.js";
+import { useEffect, useRef } from "react";
+import { getFigure } from "../animations/index.js";
+import Figure from "../animations/engine/Figure.jsx";
 
-export default function ExerciseAnimation({ pattern, className = "thumb" }) {
-  const Animation = ANIMATIONS[pattern];
+export default function ExerciseAnimation({ id, className = "thumb", phases = false }) {
+  const ref = useRef(null);
+  const compiled = getFigure(id);
+
+  // Pause when the box is not visible. The class is toggled directly on the
+  // element, so scrolling never re-renders React components.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => el.classList.toggle("paused", !entry.isIntersecting),
+      { rootMargin: "120px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className={`anim-box ${className}`}>
-      {/* If a pattern were ever missing, show an empty box instead of crashing */}
-      {Animation ? <Animation /> : null}
+    <div ref={ref} className="anim-wrap">
+      <div className={`anim-box ${className}`}>{compiled && <Figure compiled={compiled} />}</div>
+
+      {/* Phase names, each one highlighted in sync with the figure */}
+      {phases && compiled && compiled.labels.length > 0 && (
+        <div className="phases">
+          {compiled.labels.map((label) => (
+            <span
+              key={label.text}
+              className="phase"
+              style={{ animation: `${label.anim} ${compiled.duration}s step-end infinite` }}
+            >
+              {label.text}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

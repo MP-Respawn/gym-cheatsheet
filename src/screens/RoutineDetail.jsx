@@ -79,7 +79,7 @@ export default function RoutineDetail({ id, gymMode, onGymModeChange }) {
 
                 {exercises.map((ex) => (
                   <a key={ex.id} className="step-exercise" href={`#/ejercicio/${ex.id}`}>
-                    <ExerciseAnimation pattern={ex.pattern} className="step-anim" />
+                    <ExerciseAnimation id={ex.id} className="step-anim" />
                     <div className="step-text">
                       <span className="step-name">{ex.name}</span>
                       <span className="step-desc hide-in-gym">{ex.description}</span>

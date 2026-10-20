@@ -1,0 +1,105 @@
+/*
+ * figures.css
+ *
+ * Look of the stick figures. The motion itself is generated per exercise
+ * (CSS @keyframes written by engine/kinematics.js and injected once).
+ */
+
+.figure {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Body segments: thick, round-capped lines */
+.figure .bone {
+  stroke: var(--figure-color);
+  stroke-width: var(--stroke, 6);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Limbs on the far side of the body: darker, so they read as "behind" */
+.figure .bone.far {
+  stroke: var(--figure-far);
+}
+
+.figure .head {
+  fill: var(--figure-color);
+}
+
+/* Equipment: thinner and muted, so the body stands out */
+.figure .gear {
+  stroke: var(--gear-color);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Solid equipment: plates, weight stacks */
+.figure .gear-fill {
+  fill: var(--gear-color);
+  stroke: none;
+}
+
+/* Barbells held in the hands: a bit thicker */
+.figure .gear.bar {
+  stroke-width: 5;
+}
+
+/* Cables: thin lines that stretch as the hands move */
+.figure .cable {
+  stroke: var(--gear-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Elastic bands: warm color so they are easy to spot */
+.figure .band {
+  stroke: var(--band-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* Every moving group pivots in the drawing's own coordinates */
+.figure .mv {
+  transform-box: view-box;
+}
+
+/* Off-screen animations pause, so a long list stays light on the phone */
+.paused .mv,
+.paused .phase {
+  animation-play-state: paused !important;
+}
+
+/* Phase names under the big animation; the current one lights up */
+.phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.phase {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  opacity: 0.38;
+}
+
+/* "Reduce motion" on the phone: no loops, the start pose stays still,
+   and every phase name is shown at full strength */
+@media (prefers-reduced-motion: reduce) {
+  .figure .mv,
+  .phase {
+    animation: none !important;
+  }
+  .phase {
+    opacity: 1;
+  }
+}

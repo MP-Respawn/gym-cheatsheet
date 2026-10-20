@@ -14,16 +14,19 @@
  *   - every id inside an "alternatives" array exists
  *   - every trainer exercise has at least 2 alternatives
  *   - every id used in routines.js exists
- *   - every pattern has an animation file (src/animations/<pattern>.jsx)
- *     and is registered in src/animations/index.js
+ *   - every exercise has its own animation (src/animations/exercises/<id>.js)
+ *     and no animation file is left without an exercise
+ *   - every animation compiles, loops back to its start pose, and never
+ *     pushes a joint through the floor or out of the drawing
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { EXERCISES, GROUPS } from "../src/data/exercises.js";
 import { ROUTINES } from "../src/data/routines.js";
+import { validate } from "../src/animations/engine/kinematics.js";
 
 // Absolute path of the project root (one folder up from /scripts).
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -73,19 +76,28 @@ for (const routine of ROUTINES) {
 }
 
 /* ---- Animations ----
- * Node cannot import .jsx files, so instead of loading the registry we read
- * index.js as text and look for the pattern key inside quotes.
+ * Each exercise has one file in src/animations/exercises/ named like its id.
+ * The files are plain JavaScript, so we can load them here and run the same
+ * engine the app uses to look for problems.
  */
-const registryPath = join(root, "src", "animations", "index.js");
-const registry = existsSync(registryPath) ? readFileSync(registryPath, "utf8") : "";
-const patterns = new Set(EXERCISES.map((ex) => ex.pattern));
-for (const pattern of patterns) {
-  if (!existsSync(join(root, "src", "animations", `${pattern}.jsx`))) {
-    errors.push(`falta el archivo de animación src/animations/${pattern}.jsx`);
+const animDir = join(root, "src", "animations", "exercises");
+const animFiles = existsSync(animDir)
+  ? readdirSync(animDir).filter((f) => f.endsWith(".js")).map((f) => f.replace(/\.js$/, ""))
+  : [];
+let animated = 0;
+for (const ex of EXERCISES) {
+  const file = join(animDir, `${ex.id}.js`);
+  if (!existsSync(file)) {
+    errors.push(`${ex.id}: falta su animación src/animations/exercises/${ex.id}.js`);
+    continue;
   }
-  if (!registry.includes(`"${pattern}"`)) {
-    errors.push(`el patrón "${pattern}" no está registrado en src/animations/index.js`);
-  }
+  const spec = (await import(pathToFileURL(file).href)).default;
+  const problems = validate(spec, ex.id);
+  for (const p of problems) errors.push(`${ex.id} (animación): ${p}`);
+  if (problems.length === 0) animated++;
+}
+for (const file of animFiles) {
+  if (!exerciseIds.has(file)) errors.push(`animación sin ejercicio: src/animations/exercises/${file}.js`);
 }
 
 /* ---- Report ---- */
@@ -95,5 +107,5 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `check-data: OK. ${EXERCISES.length} ejercicios, ${ROUTINES.length} rutinas, ${patterns.size} patrones.`,
+  `check-data: OK. ${EXERCISES.length} ejercicios, ${ROUTINES.length} rutinas, ${animated} animaciones.`,
 );

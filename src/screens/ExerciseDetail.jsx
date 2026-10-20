@@ -37,7 +37,8 @@ export default function ExerciseDetail({ id }) {
       </div>
 
       <div className="content detail">
-        <ExerciseAnimation pattern={exercise.pattern} className="hero" />
+        {/* Big animation, with the phase names lighting up underneath */}
+        <ExerciseAnimation id={exercise.id} className="hero" phases />
 
         <h1 className="detail-title">{exercise.name}</h1>
 

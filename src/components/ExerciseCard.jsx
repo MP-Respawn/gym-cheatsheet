@@ -11,7 +11,7 @@ import ExerciseAnimation from "./ExerciseAnimation.jsx";
 export default function ExerciseCard({ exercise }) {
   return (
     <a className="card" href={`#/ejercicio/${exercise.id}`}>
-      <ExerciseAnimation pattern={exercise.pattern} className="thumb" />
+      <ExerciseAnimation id={exercise.id} className="thumb" />
       <div className="card-text">
         <span className="card-title">{exercise.name}</span>
         <span className="card-meta">

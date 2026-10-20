@@ -15,7 +15,8 @@
  *   name          what you see on screen
  *   group         main muscle group (one of the GROUPS keys)
  *   secondary     optional extra groups it also works
- *   pattern       movement pattern; picks which stick-figure animation to show
+ *   pattern       movement family (squat, hinge, row...), groups similar exercises.
+ *                 The animation itself lives in src/animations/exercises/<id>.js
  *   equipment     free text tags, also used by the search box
  *   description   1 or 2 sentences: what it is and what it trains
  *   cues          technique notes, imperative voseo ("bajá", "apretá")

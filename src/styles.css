@@ -26,7 +26,9 @@
   --accent: #f6c445; /* warm yellow: active chips, highlights */
   --accent-ink: #1b1500; /* text placed on top of the accent */
   --figure-color: #f1f3f7; /* stick figure */
+  --figure-far: #8e96a6; /* limbs on the far side of the figure */
   --gear-color: #7d8597; /* equipment in the animations */
+  --band-color: #f0915a; /* elastic bands */
   --radius: 14px;
   --tap: 48px; /* minimum height for anything you tap */
   --tab-height: 64px;
@@ -136,7 +138,11 @@ ol {
   color: var(--muted);
 }
 
-/* Box that holds a stick-figure animation */
+/* Box that holds a stick-figure animation (plus its phase names, if any) */
+.anim-wrap {
+  flex: none;
+}
+
 .anim-box {
   flex: none;
   background: var(--surface-2);

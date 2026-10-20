@@ -34,9 +34,11 @@ export default function TabBar({ active }) {
           className={tab.key === active ? "tab active" : "tab"}
           aria-current={tab.key === active ? "page" : undefined}
         >
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-            <path d={tab.icon} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-          </svg>
+          <span className="tab-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+              <path d={tab.icon} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </span>
           {tab.label}
         </a>
       ))}

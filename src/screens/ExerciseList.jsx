@@ -1,33 +1,35 @@
 /*
  * ExerciseList.jsx: home screen (#/)
  *
- * Top: a sticky bar with the search box and a sideways-scrolling row of
- * muscle-group chips. Below: the exercises that match, grouped under a
- * heading per muscle group.
+ * Top: the app's top nav (menu, name, search bar). Then the page title and a
+ * sideways-scrolling row of muscle-group chips. Below: the exercises of the
+ * chosen group, under a heading per muscle group.
  *
- * The search text and the chosen chip live in App.jsx (passed in as props),
- * so they are still there when you come back from an exercise detail.
- * The filtering itself is in src/utils/search.js (shared with the picker).
+ * Searching happens on its own page (#/buscar), opened from the search bar.
+ * The chosen chip lives in App.jsx (passed in as props), so it is still
+ * there when you come back from an exercise detail.
  */
+import AppHeader from "../components/AppHeader.jsx";
 import ExerciseCard from "../components/ExerciseCard.jsx";
-import ExerciseFilters from "../components/ExerciseFilters.jsx";
+import { GroupChips } from "../components/ExerciseFilters.jsx";
+import { EXERCISES } from "../data/exercises.js";
 import { exerciseSections } from "../utils/search.js";
 
-export default function ExerciseList({ query, onQueryChange, group, onGroupChange }) {
-  const sections = exerciseSections(query, group);
+export default function ExerciseList({ group, onGroupChange, onMenuClick }) {
+  const sections = exerciseSections("", group);
 
   return (
     <div className="screen">
-      {/* Sticky filter bar: stays on top while the list scrolls */}
-      <div className="filter-bar">
-        <ExerciseFilters query={query} onQueryChange={onQueryChange} group={group} onGroupChange={onGroupChange} />
+      <AppHeader onMenuClick={onMenuClick} />
+
+      <div className="page-head">
+        <h1 className="page-title">Ejercicios</h1>
+        <span className="page-count">{EXERCISES.length} ejercicios</span>
       </div>
+      <GroupChips group={group} onGroupChange={onGroupChange} />
 
       {/* The list itself */}
       <div className="content">
-        {sections.length === 0 && (
-          <p className="empty">No encontramos ejercicios con esa búsqueda.</p>
-        )}
         {sections.map((section) => (
           <section key={section.key} className="list-section">
             <h2 className="section-title">{section.label}</h2>

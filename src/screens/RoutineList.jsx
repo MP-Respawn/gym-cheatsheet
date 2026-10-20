@@ -1,14 +1,14 @@
 /*
  * RoutineList.jsx: routine list (#/rutinas)
  *
- * Top: "Mis rutinas", the ones you built (saved on this device), with a
- * button to create a new one. Below: the trainer's routines, grouped under
- * "Bloque A" and "Bloque B". At the bottom, "Tus datos": backup tools.
+ * Top: the app's top nav (menu, name, search bar). Then "Mis rutinas", the
+ * ones you built (saved on this device), with a button to create a new one.
+ * Below: the trainer's routines, grouped under "Bloque A" and "Bloque B".
+ * The backup tools ("Tus datos") live in the side menu (MenuDrawer).
  */
-import { useRef, useState } from "react";
+import AppHeader from "../components/AppHeader.jsx";
 import { ROUTINES } from "../data/routines.js";
-import { exportData, importData } from "../store/storage.js";
-import { useIsPersistent, useMyRoutines } from "../store/useStore.js";
+import { useMyRoutines } from "../store/useStore.js";
 
 // Right-pointing chevron, hints that the card opens.
 function Chevron() {
@@ -32,43 +32,18 @@ function RoutineCard({ routine }) {
   );
 }
 
-// Downloads all your personal data as a .json file.
-function downloadBackup() {
-  const blob = new Blob([exportData()], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `machete-gimnasio-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-export default function RoutineList() {
+export default function RoutineList({ onMenuClick }) {
   const mine = useMyRoutines();
-  const persistent = useIsPersistent();
-  const fileInput = useRef(null);
-  const [backupMessage, setBackupMessage] = useState("");
 
   // Unique block names, keeping their first-appearance order ("Bloque A", "Bloque B").
   const blocks = [...new Set(ROUTINES.map((r) => r.block))];
 
-  // Reads the chosen backup file and merges it into your data.
-  async function restore(event) {
-    const file = event.target.files?.[0];
-    event.target.value = ""; // allow choosing the same file again
-    if (!file) return;
-    try {
-      const result = importData(await file.text());
-      setBackupMessage(`Listo: ${result.routines} rutinas y ${result.sessions} entrenamientos importados.`);
-    } catch (error) {
-      setBackupMessage(error.message || "No se pudo leer el archivo.");
-    }
-  }
-
   return (
     <div className="screen">
-      <div className="top-bar">
-        <h1 className="top-title">Rutinas</h1>
+      <AppHeader onMenuClick={onMenuClick} />
+
+      <div className="page-head">
+        <h1 className="page-title">Rutinas</h1>
       </div>
 
       <div className="content">
@@ -96,31 +71,6 @@ export default function RoutineList() {
             </div>
           </section>
         ))}
-
-        {/* Backup: your data only lives on this device for now */}
-        <section className="list-section data-section">
-          <h2 className="section-title">Tus datos</h2>
-          {persistent ? (
-            <p className="hint">
-              Tus rutinas y tu historial se guardan en este teléfono. Agregá la app a la pantalla de inicio para que el
-              navegador no los borre, y bajate una copia de vez en cuando.
-            </p>
-          ) : (
-            <p className="hint warning">
-              Este navegador no permite guardar datos (¿ventana privada?): lo que cargues se pierde al cerrar.
-            </p>
-          )}
-          <div className="data-buttons">
-            <button type="button" className="secondary-button" onClick={downloadBackup}>
-              Exportar copia
-            </button>
-            <button type="button" className="secondary-button" onClick={() => fileInput.current?.click()}>
-              Importar copia
-            </button>
-            <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={restore} />
-          </div>
-          {backupMessage && <p className="hint">{backupMessage}</p>}
-        </section>
       </div>
     </div>
   );

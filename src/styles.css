@@ -7,8 +7,10 @@
  * Sections:
  *   1. Colors and sizes (custom properties). Change the look here.
  *   2. Base page setup
- *   3. Shared layout: screens, top bar, content
+ *   3. Shared layout: screens, top nav, top bar, content
+ *   3b. Side menu (hamburger drawer)
  *   4. Home: filter bar, chips, cards
+ *   4b. Search page
  *   5. Exercise detail
  *   6. Routines
  *   7. Modo gym
@@ -34,6 +36,8 @@
   --tap: 48px; /* minimum height for anything you tap */
   --tab-height: 64px;
   --max-width: 560px;
+  /* Display face for the app name and page titles; body text stays system-ui */
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -110,9 +114,106 @@ ol {
   border-bottom: 1px solid var(--border);
 }
 
-.top-title {
-  font-size: 22px;
-  padding: 0 8px;
+/* Top nav on the main screens: menu button + app name, search bar below */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+}
+
+.menu-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-left: -10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.menu-button:active {
+  background: var(--surface-2);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brand-accent {
+  color: var(--accent);
+}
+
+/* Looks like a search box; tapping it opens the search page */
+.search-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* Big title at the top of a main screen ("Ejercicios", "Rutinas") */
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 4px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.page-count {
+  font-size: 14px;
+  color: var(--muted);
 }
 
 .back-button {
@@ -154,6 +255,150 @@ ol {
 .anim-box.thumb {
   width: 80px;
   height: 80px;
+}
+
+/* ---------- 3b. Side menu ---------- */
+/* A <dialog> pinned to the left edge; its ::backdrop dims the page behind */
+.drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(320px, 86vw);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.drawer[open] {
+  animation: drawer-in 0.22s ease-out;
+}
+
+.drawer::backdrop {
+  background: rgb(5 6 9 / 0.72);
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+/* Stop the page behind from scrolling while the menu is open */
+html:has(.drawer[open]) {
+  overflow: hidden;
+}
+
+.drawer-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(10px + env(safe-area-inset-top)) 8px 10px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer-head .menu-button {
+  margin-left: 0;
+  color: var(--muted);
+}
+
+.drawer-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+}
+
+.drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.drawer-link:active {
+  background: var(--surface-2);
+}
+
+.drawer-link.active {
+  background: rgb(246 196 69 / 0.12);
+  color: var(--accent);
+}
+
+.drawer-section {
+  margin: 18px 12px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drawer-switch {
+  min-height: 60px;
+}
+
+.drawer-switch-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-switch-hint {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* Reuses the Modo gym switch drawing from section 6 */
+.drawer-switch.on .gym-toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.drawer-switch.on .gym-toggle-thumb {
+  transform: translateX(18px);
+  background: var(--accent-ink);
+}
+
+.drawer-note {
+  margin: 6px 12px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.drawer-foot {
+  padding: 16px 22px calc(20px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.drawer-foot .warning {
+  color: var(--band-color);
 }
 
 /* ---------- 4. Home ---------- */
@@ -289,6 +534,95 @@ ol {
   border-radius: 6px;
   font-size: 11px;
   color: var(--muted);
+}
+
+/* ---------- 4b. Search page ---------- */
+.search-top-bar {
+  gap: 4px;
+  padding-right: 16px;
+}
+
+/* Arrow only: the search box needs the room more than the word "Volver" */
+.search-top-bar .back-button {
+  padding-right: 4px;
+  font-size: 0;
+}
+
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-field-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.search.search-input {
+  width: 100%;
+  margin: 0;
+  padding: 0 44px 0 42px;
+  border-color: var(--accent);
+}
+
+/* Hide the browser's own clear "x": we draw a bigger one */
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-clear {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* Section heading with something on the right (a count, a "Borrar" button) */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.section-head .section-title {
+  margin: 0;
+}
+
+.section-count {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The typed words inside a result's name */
+mark {
+  background: none;
+  color: var(--accent);
+}
+
+.anim-box.thumb.small {
+  width: 56px;
+  height: 56px;
 }
 
 /* ---------- 5. Exercise detail ---------- */
@@ -1016,17 +1350,6 @@ ol {
   color: var(--muted);
 }
 
-/* Backup section on the routines tab */
-.data-section {
-  margin-top: 32px;
-}
-
-.data-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
 /* ---------- 8. Bottom tab bar ---------- */
 .tab-bar {
   position: fixed;
@@ -1059,10 +1382,27 @@ ol {
   color: var(--accent);
 }
 
+/* Soft pill behind the active tab's icon */
+.tab-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+}
+
+.tab.active .tab-icon {
+  background: rgb(246 196 69 / 0.14);
+}
+
 /* Respect "reduce motion" for the small UI transitions too */
 @media (prefers-reduced-motion: reduce) {
   .gym-toggle-track,
   .gym-toggle-thumb {
     transition: none;
+  }
+
+  .drawer[open] {
+    animation: none;
   }
 }

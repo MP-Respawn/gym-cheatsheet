@@ -5,6 +5,7 @@
  * URL, which works on any static host (Vercel included) with zero config:
  *
  *   #/                  -> home, exercise list
+ *   #/buscar            -> search exercises and routines
  *   #/ejercicio/<id>    -> one exercise
  *   #/rutinas           -> routine list
  *   #/rutina/<id>       -> one routine (the trainer's or yours)
@@ -30,6 +31,7 @@ export function parseHash(hash) {
   if (first === "rutina" && second && third === "entrenar") return { name: "routine-train", id: second };
   if (first === "rutina" && second) return { name: "routine", id: second };
   if (first === "rutinas") return { name: "routines" };
+  if (first === "buscar") return { name: "search" };
   return { name: "home" };
 }
 

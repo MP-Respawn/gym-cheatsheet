@@ -1,15 +1,18 @@
 /*
  * App.jsx
  *
- * The top of the app. It does three things:
+ * The top of the app. It does four things:
  *   1. Reads the current page from the URL hash (useHashRoute) and shows the
  *      matching screen.
  *   2. Keeps the little bits of state that must survive moving between pages:
  *      the search text, the chosen muscle-group chip, and Modo gym.
- *   3. Draws the bottom tab bar.
+ *   3. Owns the side menu (MenuDrawer): the hamburger in the top nav opens
+ *      it, and moving to another page closes it.
+ *   4. Draws the bottom tab bar.
  */
 import { useLayoutEffect, useState } from "react";
 import { savedScroll, useHashRoute } from "./hooks/useHashRoute.js";
+import MenuDrawer from "./components/MenuDrawer.jsx";
 import TabBar from "./components/TabBar.jsx";
 import ExerciseList from "./screens/ExerciseList.jsx";
 import ExerciseDetail from "./screens/ExerciseDetail.jsx";
@@ -17,6 +20,7 @@ import RoutineList from "./screens/RoutineList.jsx";
 import RoutineDetail from "./screens/RoutineDetail.jsx";
 import RoutineEditor from "./screens/RoutineEditor.jsx";
 import WorkoutLog from "./screens/WorkoutLog.jsx";
+import Search from "./screens/Search.jsx";
 import { useAnyRoutine } from "./store/useStore.js";
 
 const GYM_MODE_KEY = "gym-mode";
@@ -42,9 +46,20 @@ function saveGymMode(on) {
 export default function App() {
   const route = useHashRoute();
 
-  // Home filters, kept here so they survive opening an exercise and coming back.
+  // Search text and the home chip, kept here so they survive opening an
+  // exercise and coming back.
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("todos");
+
+  // The side menu. Closed again on every page change (a menu link, the
+  // phone's back button...), using React's "adjust state while rendering".
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuRoute, setMenuRoute] = useState(route);
+  if (menuRoute !== route) {
+    setMenuRoute(route);
+    setMenuOpen(false);
+  }
+  const openMenu = () => setMenuOpen(true);
 
   const [gymMode, setGymMode] = useState(loadGymMode);
   function changeGymMode(on) {
@@ -56,7 +71,7 @@ export default function App() {
   // detail pages start at the top.
   useLayoutEffect(() => {
     const hash = window.location.hash || "#/";
-    const isList = route.name === "home" || route.name === "routines";
+    const isList = route.name === "home" || route.name === "routines" || route.name === "search";
     window.scrollTo(0, isList ? (savedScroll[hash] ?? 0) : 0);
   }, [route]);
 
@@ -69,7 +84,9 @@ export default function App() {
   if (route.name === "exercise") {
     screen = <ExerciseDetail id={route.id} />;
   } else if (route.name === "routines") {
-    screen = <RoutineList />;
+    screen = <RoutineList onMenuClick={openMenu} />;
+  } else if (route.name === "search") {
+    screen = <Search query={query} onQueryChange={setQuery} />;
   } else if (route.name === "routine-new") {
     screen = <RoutineEditor key="new" />;
   } else if (route.name === "routine-edit") {
@@ -81,22 +98,26 @@ export default function App() {
     screen = <RoutineDetail routine={routine} isMine={isMine} gymMode={gymMode} onGymModeChange={changeGymMode} />;
   } else {
     screen = (
-      <ExerciseList
-        query={query}
-        onQueryChange={setQuery}
-        group={group}
-        onGroupChange={setGroup}
-      />
+      <ExerciseList group={group} onGroupChange={setGroup} onMenuClick={openMenu} />
     );
   }
 
-  // Exercise pages belong to the first tab, routine pages to the second.
-  const activeTab = route.name.startsWith("routine") ? "routines" : "exercises";
+  // Exercise pages belong to the first tab, routine pages to the second;
+  // the search page to neither.
+  let activeTab = route.name.startsWith("routine") ? "routines" : "exercises";
+  if (route.name === "search") activeTab = null;
 
   return (
     <div className="app">
       <main>{screen}</main>
       <TabBar active={activeTab} />
+      <MenuDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        activeTab={activeTab}
+        gymMode={gymMode}
+        onGymModeChange={changeGymMode}
+      />
     </div>
   );
 }

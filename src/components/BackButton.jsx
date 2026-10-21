@@ -25,7 +25,7 @@ export default function BackButton({ fallback = "#/", confirmMessage = null }) {
     <button type="button" className="back-button" onClick={goBack}>
       {/* Left-pointing chevron drawn with SVG, no icon font needed */}
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       Volver
     </button>

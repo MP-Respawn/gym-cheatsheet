@@ -1,14 +1,22 @@
 /*
  * styles.css
  *
- * All the app's styles in one place. Mobile first: everything is designed
- * for a 375px wide phone, and simply gets a max width on bigger screens.
+ * All the app's styles in one place, built on the RPWN Studio design
+ * system (dark #0D1117 ground, teal #00E5CC accent, Space Grotesk for
+ * display text and DM Sans for everything else).
+ *
+ * Mobile first: everything is designed for a 390px phone. From 900px wide
+ * (tablet landscape, laptop, desktop) the layout changes:
+ *   - the bottom tab bar disappears and a fixed side navigation appears
+ *   - exercise and routine lists become a 2–3 column grid
+ *   - the exercise detail page uses two columns
+ *   - fixed bars (action bar, picker) leave room for the side nav
  *
  * Sections:
- *   1. Colors and sizes (custom properties). Change the look here.
+ *   1. Tokens (custom properties). Change the look here.
  *   2. Base page setup
- *   3. Shared layout: screens, top nav, top bar, content
- *   3b. Side menu (hamburger drawer)
+ *   3. Shared layout: app shell, top nav, top bar, content
+ *   3b. Side menu (hamburger drawer, phone) and side nav (desktop)
  *   4. Home: filter bar, chips, cards
  *   4b. Search page
  *   5. Exercise detail
@@ -16,28 +24,45 @@
  *   7. Modo gym
  *   7b. Your routines: forms, buttons, editor, picker, workout log, history
  *   8. Bottom tab bar
+ *   9. Responsive: tablet and desktop
  */
 
-/* ---------- 1. Colors and sizes ---------- */
+/* ---------- 1. Tokens (RPWN Studio design system) ---------- */
 :root {
-  --bg: #0f1115; /* page background, near black */
-  --surface: #191c23; /* cards */
-  --surface-2: #232733; /* animation boxes, inputs */
-  --border: #2e3340;
-  --text: #f1f3f7; /* main text */
-  --muted: #a6adbb; /* secondary text, still readable on dark */
-  --accent: #f6c445; /* warm yellow: active chips, highlights */
-  --accent-ink: #1b1500; /* text placed on top of the accent */
-  --figure-color: #f1f3f7; /* stick figure */
-  --figure-far: #8e96a6; /* limbs on the far side of the figure */
-  --gear-color: #7d8597; /* equipment in the animations */
-  --band-color: #f0915a; /* elastic bands */
-  --radius: 14px;
+  --bg: #0d1117; /* page background */
+  --surface: #161b22; /* cards, elevated surfaces */
+  --surface-2: #0d1117; /* inputs and animation boxes sit "below" a card */
+  --border: #21262d;
+  --text: #f0f0f0; /* primary text */
+  --muted: #8b949e; /* secondary text: the system's #6B7280 lifted a step so 12–13px labels pass 4.5:1 */
+  --muted-2: #6b7280; /* decorative muted (icons, dividers, placeholder) */
+  --accent: #00e5cc; /* teal: links, CTAs, active states */
+  --accent-ink: #0d1117; /* text placed on top of the accent */
+  --accent-soft: rgb(0 229 204 / 0.12); /* tinted pill behind active items */
+  --accent-glow: rgb(0 229 204 / 0.3); /* hover ring */
+  --danger: #f85149;
+  --warning: #d29922;
+  --figure-color: #f0f0f0; /* stick figure */
+  --figure-far: #8b949e; /* limbs on the far side of the figure */
+  --gear-color: #6b7280; /* equipment in the animations */
+  --band-color: #d18616; /* elastic bands */
+
+  --radius: 12px; /* cards */
+  --radius-button: 8px;
+  --radius-input: 10px;
+  --radius-pill: 20px;
   --tap: 48px; /* minimum height for anything you tap */
   --tab-height: 64px;
-  --max-width: 560px;
-  /* Display face for the app name and page titles; body text stays system-ui */
-  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --sidenav-width: 260px;
+  --max-width: 560px; /* phone/tablet-portrait content width */
+  --page-max-width: 1100px; /* content width on desktop */
+
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.35);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
 }
 
@@ -56,9 +81,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.45;
+  line-height: 1.5;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -80,10 +105,30 @@ ol {
   margin: 0;
 }
 
+::selection {
+  background: rgb(0 229 204 / 0.2);
+  color: var(--text);
+}
+
 /* Visible focus ring for keyboard users, invisible for touch */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Small uppercase label used for section titles, counts and eyebrows */
+.eyebrow,
+.section-title,
+.page-count,
+.routine-block,
+.prescription-label,
+.drawer-section,
+.sidenav-section {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 /* ---------- 3. Shared layout ---------- */
@@ -96,7 +141,7 @@ ol {
 }
 
 .content {
-  padding: 8px 16px 0;
+  padding: 8px 20px 0;
 }
 
 /* Sticky bar at the top of detail pages (back button, toggles) */
@@ -109,7 +154,7 @@ ol {
   justify-content: space-between;
   gap: 12px;
   min-height: 56px;
-  padding: 4px 8px;
+  padding: calc(4px + env(safe-area-inset-top)) 12px 4px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
@@ -121,8 +166,8 @@ ol {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: calc(8px + env(safe-area-inset-top)) 16px 12px;
+  gap: 12px;
+  padding: calc(8px + env(safe-area-inset-top)) 20px 12px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
@@ -130,7 +175,7 @@ ol {
 .app-header-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-height: var(--tap);
 }
 
@@ -141,43 +186,47 @@ ol {
   height: var(--tap);
   margin-left: -10px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-input);
   background: none;
   color: var(--text);
   cursor: pointer;
+  transition: background 0.2s;
 }
 
+.menu-button:hover,
 .menu-button:active {
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
+/* The wordmark: "> Respawn fitness", a terminal prompt metaphor */
 .brand {
   display: inline-flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-display);
+  line-height: 1;
 }
 
-.brand-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-ink);
+.brand-prompt {
+  color: var(--accent);
+  opacity: 0.6;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .brand-name {
-  font-family: var(--font-display);
-  font-size: 23px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .brand-accent {
   color: var(--accent);
+  opacity: 0.7;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
 }
 
 /* Looks like a search box; tapping it opens the search page */
@@ -185,12 +234,18 @@ ol {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: var(--tap);
+  height: 44px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-2);
+  border-radius: var(--radius-input);
+  background: var(--surface);
   color: var(--muted);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.search-link:hover {
+  border-color: var(--accent);
 }
 
 /* Big title at the top of a main screen ("Ejercicios", "Rutinas") */
@@ -199,20 +254,18 @@ ol {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 16px 4px;
+  padding: 18px 20px 4px;
 }
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 28px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: -0.03em;
 }
 
 .page-count {
-  font-size: 14px;
   color: var(--muted);
 }
 
@@ -224,14 +277,14 @@ ol {
   padding: 0 12px 0 4px;
   background: none;
   border: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--accent);
   cursor: pointer;
 }
 
 .empty {
-  padding: 32px 16px;
+  padding: 32px 20px;
   color: var(--muted);
   text-align: center;
 }
@@ -248,16 +301,17 @@ ol {
 .anim-box {
   flex: none;
   background: var(--surface-2);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
   overflow: hidden;
 }
 
 .anim-box.thumb {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
 }
 
-/* ---------- 3b. Side menu ---------- */
+/* ---------- 3b. Side menu (phone) ---------- */
 /* A <dialog> pinned to the left edge; its ::backdrop dims the page behind */
 .drawer {
   position: fixed;
@@ -270,16 +324,16 @@ ol {
   padding: 0;
   border: 0;
   border-right: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
 }
 
 .drawer[open] {
-  animation: drawer-in 0.22s ease-out;
+  animation: drawer-in 0.3s var(--ease);
 }
 
 .drawer::backdrop {
-  background: rgb(5 6 9 / 0.72);
+  background: rgb(0 0 0 / 0.6);
 }
 
 @keyframes drawer-in {
@@ -304,7 +358,7 @@ html:has(.drawer[open]) {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: calc(10px + env(safe-area-inset-top)) 8px 10px 18px;
+  padding: calc(10px + env(safe-area-inset-top)) 8px 10px 20px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -321,43 +375,47 @@ html:has(.drawer[open]) {
   padding: 12px 10px;
 }
 
-.drawer-link {
+/* One row of the side menu or the desktop side nav: icon + label */
+.drawer-link,
+.sidenav-link {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  min-height: var(--tap);
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 0 14px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-input);
   background: none;
-  color: var(--text);
-  font-size: 16px;
-  font-weight: 600;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
-.drawer-link:active {
-  background: var(--surface-2);
+.drawer-link:hover,
+.sidenav-link:hover {
+  background: var(--surface);
+  color: var(--text);
 }
 
-.drawer-link.active {
-  background: rgb(246 196 69 / 0.12);
+.drawer-link.active,
+.sidenav-link.active {
+  background: var(--accent-soft);
   color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
-.drawer-section {
-  margin: 18px 12px 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+.drawer-section,
+.sidenav-section {
+  margin: 18px 14px 6px;
+  color: var(--muted-2);
 }
 
 .drawer-switch {
-  min-height: 60px;
+  min-height: 56px;
 }
 
 .drawer-switch-text {
@@ -367,7 +425,7 @@ html:has(.drawer[open]) {
 }
 
 .drawer-switch-hint {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   line-height: 1.3;
   color: var(--muted);
@@ -380,25 +438,31 @@ html:has(.drawer[open]) {
 }
 
 .drawer-switch.on .gym-toggle-thumb {
-  transform: translateX(18px);
+  transform: translateX(16px);
   background: var(--accent-ink);
 }
 
 .drawer-note {
-  margin: 6px 12px 0;
-  font-size: 14px;
+  margin: 6px 14px 0;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .drawer-foot {
   padding: 16px 22px calc(20px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--muted);
 }
 
 .drawer-foot .warning {
-  color: var(--band-color);
+  color: var(--warning);
+}
+
+/* Desktop side nav: hidden on phones, shown from 900px (section 9) */
+.sidenav {
+  display: none;
 }
 
 /* ---------- 4. Home ---------- */
@@ -413,19 +477,25 @@ html:has(.drawer[open]) {
 
 .search {
   display: block;
-  width: calc(100% - 32px);
-  margin: 0 16px;
-  height: var(--tap);
+  width: calc(100% - 40px);
+  margin: 0 20px;
+  height: 44px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface-2);
+  border-radius: var(--radius-input);
+  background: var(--surface);
   color: var(--text);
+  font-family: inherit;
   font-size: 16px; /* 16px stops iPhones from zooming in on focus */
 }
 
 .search::placeholder {
-  color: var(--muted);
+  color: var(--muted-2);
+}
+
+.search:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 /* The chip row scrolls sideways by itself; the page never does */
@@ -433,7 +503,7 @@ html:has(.drawer[open]) {
   display: flex;
   gap: 8px;
   margin-top: 10px;
-  padding: 0 16px;
+  padding: 0 20px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -445,21 +515,27 @@ html:has(.drawer[open]) {
 
 .chip {
   flex: none;
-  min-height: 40px;
+  min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.chip:hover {
+  border-color: var(--accent);
 }
 
 .chip.active {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .list-section {
@@ -468,10 +544,6 @@ html:has(.drawer[open]) {
 
 .section-title {
   margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -487,13 +559,20 @@ html:has(.drawer[open]) {
   align-items: center;
   gap: 12px;
   min-height: var(--tap);
-  padding: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-glow);
 }
 
 .card:active {
-  background: var(--surface-2);
+  transform: scale(0.99);
 }
 
 /* min-width: 0 lets the text shrink so long names get "..." instead of overflowing */
@@ -505,23 +584,27 @@ html:has(.drawer[open]) {
 }
 
 .card-title {
-  font-size: 17px;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 1.25;
 }
 
 .card-meta {
   display: flex;
+  flex-wrap: wrap; /* the "sugerido" tag drops below a long group name */
   align-items: center;
-  gap: 6px;
+  gap: 2px 6px;
   margin-top: 2px;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--accent);
 }
 
 .card-desc {
   margin-top: 2px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
@@ -533,13 +616,14 @@ html:has(.drawer[open]) {
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 11px;
+  font-weight: 500;
   color: var(--muted);
 }
 
 /* ---------- 4b. Search page ---------- */
 .search-top-bar {
   gap: 4px;
-  padding-right: 16px;
+  padding-right: 20px;
 }
 
 /* Arrow only: the search box needs the room more than the word "Volver" */
@@ -634,8 +718,11 @@ mark {
 
 .detail-title {
   margin-top: 16px;
+  font-family: var(--font-display);
   font-size: 26px;
-  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .tags {
@@ -646,10 +733,11 @@ mark {
 }
 
 .tag {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 13px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--muted);
 }
 
@@ -657,7 +745,7 @@ mark {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tag-source {
@@ -666,12 +754,18 @@ mark {
 
 .description {
   margin-top: 14px;
-  font-size: 17px;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .block-title {
   margin: 24px 0 10px;
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 /* Cues as a checklist: a drawn check mark before each line */
@@ -685,57 +779,56 @@ mark {
 
 .cues li {
   position: relative;
-  padding-left: 32px;
-  font-size: 16px;
+  padding-left: 30px;
+  font-size: 15px;
 }
 
 .cues li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 1px;
-  width: 20px;
-  height: 20px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
   border-radius: 6px;
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--border);
 }
 
 .cues li::after {
   content: "";
   position: absolute;
-  left: 7px;
+  left: 6px;
   top: 4px;
-  width: 6px;
-  height: 11px;
+  width: 5px;
+  height: 10px;
   border: solid var(--accent);
-  border-width: 0 2.5px 2.5px 0;
+  border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
-/* Highlighted box with sets and reps */
+/* Highlighted box with sets and reps: full accent border, no side stripe */
 .prescription {
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-top: 20px;
   padding: 14px 16px;
-  border-left: 4px solid var(--accent);
-  border-radius: 10px;
+  border: 1px solid rgb(0 229 204 / 0.45);
+  border-radius: var(--radius);
   background: var(--surface);
 }
 
 .prescription-label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 11px;
   color: var(--accent);
 }
 
 .prescription-text {
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 18px;
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .alt-chips {
@@ -747,22 +840,23 @@ mark {
 .alt-chip {
   display: inline-flex;
   align-items: center;
-  min-height: var(--tap);
+  min-height: 44px;
   padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-input);
   background: var(--surface);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  transition: border-color 0.2s;
 }
 
-.alt-chip:active {
-  background: var(--surface-2);
+.alt-chip:hover {
+  border-color: var(--accent);
 }
 
 .equipment {
   margin-top: 24px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Deliberately small: YouTube is a secondary resource */
@@ -770,11 +864,15 @@ mark {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-top: 8px;
-  font-size: 14px;
+  margin-top: 4px;
+  font-size: 13px;
   color: var(--muted);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.youtube-link:hover {
+  color: var(--text);
 }
 
 /* ---------- 6. Routines ---------- */
@@ -784,24 +882,21 @@ mark {
 
 .chevron {
   flex: none;
-  color: var(--muted);
+  color: var(--muted-2);
 }
 
 .routine-block {
   margin-top: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--accent);
 }
 
 .routine-block + .detail-title {
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .routine-focus {
   margin-top: 4px;
+  font-size: 14px;
   color: var(--muted);
 }
 
@@ -811,11 +906,12 @@ mark {
   margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .step {
-  padding: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -824,30 +920,36 @@ mark {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .step-number {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-ink);
-  font-weight: 800;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
 }
 
 .step-kind {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--accent);
 }
 
 .step-prescription {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .step-exercise {
@@ -855,7 +957,11 @@ mark {
   align-items: center;
   gap: 12px;
   min-height: var(--tap);
-  padding: 6px 0;
+  padding: 8px 0;
+}
+
+.step-exercise:hover .step-name {
+  color: var(--accent);
 }
 
 /* Separator line between exercises of the same superset */
@@ -864,8 +970,8 @@ mark {
 }
 
 .anim-box.step-anim {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
 }
 
 .step-text {
@@ -876,21 +982,24 @@ mark {
 }
 
 .step-name {
-  font-size: 16px;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.25;
   color: var(--text);
+  transition: color 0.2s;
 }
 
 .step-desc {
   margin-top: 2px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .step-ex-prescription {
   margin-top: 4px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -898,7 +1007,7 @@ mark {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px dashed var(--border);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
@@ -911,27 +1020,28 @@ mark {
   padding: 0 8px;
   background: none;
   border: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .gym-toggle-track {
   position: relative;
-  width: 46px;
-  height: 28px;
-  border-radius: 999px;
-  background: var(--surface-2);
+  flex: none;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
   border: 1px solid var(--border);
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .gym-toggle-thumb {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--muted);
   transition: transform 0.2s, background 0.2s;
@@ -967,7 +1077,7 @@ mark {
 }
 
 .gym-mode .step-kind {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .gym-mode .step-exercise {
@@ -994,18 +1104,19 @@ mark {
 /* Title shown next to "Volver" on the editor and the workout log */
 .top-bar-title {
   margin-right: auto;
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .hint {
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
 }
 
 .hint.warning {
-  color: var(--band-color);
+  color: var(--warning);
 }
 
 /* Form fields: a small label above a big input */
@@ -1017,8 +1128,10 @@ mark {
 }
 
 .field-label {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -1027,16 +1140,21 @@ mark {
   min-height: var(--tap);
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-input);
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
   font-size: 16px; /* 16px stops iPhones from zooming in */
+  transition: border-color 0.2s;
 }
 
 .input::placeholder {
-  color: var(--muted);
-  opacity: 0.7;
+  color: var(--muted-2);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 /* Buttons */
@@ -1050,10 +1168,11 @@ mark {
   width: 100%;
   min-height: var(--tap);
   padding: 0 16px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
+  border-radius: var(--radius-button);
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .primary-button {
@@ -1062,23 +1181,45 @@ mark {
   color: var(--accent-ink);
 }
 
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--accent-glow);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
 .secondary-button {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
 }
 
+.secondary-button:hover {
+  border-color: var(--accent);
+}
+
 .add-button {
-  border: 1.5px dashed var(--border);
+  border: 1px dashed var(--border);
   background: none;
   color: var(--accent);
+}
+
+.add-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .danger-button {
   margin-top: 28px;
   border: 1px solid var(--border);
   background: none;
-  color: #ff8a8a;
+  color: var(--danger);
+}
+
+.danger-button:hover {
+  border-color: var(--danger);
 }
 
 .text-button {
@@ -1087,9 +1228,14 @@ mark {
   border: 0;
   background: none;
   color: var(--accent);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .icon-button {
@@ -1098,10 +1244,15 @@ mark {
   width: 40px;
   height: 40px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-input);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.icon-button:hover {
+  border-color: var(--accent);
 }
 
 .icon-button.small {
@@ -1138,14 +1289,14 @@ mark {
   z-index: 15;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10px 16px;
+  padding: 10px 20px;
   background: var(--bg);
   border-top: 1px solid var(--border);
 }
 
 .action-error {
   margin-bottom: 8px;
-  color: #ff8a8a;
+  color: var(--danger);
   font-size: 14px;
   font-weight: 600;
 }
@@ -1173,7 +1324,7 @@ mark {
   justify-content: space-between;
   gap: 8px;
   min-height: 40px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .edit-exercise + .edit-exercise {
@@ -1206,24 +1357,26 @@ mark {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px 8px;
+  padding: 0 20px 8px;
 }
 
 .picker-title {
+  font-family: var(--font-display);
   font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .picker-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 16px 24px;
+  padding: 0 20px 24px;
   -webkit-overflow-scrolling: touch;
 }
 
 /* Card used as a button inside the picker */
 .card-button {
   width: 100%;
-  border: 0;
   text-align: left;
   font: inherit;
   color: inherit;
@@ -1250,7 +1403,7 @@ mark {
 
 .log-last {
   margin-top: 2px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -1271,7 +1424,8 @@ mark {
   flex: none;
   width: 22px;
   text-align: center;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 700;
   color: var(--muted);
 }
 
@@ -1283,18 +1437,22 @@ mark {
 
 .set-input {
   padding-right: 44px;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* "kg" / "reps" written inside the box, on the right */
 .set-unit {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
   pointer-events: none;
 }
@@ -1313,7 +1471,8 @@ mark {
 
 /* History on the exercise page */
 .history-best {
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--accent);
 }
 
@@ -1328,25 +1487,29 @@ mark {
 
 .history-row {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 56px 1fr;
   gap: 2px 10px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
   background: var(--surface);
 }
 
 .history-date {
   grid-row: span 2;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 600;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .history-sets {
-  font-weight: 700;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .history-routine {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -1372,10 +1535,11 @@ mark {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-size: 13px;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
+  transition: color 0.2s;
 }
 
 .tab.active {
@@ -1386,23 +1550,316 @@ mark {
 .tab-icon {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 30px;
-  border-radius: 999px;
+  width: 52px;
+  height: 28px;
+  border-radius: var(--radius-pill);
 }
 
 .tab.active .tab-icon {
-  background: rgb(246 196 69 / 0.14);
+  background: var(--accent-soft);
 }
 
 /* Respect "reduce motion" for the small UI transitions too */
 @media (prefers-reduced-motion: reduce) {
   .gym-toggle-track,
-  .gym-toggle-thumb {
+  .gym-toggle-thumb,
+  .card,
+  .primary-button {
     transition: none;
   }
 
   .drawer[open] {
     animation: none;
+  }
+
+  .primary-button:hover {
+    transform: none;
+  }
+}
+
+/* ---------- 9. Responsive: tablet portrait ---------- */
+/* Between 600 and 900px the phone layout stays, but lists use two columns. */
+@media (min-width: 600px) {
+  :root {
+    --max-width: 720px;
+  }
+
+  .card-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* The "+ Nueva rutina" button spans the whole row */
+  .card-list > .add-button {
+    grid-column: 1 / -1;
+  }
+
+  .anim-box.hero {
+    height: 300px;
+  }
+}
+
+/* ---------- 9b. Responsive: desktop ---------- */
+/* From 900px: side nav instead of tab bar + hamburger, wider content. */
+@media (min-width: 900px) {
+  :root {
+    --max-width: none;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidenav-width) minmax(0, 1fr);
+    max-width: none;
+    padding-bottom: 0;
+  }
+
+  /* Side nav: fixed to the left, full height */
+  .sidenav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100dvh;
+    padding: 20px 14px;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    overflow-y: auto;
+  }
+
+  .sidenav-brand {
+    display: block;
+    padding: 8px 14px 22px;
+  }
+
+  .sidenav-switch .gym-toggle-track {
+    width: 36px;
+    height: 20px;
+  }
+
+  .sidenav-switch .gym-toggle-thumb {
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    left: 2px;
+  }
+
+  .sidenav-switch.on .gym-toggle-track {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .sidenav-switch.on .gym-toggle-thumb {
+    transform: translateX(16px);
+    background: var(--accent-ink);
+  }
+
+  .sidenav-switch-text {
+    flex: 1;
+  }
+
+  .sidenav-note {
+    margin: 6px 14px 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .sidenav-foot {
+    margin: auto 14px 0;
+    padding-top: 20px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted-2);
+  }
+
+  .sidenav-foot .warning {
+    color: var(--warning);
+  }
+
+  /* Main column: centered content with page padding */
+  .app > main {
+    min-width: 0;
+  }
+
+  .screen {
+    max-width: var(--page-max-width);
+    padding: 0 40px 48px;
+  }
+
+  /* No hamburger or wordmark in the header: the side nav has them */
+  .app-header {
+    padding: 24px 0 12px;
+    gap: 0;
+  }
+
+  .app-header-row {
+    display: none;
+  }
+
+  .search-link {
+    max-width: 420px;
+  }
+
+  .page-head {
+    padding: 20px 0 4px;
+  }
+
+  .page-title {
+    font-size: 36px;
+  }
+
+  .chips {
+    flex-wrap: wrap;
+    padding: 0;
+  }
+
+  .content {
+    padding: 8px 0 0;
+  }
+
+  .top-bar {
+    padding: 8px 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .search {
+    width: 100%;
+    margin: 0;
+  }
+
+  .filter-bar {
+    padding: 12px 0 10px;
+  }
+
+  .empty {
+    padding: 32px 0;
+  }
+
+  /* Cards stay in two columns here: next to the side nav, three columns
+     only fit from 1280px (below that the text got ~100px wide) */
+  .card-list {
+    gap: 16px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .anim-box.thumb {
+    width: 72px;
+    height: 72px;
+  }
+
+  /* Description wraps to two lines instead of a single ellipsis line */
+  .card-desc {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
+  }
+
+  /* Exercise detail: hero + technique on the left, the rest on the right */
+  .content.detail {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: 40px;
+    align-items: start;
+  }
+
+  /* Not sticky: with a few history rows the column gets taller than the
+     screen, and a sticky one would hide its bottom (equipment, YouTube) */
+  .detail-aside > .prescription {
+    margin-top: 0;
+  }
+
+  .anim-box.hero {
+    height: 360px;
+  }
+
+  .detail-title {
+    font-size: 36px;
+  }
+
+  /* Routines: steps on the left, nothing cramped */
+  .steps {
+    gap: 12px;
+  }
+
+  .step {
+    padding: 14px 16px;
+  }
+
+  .anim-box.step-anim {
+    width: 72px;
+    height: 72px;
+  }
+
+  .routine-actions {
+    max-width: 420px;
+  }
+
+  /* Fixed bars sit over the main column, not over the side nav */
+  .tab-bar {
+    display: none;
+  }
+
+  .action-bar {
+    left: var(--sidenav-width);
+    bottom: 0;
+    max-width: none;
+    padding: 12px 40px;
+  }
+
+  .action-bar .primary-button {
+    max-width: 420px;
+  }
+
+  .picker {
+    left: var(--sidenav-width);
+    max-width: none;
+  }
+
+  .picker-head,
+  .picker-list {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .picker .search {
+    width: 100%;
+    margin: 0;
+  }
+
+  .picker .chips {
+    padding: 0;
+  }
+
+  .picker-title-row {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .picker .card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The phone drawer is never needed on desktop */
+  .drawer {
+    display: none;
+  }
+
+  /* Workout log: set rows have room for wider inputs */
+  .set-rows {
+    max-width: 480px;
+  }
+}
+
+/* Wide desktop: room for three columns of cards */
+@media (min-width: 1280px) {
+  .card-list,
+  .picker .card-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

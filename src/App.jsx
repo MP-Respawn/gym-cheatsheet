@@ -8,11 +8,14 @@
  *      the search text, the chosen muscle-group chip, and Modo gym.
  *   3. Owns the side menu (MenuDrawer): the hamburger in the top nav opens
  *      it, and moving to another page closes it.
- *   4. Draws the bottom tab bar.
+ *   4. Draws the navigation: the bottom tab bar on phones, the side nav on
+ *      wide screens (both are always rendered; styles.css shows one or the
+ *      other depending on the screen width).
  */
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { savedScroll, useHashRoute } from "./hooks/useHashRoute.js";
 import MenuDrawer from "./components/MenuDrawer.jsx";
+import SideNav from "./components/SideNav.jsx";
 import TabBar from "./components/TabBar.jsx";
 import ExerciseList from "./screens/ExerciseList.jsx";
 import ExerciseDetail from "./screens/ExerciseDetail.jsx";
@@ -60,6 +63,18 @@ export default function App() {
     setMenuOpen(false);
   }
   const openMenu = () => setMenuOpen(true);
+
+  // From 900px the side nav replaces the menu and styles.css hides it. An
+  // open menu would stay modal while hidden and freeze the page (a tablet
+  // turned sideways, a window made wider), so close it when that happens.
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 900px)");
+    function onChange(event) {
+      if (event.matches) setMenuOpen(false);
+    }
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+  }, []);
 
   const [gymMode, setGymMode] = useState(loadGymMode);
   function changeGymMode(on) {
@@ -109,6 +124,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <SideNav activeTab={activeTab} gymMode={gymMode} onGymModeChange={changeGymMode} />
       <main>{screen}</main>
       <TabBar active={activeTab} />
       <MenuDrawer

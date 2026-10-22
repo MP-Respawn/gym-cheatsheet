@@ -3,35 +3,48 @@
  *   #/rutina/<id>/entrenar   (works for the trainer's routines and yours)
  *
  * For every exercise of the routine you get one row per set with two boxes:
- * kg and reps. "Última vez" shows what you did the previous time, and the
- * empty boxes show those numbers as hints. Everything is saved as you type,
+ * kg and reps (core exercises get a single box instead: reps, or seconds
+ * for holds). A vuelta step lists every exercise of the vuelta in order.
+ * "Última vez" shows what you did the previous time, and the empty boxes
+ * show those numbers as hints. Everything is saved as you type,
  * so closing the app mid-workout loses nothing.
  *
  * "Terminar entrenamiento" closes the session and adds it to your history
  * (empty sets are ignored). "Descartar" throws it away.
  */
 import { useEffect } from "react";
-import { getExercise } from "../data/exercises.js";
+import { VUELTAS, getExercise, getVuelta } from "../data/exercises.js";
+import { stepExerciseIds } from "../data/routines.js";
 import { hasInAppHistory } from "../hooks/useHashRoute.js";
 import { useActiveSession, usePersonalData } from "../store/useStore.js";
 import {
   discardSession,
+  emptySet,
   finishSession,
   formatNumber,
   formatSets,
   lastSetsFor,
   pyramidReps,
   saveSession,
+  setFields,
   startSession,
 } from "../store/workouts.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
 
-function stepKind(count) {
+function stepKind(step, count) {
+  if (step.vuelta) return getVuelta(step.vuelta)?.label ?? "Vuelta";
   if (count === 2) return "Superserie";
   if (count > 2) return "Circuito";
   return null;
 }
+
+// How each kind of box looks: unit shown inside, keyboard, and screen-reader name.
+const FIELD = {
+  kg: { unit: "kg", inputMode: "decimal", label: "kilos" },
+  reps: { unit: "reps", inputMode: "numeric", label: "repeticiones" },
+  secs: { unit: "seg", inputMode: "numeric", label: "segundos" },
+};
 
 // Leaves the log and goes back to the routine page.
 function leave(routineId) {
@@ -42,6 +55,8 @@ function leave(routineId) {
 export default function WorkoutLog({ routine, gymMode }) {
   const data = usePersonalData();
   const session = useActiveSession(routine.id);
+  // One of the trainer's core vueltas: its steps carry "which arm / side" notes.
+  const isVuelta = VUELTAS.some((v) => v.routineId === routine.id);
 
   // Opening the screen starts a session (or resumes the one in progress).
   useEffect(() => {
@@ -111,15 +126,18 @@ export default function WorkoutLog({ routine, gymMode }) {
 
         <ol className="steps">
           {routine.steps.map((step, stepIndex) => {
-            const kind = stepKind(step.exerciseIds.length);
+            const exerciseIds = stepExerciseIds(step);
+            const kind = stepKind(step, exerciseIds.length);
             return (
               <li key={stepIndex} className="step">
                 <div className="step-head">
                   <span className="step-number">{stepIndex + 1}</span>
                   {kind && <span className="step-kind">{kind}</span>}
                 </div>
+                {/* In a vuelta the note says which arm or side ("Con el otro brazo") */}
+                {isVuelta && step.note && <p className="step-prescription">{step.note}</p>}
 
-                {step.exerciseIds.map((exerciseId) => {
+                {exerciseIds.map((exerciseId, position) => {
                   const ex = getExercise(exerciseId);
                   const entryIndex = entryFor(exerciseId);
                   if (!ex || entryIndex < 0) return null;
@@ -127,10 +145,19 @@ export default function WorkoutLog({ routine, gymMode }) {
                   const prescription = step.prescription || ex.prescription;
                   const last = lastSetsFor(exerciseId, data.sessions);
                   const repsHints = pyramidReps(prescription);
-                  const allEmpty = entry.sets.every((s) => s.kg === "" && s.reps === "");
+                  const fields = setFields(exerciseId);
+                  const allEmpty = entry.sets.every((s) => fields.every((f) => (s[f] ?? "") === ""));
+
+                  // Hint shown in an empty box: last time's number, the pyramid, or the unit.
+                  const hint = (setIndex, field) => {
+                    const before = last?.[setIndex]?.[field];
+                    if (before != null) return formatNumber(before);
+                    if (field === "reps" && repsHints[setIndex]) return repsHints[setIndex];
+                    return FIELD[field].unit;
+                  };
 
                   return (
-                    <div key={exerciseId} className="log-exercise">
+                    <div key={`${exerciseId}-${position}`} className="log-exercise">
                       <div className="log-exercise-head">
                         <ExerciseAnimation id={exerciseId} className="step-anim" />
                         <div className="step-text">
@@ -142,35 +169,24 @@ export default function WorkoutLog({ routine, gymMode }) {
                         </div>
                       </div>
 
-                      {/* One row per set: number, kg, reps, remove */}
+                      {/* One row per set: number, its boxes (kg + reps, reps, or seg), remove */}
                       <div className="set-rows">
                         {entry.sets.map((set, setIndex) => (
                           <div key={setIndex} className="set-row">
                             <span className="set-number">{setIndex + 1}</span>
-                            <label className="set-field">
-                              <input
-                                className="input set-input"
-                                inputMode="decimal"
-                                value={set.kg}
-                                placeholder={last?.[setIndex]?.kg != null ? formatNumber(last[setIndex].kg) : "kg"}
-                                aria-label={`Serie ${setIndex + 1}, kilos`}
-                                onChange={(e) => changeSet(entryIndex, setIndex, "kg", e.target.value)}
-                              />
-                              <span className="set-unit">kg</span>
-                            </label>
-                            <label className="set-field">
-                              <input
-                                className="input set-input"
-                                inputMode="numeric"
-                                value={set.reps}
-                                placeholder={
-                                  last?.[setIndex]?.reps != null ? formatNumber(last[setIndex].reps) : (repsHints[setIndex] ?? "reps")
-                                }
-                                aria-label={`Serie ${setIndex + 1}, repeticiones`}
-                                onChange={(e) => changeSet(entryIndex, setIndex, "reps", e.target.value)}
-                              />
-                              <span className="set-unit">reps</span>
-                            </label>
+                            {fields.map((field) => (
+                              <label key={field} className="set-field">
+                                <input
+                                  className="input set-input"
+                                  inputMode={FIELD[field].inputMode}
+                                  value={set[field] ?? ""}
+                                  placeholder={hint(setIndex, field)}
+                                  aria-label={`Serie ${setIndex + 1}, ${FIELD[field].label}`}
+                                  onChange={(e) => changeSet(entryIndex, setIndex, field, e.target.value)}
+                                />
+                                <span className="set-unit">{FIELD[field].unit}</span>
+                              </label>
+                            ))}
                             <button
                               type="button"
                               className="icon-button small"
@@ -189,7 +205,7 @@ export default function WorkoutLog({ routine, gymMode }) {
                         <button
                           type="button"
                           className="text-button"
-                          onClick={() => setEntry(entryIndex, [...entry.sets, { kg: "", reps: "" }])}
+                          onClick={() => setEntry(entryIndex, [...entry.sets, emptySet(exerciseId)])}
                         >
                           + Serie
                         </button>
@@ -201,7 +217,7 @@ export default function WorkoutLog({ routine, gymMode }) {
                             onClick={() =>
                               setEntry(
                                 entryIndex,
-                                last.map((s) => ({ kg: formatNumber(s.kg), reps: formatNumber(s.reps) })),
+                                last.map((s) => Object.fromEntries(fields.map((f) => [f, formatNumber(s[f])]))),
                               )
                             }
                           >

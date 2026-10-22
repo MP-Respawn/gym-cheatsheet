@@ -17,6 +17,8 @@
  * an in-memory copy; isPersistent() tells the UI so it can warn the user.
  */
 
+import { RENAMED_IDS } from "../data/renamedIds.js";
+
 const KEY = "gym-cheatsheet:v1";
 export const DATA_VERSION = 1;
 
@@ -29,14 +31,39 @@ const listeners = new Set();
 
 /* ---- Loading ---- */
 
+// The current id for an exercise id that may have been renamed.
+const currentId = (id) => RENAMED_IDS[id] ?? id;
+
+/*
+ * Points your routines and logged workouts at the current exercise ids
+ * (renamedIds.js), so history saved under an old id keeps showing up.
+ * Safe to run on every load: current ids are left as they are.
+ */
+function renameOldIds(routines, sessions) {
+  return {
+    routines: routines.map((r) => ({
+      ...r,
+      steps: (r.steps ?? []).map((step) =>
+        step.exerciseIds ? { ...step, exerciseIds: step.exerciseIds.map(currentId) } : step,
+      ),
+    })),
+    sessions: sessions.map((s) => ({
+      ...s,
+      entries: (s.entries ?? []).map((e) => ({ ...e, exerciseId: currentId(e.exerciseId) })),
+    })),
+  };
+}
+
 // Upgrades data saved by an older version of the app. Only version 1 exists
 // for now; future changes to the shape go here.
 function migrate(raw) {
   if (!raw || typeof raw !== "object") return empty();
   return {
     version: DATA_VERSION,
-    routines: Array.isArray(raw.routines) ? raw.routines : [],
-    sessions: Array.isArray(raw.sessions) ? raw.sessions : [],
+    ...renameOldIds(
+      Array.isArray(raw.routines) ? raw.routines : [],
+      Array.isArray(raw.sessions) ? raw.sessions : [],
+    ),
   };
 }
 
@@ -140,10 +167,12 @@ export function importData(text) {
     }
     return [...byId.values()];
   };
+  // An old backup may still use renamed exercise ids.
+  const renamed = renameOldIds(incoming.routines, incoming.sessions);
   updateData((d) => ({
     ...d,
-    routines: merge(d.routines, incoming.routines),
-    sessions: merge(d.sessions, incoming.sessions),
+    routines: merge(d.routines, renamed.routines),
+    sessions: merge(d.sessions, renamed.sessions),
   }));
   return { routines: incoming.routines.length, sessions: incoming.sessions.length };
 }

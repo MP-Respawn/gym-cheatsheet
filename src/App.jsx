@@ -53,6 +53,8 @@ export default function App() {
   // exercise and coming back.
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("todos");
+  // Vuelta chip inside "Abdomen y core": "todas", a VUELTAS key, or "otros".
+  const [vuelta, setVuelta] = useState("todas");
 
   // The side menu. Closed again on every page change (a menu link, the
   // phone's back button...), using React's "adjust state while rendering".
@@ -113,7 +115,13 @@ export default function App() {
     screen = <RoutineDetail routine={routine} isMine={isMine} gymMode={gymMode} onGymModeChange={changeGymMode} />;
   } else {
     screen = (
-      <ExerciseList group={group} onGroupChange={setGroup} onMenuClick={openMenu} />
+      <ExerciseList
+        group={group}
+        onGroupChange={setGroup}
+        vuelta={vuelta}
+        onVueltaChange={setVuelta}
+        onMenuClick={openMenu}
+      />
     );
   }
 

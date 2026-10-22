@@ -7,6 +7,8 @@
  *
  * What you will find, top to bottom:
  *   1. GROUPS: the muscle groups, in the order they appear as filter chips.
+ *      VUELTAS: the trainer's four core circuits (filter chips inside
+ *      "Abdomen y core"; each one is also a routine in routines.js).
  *   2. EXERCISES: one object per exercise (shape explained right below).
  *   3. Small helper functions so screens can look things up by id or key.
  *
@@ -24,6 +26,9 @@
  *   alternatives  ids of exercises to do instead when the gym is crowded
  *   youtubeQuery  search text for the "Ver en YouTube" link
  *   source        "trainer" = from the coach's notes, "added" = suggested extra
+ *   vuelta        OPTIONAL. Key of the VUELTAS circuit it belongs to (core only)
+ *   measure       OPTIONAL. What the workout log asks for: "reps" or "secs"
+ *                 (isometric holds). Without it the log asks for kg and reps.
  *
  * To add an exercise: copy any block, give it a new id, and run
  * `node scripts/check-data.mjs` to make sure every reference still exists.
@@ -47,6 +52,19 @@ export const GROUPS = [
   { key: "hombros", label: "Hombros" },
   { key: "brazos", label: "Bíceps y tríceps" },
   { key: "flexibilidad", label: "Flexibilidad" },
+];
+
+/*
+ * The four core "vueltas", in the trainer's order. `key` is what exercises
+ * put in their `vuelta` field, `chip` the short filter label, and
+ * `routineId` the routine in routines.js that holds the full ordered
+ * sequence (so it can be opened, trained and used in Modo gym).
+ */
+export const VUELTAS = [
+  { key: "pelota", label: "Vuelta: abdomen en pelota", chip: "Pelota", routineId: "vuelta-abdomen-en-pelota" },
+  { key: "clasico", label: "Vuelta: abdomen clásico", chip: "Clásico", routineId: "vuelta-abdomen-clasico" },
+  { key: "estirado", label: "Vuelta: abdomen estirado", chip: "Estirado", routineId: "vuelta-abdomen-estirado" },
+  { key: "isometrico", label: "Vuelta: abdomen isométrico", chip: "Isométrico", routineId: "vuelta-abdomen-isometrico" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -128,19 +146,453 @@ export const EXERCISES = [
     source: "trainer",
   },
 
-  /* ---------------- Abdomen y core ---------------- */
+  /* ---------------- Abdomen y core ----------------
+   * The trainer's core work is four "vueltas": fixed sequences done in
+   * order (see VUELTAS below and the "Vueltas de abdomen" routines). Each
+   * exercise says which vuelta it belongs to; they are listed here in
+   * vuelta order so the list and the filter show them that way.
+   */
+
+  /* Vuelta: abdomen en pelota */
+  {
+    id: "abdominal-pies-en-pelota",
+    name: "Abdominales con pies en la pelota",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["pelota", "colchoneta"],
+    description:
+      "Boca arriba con los pies apoyados arriba de la pelota, subís los hombros contrayendo el abdomen. Abre la vuelta con pelota.",
+    cues: [
+      "Pies apoyados arriba de la pelota, rodillas a 90 grados.",
+      "Hombros bien arriba en cada rep.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["abdominal-tradicional", "elevacion-tronco-pelota"],
+    youtubeQuery: "abdominales con pies sobre pelota suiza",
+    source: "trainer",
+  },
+  {
+    id: "elevacion-tronco-pelota",
+    name: "Elevación de tronco con pelota",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["pelota", "colchoneta"],
+    description:
+      "Acostado, sostenés la pelota con los brazos estirados y subís el tronco llevándola hacia arriba. Trabaja el abdomen alto.",
+    cues: [
+      "Sostené la pelota con los brazos estirados.",
+      "Hombros bien arriba, el cuello relajado.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["abdominal-pies-en-pelota", "abdominal-estirado"],
+    youtubeQuery: "elevacion de tronco sosteniendo pelota abdominales",
+    source: "trainer",
+  },
+  {
+    id: "elevacion-piernas-pelota",
+    name: "Elevación de piernas con pelota",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "leg-raise",
+    equipment: ["pelota", "colchoneta"],
+    description:
+      "Boca arriba con la pelota entre los pies, subís y bajás las piernas estiradas. Trabaja el abdomen bajo.",
+    cues: [
+      "Apretá la pelota entre los pies.",
+      "Zona lumbar pegada al piso al bajar.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["elevacion-piernas", "elevacion-piernas-colgado"],
+    youtubeQuery: "elevacion de piernas con pelota entre los pies",
+    source: "trainer",
+  },
+  {
+    id: "puente-piernas-pelota",
+    name: "Puente con piernas en la pelota",
+    group: "core",
+    secondary: ["gluteos", "isquios"],
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "glute-bridge",
+    equipment: ["pelota", "colchoneta"],
+    description:
+      "Boca arriba con las pantorrillas sobre la pelota, subís la cadera hasta quedar en línea. Trabaja glúteos, isquios y la estabilidad del core.",
+    cues: [
+      "Pantorrillas arriba de la pelota, brazos en el piso.",
+      "Subí la cadera apretando glúteos, sin arquear la espalda.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["curl-isquios-pelota", "dead-bug"],
+    youtubeQuery: "puente de gluteos con piernas sobre pelota suiza",
+    source: "trainer",
+  },
+  {
+    id: "abdominal-lateral-pelota",
+    name: "Abdominales laterales en pelota",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "side-crunch",
+    equipment: ["pelota"],
+    description:
+      "De costado con la cadera apoyada sobre la pelota, subís el tronco hacia el techo. Trabaja oblicuos.",
+    cues: [
+      "Cadera apoyada de costado sobre la pelota, pies firmes en el piso.",
+      "Subí de costado, sin girar el tronco.",
+      "Hacé todas de un lado y después del otro.",
+    ],
+    prescription: "30 reps por lado (o lo que diga la rutina)",
+    alternatives: ["abdominal-lateral", "plancha-lateral"],
+    youtubeQuery: "abdominales laterales oblicuos sobre pelota suiza",
+    source: "trainer",
+  },
+  {
+    id: "espinal-pelota-tronco",
+    name: "Espinales en pelota: tronco",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "superman",
+    equipment: ["pelota"],
+    description:
+      "Boca abajo con la pelota bajo la cadera, subís el tronco hasta quedar en línea. Trabaja la zona lumbar.",
+    cues: [
+      "Pelota bajo la cadera y pies firmes en el piso.",
+      "Subí el tronco hasta la línea, sin pasarte hacia atrás.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["espinal-brazos", "espinal-pelota-piernas"],
+    youtubeQuery: "extension lumbar sobre pelota suiza",
+    source: "trainer",
+  },
+  {
+    id: "espinal-pelota-piernas",
+    name: "Espinales en pelota: piernas",
+    group: "core",
+    secondary: ["gluteos"],
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "superman",
+    equipment: ["pelota"],
+    description:
+      "Con el pecho apoyado en la pelota y las manos en el piso, subís las piernas estiradas. Cierra la vuelta con pelota.",
+    cues: [
+      "Pecho sobre la pelota, manos firmes en el piso.",
+      "Subí las piernas juntas y estiradas, apretando glúteos.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["espinal-piernas", "espinal-pelota-tronco"],
+    youtubeQuery: "extension de cadera piernas sobre pelota suiza reverse hyper",
+    source: "trainer",
+  },
+
+  /* Vuelta: abdomen clásico */
+  {
+    id: "abdominal-tradicional",
+    name: "Abdominal tradicional",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["colchoneta"],
+    description: "El crunch de siempre: acostado, subís los hombros contrayendo el abdomen. Abre la vuelta clásica.",
+    cues: [
+      "Subí los hombros con el abdomen, no tirando del cuello.",
+      "Bajá controlado, sin apoyar del todo entre reps.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["abdominal-pies-en-pelota", "abdominal-estirado"],
+    youtubeQuery: "crunch abdominal tecnica correcta",
+    source: "trainer",
+  },
+  {
+    id: "abdominal-cruzado",
+    name: "Abdominal cruzado",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["colchoneta"],
+    description:
+      "Crunch llevando el codo hacia la rodilla contraria. En la vuelta se hace con un brazo y después con el otro.",
+    cues: [
+      "Llevá el codo hacia la rodilla opuesta.",
+      "Girá desde el abdomen, no desde el cuello.",
+      "Todas con un brazo y después con el otro.",
+    ],
+    prescription: "30 reps por lado (o lo que diga la rutina)",
+    alternatives: ["abdominal-tradicional", "abdominal-lateral"],
+    youtubeQuery: "abdominal cruzado codo a rodilla oblicuos",
+    source: "trainer",
+  },
+  {
+    id: "abdominal-lateral",
+    name: "Abdominales laterales (oblicuos)",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "side-crunch",
+    equipment: ["colchoneta"],
+    description: "Acostado de costado, subís el tronco de lado. Trabaja los oblicuos.",
+    cues: [
+      "Apoyado sobre el lateral, piernas juntas.",
+      "Subí de costado, sin girar el tronco.",
+      "Hacé todas de un lado y después del otro.",
+    ],
+    prescription: "30 reps por lado (o lo que diga la rutina)",
+    alternatives: ["abdominal-lateral-pelota", "plancha-lateral"],
+    youtubeQuery: "abdominales oblicuos acostado de costado",
+    source: "trainer",
+  },
+  {
+    id: "patadas-piernas",
+    name: "Patadas de piernas",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "leg-raise",
+    equipment: ["colchoneta"],
+    description:
+      "Boca arriba con las manos debajo de la cola, alternás patadas cortas con las piernas estiradas (flutter kicks). Trabaja el abdomen bajo.",
+    cues: [
+      "Manos debajo de la cola y zona lumbar pegada al piso.",
+      "Patadas cortas y rápidas, piernas estiradas.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["elevacion-piernas", "dead-bug"],
+    youtubeQuery: "flutter kicks abdominales tecnica",
+    source: "trainer",
+  },
+  {
+    id: "espinal-brazos",
+    name: "Espinales: solo brazos",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "superman",
+    equipment: ["colchoneta"],
+    description: "Boca abajo con los brazos estirados adelante, subís solo los brazos y el pecho. Trabaja la zona lumbar y la espalda alta.",
+    cues: [
+      "Mirada al piso, el cuello sigue la línea de la espalda.",
+      "Las piernas quedan apoyadas.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["espinal-brazos-piernas", "espinal-pelota-tronco"],
+    youtubeQuery: "espinales boca abajo elevacion de brazos",
+    source: "trainer",
+  },
+  {
+    id: "espinal-piernas",
+    name: "Espinales: solo piernas",
+    group: "core",
+    secondary: ["gluteos"],
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "superman",
+    equipment: ["colchoneta"],
+    description: "Boca abajo, subís solo las piernas estiradas. Trabaja zona lumbar y glúteos.",
+    cues: [
+      "Piernas juntas y estiradas.",
+      "Apretá glúteos al subir, el pecho queda apoyado.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["espinal-brazos-piernas", "espinal-pelota-piernas"],
+    youtubeQuery: "espinales boca abajo elevacion de piernas",
+    source: "trainer",
+  },
+  {
+    id: "espinal-brazos-piernas",
+    name: "Espinales: brazos y piernas",
+    group: "core",
+    secondary: ["gluteos"],
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "superman",
+    equipment: ["colchoneta"],
+    description: "El superman: boca abajo, subís brazos y piernas a la vez. Cierra la vuelta clásica.",
+    cues: [
+      "Subí brazos y piernas juntos, como volando.",
+      "Mirada al piso, sin tirar el cuello atrás.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["espinal-brazos", "bird-dog"],
+    youtubeQuery: "superman ejercicio lumbar tecnica",
+    source: "trainer",
+  },
+
+  /* Vuelta: abdomen estirado */
+  {
+    id: "abdominal-estirado",
+    name: "Abdominales estirados",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["colchoneta"],
+    description:
+      "Crunch con los brazos estirados por encima de la cabeza. Más difícil que el tradicional porque los brazos alargan la palanca.",
+    cues: [
+      "Brazos estirados por encima de la cabeza, junto a las orejas.",
+      "Subí los hombros sin tirar los brazos hacia adelante.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["abdominal-tradicional", "elevacion-tronco-pelota"],
+    youtubeQuery: "crunch con brazos extendidos sobre la cabeza",
+    source: "trainer",
+  },
+  {
+    id: "elevacion-piernas",
+    name: "Elevaciones de piernas",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "leg-raise",
+    equipment: ["colchoneta"],
+    description: "Boca arriba, subís y bajás las piernas estiradas. Trabaja el abdomen bajo.",
+    cues: [
+      "Zona lumbar pegada al piso todo el tiempo.",
+      "Bajá lento, sin apoyar los talones entre reps.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["elevacion-piernas-pelota", "elevacion-piernas-cruzadas"],
+    youtubeQuery: "elevacion de piernas acostado tecnica",
+    source: "trainer",
+  },
+  {
+    id: "elevacion-piernas-cruzadas",
+    name: "Elevaciones con piernas cruzadas",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "leg-raise",
+    equipment: ["colchoneta"],
+    description:
+      "Elevaciones de piernas cruzando una sobre la otra en cada subida (tijeras). Suma trabajo de oblicuos.",
+    cues: [
+      "Cruzá las piernas en cada subida, alternando cuál va arriba.",
+      "Zona lumbar pegada al piso.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["elevacion-piernas", "patadas-piernas"],
+    youtubeQuery: "tijeras cruzadas abdominales piernas",
+    source: "trainer",
+  },
+  {
+    id: "rueda-abdominal",
+    name: "Rueda abdominal hacia adelante",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "ab-wheel",
+    equipment: ["rueda abdominal", "colchoneta"],
+    description:
+      "De rodillas, empujás la rueda hacia adelante hasta estirarte y volvés con el abdomen. Trabaja todo el core.",
+    cues: [
+      "Abdomen apretado, la espalda no se hunde.",
+      "Andá hasta donde puedas volver sin arquear.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["rueda-abdominal-lateral", "plancha-frontal"],
+    youtubeQuery: "rueda abdominal de rodillas tecnica",
+    source: "trainer",
+  },
+  {
+    id: "rueda-abdominal-lateral",
+    name: "Rueda abdominal a los laterales",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "ab-wheel",
+    equipment: ["rueda abdominal", "colchoneta"],
+    description:
+      "Como la rueda adelante, pero en diagonal hacia la izquierda y hacia la derecha. Suma trabajo de oblicuos.",
+    cues: [
+      "Alterná: una en diagonal a la izquierda y otra a la derecha.",
+      "Abdomen apretado, la espalda no se hunde.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["rueda-abdominal", "plancha-lateral"],
+    youtubeQuery: "rueda abdominal lateral oblicuos",
+    source: "trainer",
+  },
+  {
+    id: "elevacion-piernas-colgado",
+    name: "Elevación de piernas colgado",
+    group: "core",
+    vuelta: "estirado",
+    measure: "reps",
+    pattern: "leg-raise",
+    equipment: ["barra de dominadas", "paralelas"],
+    description:
+      "Colgado de una barra (o apoyado en paralelas), subís las piernas. Trabaja abdomen bajo. Cierra la vuelta estirado.",
+    cues: [
+      "Sin balanceo, subí con el abdomen.",
+      "Bajá controlado.",
+    ],
+    prescription: "8/12 reps x 3 series",
+    alternatives: ["elevacion-piernas", "elevacion-piernas-pelota"],
+    youtubeQuery: "elevacion de piernas colgado tecnica",
+    source: "trainer",
+  },
+
+  /* Vuelta: abdomen isométrico */
+  {
+    id: "plegado-en-v",
+    name: "Plegado isométrico en V",
+    group: "core",
+    vuelta: "isometrico",
+    measure: "secs",
+    pattern: "v-hold",
+    equipment: ["colchoneta"],
+    description:
+      "Sentado sobre la cola, quedás en V con brazos y piernas estirados y sostenés. Abre la vuelta isométrica.",
+    cues: [
+      "Brazos y piernas estirados, el cuerpo en V.",
+      "Hombros bien elevados.",
+      "Tensión en el abdomen, no en el cuello ni en la cintura.",
+    ],
+    prescription: "10 segundos por posición, 3 series de cada una",
+    alternatives: ["plegado-en-v-torcido", "plancha-frontal"],
+    youtubeQuery: "v sit hold abdominal isometrico",
+    source: "trainer",
+  },
+  {
+    id: "plegado-en-v-torcido",
+    name: "Plegado en V torcido",
+    group: "core",
+    vuelta: "isometrico",
+    measure: "secs",
+    pattern: "v-hold",
+    equipment: ["colchoneta"],
+    description:
+      "La misma V, girando el tronco hacia un lado y sosteniendo. En la vuelta se hace hacia la izquierda y después hacia la derecha.",
+    cues: [
+      "Desde la V, girá el tronco hacia un lado.",
+      "Hombros elevados y tensión en el abdomen, no en el cuello.",
+      "Un lado y después el otro.",
+    ],
+    prescription: "10 segundos por lado, 3 series de cada una",
+    alternatives: ["plegado-en-v", "plancha-lateral"],
+    youtubeQuery: "v sit hold con rotacion oblicuos",
+    source: "trainer",
+  },
   {
     id: "plancha-frontal",
     name: "Plancha frontal isométrica",
     group: "core",
+    vuelta: "isometrico",
+    measure: "secs",
     pattern: "plank",
     equipment: ["colchoneta"],
-    description:
-      "Parte del circuito de abdomen isométrico: plancha frontal, plancha lateral y plegado. Trabaja todo el core sin movimiento.",
+    description: "Parte de la vuelta isométrica. Trabaja todo el core sin movimiento.",
     cues: [
       "Buscá la tensión en el abdomen, no en el cuello ni en la cintura.",
       "Cuerpo en línea recta de cabeza a talones.",
-      "Encadená con la plancha lateral y el plegado.",
     ],
     prescription: "10 segundos por posición, 3 series de cada una",
     alternatives: ["plancha-banco", "dead-bug"],
@@ -152,13 +604,15 @@ export const EXERCISES = [
     name: "Plancha lateral isométrica",
     group: "core",
     secondary: ["gluteos"],
+    vuelta: "isometrico",
+    measure: "secs",
     pattern: "side-plank",
     equipment: ["colchoneta"],
-    description:
-      "Segunda posición del abdomen isométrico. Trabaja oblicuos y la zona lateral de la cintura.",
+    description: "Parte de la vuelta isométrica. Trabaja oblicuos y la zona lateral de la cintura.",
     cues: [
       "Apretá glúteos para encontrar la tensión en costillas y flotador.",
       "La tensión va al abdomen, no al cuello ni a la cintura.",
+      "Un lado y después el otro.",
     ],
     prescription: "10 segundos por lado, 3 series",
     alternatives: ["plancha-frontal", "plancha-banco"],
@@ -166,72 +620,24 @@ export const EXERCISES = [
     source: "trainer",
   },
   {
-    id: "plegado-isometrico",
-    name: "Plegado isométrico",
+    id: "bird-dog",
+    name: "Superman en equilibrio (bird dog)",
     group: "core",
-    pattern: "crunch",
+    secondary: ["gluteos"],
+    vuelta: "isometrico",
+    measure: "secs",
+    pattern: "bird-dog",
     equipment: ["colchoneta"],
     description:
-      "Tercera posición del abdomen isométrico: acostado, hombros arriba y piernas recogidas, sosteniendo la contracción.",
+      "En cuatro apoyos, estirás un brazo y la pierna contraria y sostenés el equilibrio. Cierra la vuelta isométrica.",
     cues: [
-      "Elevá bien los hombros del piso.",
-      "Tensión en el abdomen, el cuello queda relajado.",
+      "Apoyá un brazo y la rodilla opuesta, estirá los otros dos.",
+      "Espalda plana, la cadera no gira.",
+      "Sostené y cambiá de lado.",
     ],
-    prescription: "10 segundos, 3 series",
-    alternatives: ["abdomen-clasico", "dead-bug"],
-    youtubeQuery: "abdominal isometrico hollow hold",
-    source: "trainer",
-  },
-  {
-    id: "abdomen-pelota",
-    name: "Abdomen en pelota",
-    group: "core",
-    pattern: "leg-raise",
-    equipment: ["pelota", "colchoneta"],
-    description:
-      "Circuito de elevaciones de piernas con una pelota entre los pies. Trabaja abdomen bajo y oblicuos.",
-    cues: [
-      "Pelota entre los pies y hombros bien arriba todo el tiempo.",
-      "Elevación 1: piernas extendidas rectas.",
-      "Elevación 2: pataditas de abdomen clásico.",
-      "Elevación 3: elevaciones laterales con piernas extendidas.",
-    ],
-    prescription: "30 reps",
-    alternatives: ["vuelta-abdomen-estirado", "elevacion-piernas-colgado", "dead-bug"],
-    youtubeQuery: "abdominales con pelota entre los pies elevacion de piernas",
-    source: "trainer",
-  },
-  {
-    id: "abdomen-clasico",
-    name: "Abdomen clásico",
-    group: "core",
-    pattern: "crunch",
-    equipment: ["colchoneta"],
-    description: "El crunch de siempre: acostado, subís los hombros contrayendo el abdomen.",
-    cues: [
-      "Subí los hombros con el abdomen, no tirando del cuello.",
-      "Bajá controlado, sin apoyar del todo entre reps.",
-    ],
-    prescription: "30 reps",
-    alternatives: ["plegado-isometrico", "dead-bug"],
-    youtubeQuery: "crunch abdominal tecnica correcta",
-    source: "trainer",
-  },
-  {
-    id: "vuelta-abdomen-estirado",
-    name: "Vuelta de abdomen estirado",
-    group: "core",
-    pattern: "leg-raise",
-    equipment: ["colchoneta"],
-    description:
-      "El circuito de abdomen acostado de siempre. Es la alternativa cuando no hay pelota.",
-    cues: [
-      "Mismas elevaciones que con pelota, pero sin ella.",
-      "Hombros arriba y zona lumbar pegada al piso.",
-    ],
-    prescription: "30 reps",
-    alternatives: ["abdomen-pelota", "dead-bug"],
-    youtubeQuery: "circuito abdominales acostado elevacion de piernas",
+    prescription: "10 segundos por lado, 3 series de cada una",
+    alternatives: ["espinal-brazos-piernas", "dead-bug"],
+    youtubeQuery: "bird dog ejercicio core equilibrio",
     source: "trainer",
   },
 
@@ -1367,6 +1773,7 @@ export const EXERCISES = [
     id: "plancha-banco",
     name: "Plancha con apoyo en banco",
     group: "core",
+    measure: "secs",
     pattern: "plank",
     equipment: ["banco"],
     description: "Plancha con los antebrazos sobre un banco. Más fácil que en el piso, ideal si molesta la zona lumbar.",
@@ -1383,6 +1790,7 @@ export const EXERCISES = [
     id: "dead-bug",
     name: "Dead bug",
     group: "core",
+    measure: "reps",
     pattern: "leg-raise",
     equipment: ["colchoneta"],
     description: "Boca arriba, estirás brazo y pierna contrarios sin despegar la zona lumbar del piso.",
@@ -1391,24 +1799,8 @@ export const EXERCISES = [
       "Movimiento lento, exhalá al estirar.",
     ],
     prescription: "8 por lado x 3 series",
-    alternatives: ["plancha-frontal", "vuelta-abdomen-estirado"],
+    alternatives: ["plancha-frontal", "patadas-piernas"],
     youtubeQuery: "dead bug ejercicio abdominal",
-    source: "added",
-  },
-  {
-    id: "elevacion-piernas-colgado",
-    name: "Elevación de piernas colgado",
-    group: "core",
-    pattern: "leg-raise",
-    equipment: ["barra de dominadas", "paralelas"],
-    description: "Colgado de una barra (o apoyado en paralelas), subís las piernas. Trabaja abdomen bajo.",
-    cues: [
-      "Sin balanceo, subí con el abdomen.",
-      "Bajá controlado.",
-    ],
-    prescription: "8/12 reps x 3 series",
-    alternatives: ["abdomen-pelota", "dead-bug"],
-    youtubeQuery: "elevacion de piernas colgado tecnica",
     source: "added",
   },
 
@@ -1444,6 +1836,11 @@ const GROUP_LABELS = Object.fromEntries(GROUPS.map((g) => [g.key, g.label]));
 // Returns the exercise with that id, or undefined if it does not exist.
 export function getExercise(id) {
   return EXERCISES_BY_ID[id];
+}
+
+// Returns the vuelta with that key ("pelota" -> { label, chip, routineId }), or undefined.
+export function getVuelta(key) {
+  return VUELTAS.find((v) => v.key === key);
 }
 
 // Returns the Spanish label for a group key ("core" -> "Abdomen y core").

@@ -8,6 +8,7 @@
  * search the exercise on YouTube.
  */
 import { getExercise, groupLabel } from "../data/exercises.js";
+import { vueltaPlace } from "../data/routines.js";
 import { useExerciseHistory } from "../store/useStore.js";
 import { formatSet, formatSets } from "../store/workouts.js";
 import BackButton from "../components/BackButton.jsx";
@@ -16,13 +17,21 @@ import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
 // "12 oct" style dates for the history list.
 const shortDate = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" });
 
-// The heaviest set ever logged (more reps breaks a tie), or null.
+// The best set ever logged, or null: the heaviest one (more reps breaks a
+// tie); for core work without kg, the most reps or the longest hold.
 function bestSet(history) {
+  const sets = history.flatMap((entry) => entry.sets);
+  const score = (s) =>
+    s.kg != null ? [3, s.kg, s.reps ?? 0] : s.secs != null ? [2, s.secs, 0] : s.reps != null ? [1, s.reps, 0] : null;
   let best = null;
-  for (const entry of history) {
-    for (const set of entry.sets) {
-      if (set.kg == null) continue;
-      if (!best || set.kg > best.kg || (set.kg === best.kg && (set.reps ?? 0) > (best.reps ?? 0))) best = set;
+  let bestScore = null;
+  for (const set of sets) {
+    const sc = score(set);
+    if (!sc) continue;
+    const better = !bestScore || sc[0] > bestScore[0] || (sc[0] === bestScore[0] && (sc[1] > bestScore[1] || (sc[1] === bestScore[1] && sc[2] > bestScore[2])));
+    if (better) {
+      best = set;
+      bestScore = sc;
     }
   }
   return best;
@@ -32,6 +41,7 @@ export default function ExerciseDetail({ id }) {
   const exercise = getExercise(id);
   const history = useExerciseHistory(id);
   const best = bestSet(history);
+  const place = vueltaPlace(exercise);
 
   // Unknown id in the URL (typo, old bookmark): say so instead of crashing.
   if (!exercise) {
@@ -80,6 +90,14 @@ export default function ExerciseDetail({ id }) {
               {exercise.source === "trainer" ? "Del entrenador" : "Alternativa sugerida"}
             </span>
           </div>
+
+          {/* Core exercises that belong to a vuelta link to the whole sequence */}
+          {place && (
+            <a className="vuelta-link" href={`#/rutina/${place.routine.id}`}>
+              Parte de la {place.vuelta.label} · {place.positions.length > 1 ? "pasos" : "paso"}{" "}
+              {place.positions.join(" y ")} de {place.total}
+            </a>
+          )}
 
           <p className="description">{exercise.description}</p>
 

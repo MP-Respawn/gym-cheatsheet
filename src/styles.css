@@ -620,6 +620,35 @@ html:has(.drawer[open]) {
   color: var(--muted);
 }
 
+/* "Vuelta pelota": which core circuit an exercise belongs to */
+.tag-vuelta {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* "Paso 3": its place in the vuelta, when a vuelta chip is chosen */
+.tag-step {
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Second chip row (vueltas inside "Abdomen y core"): smaller than the groups */
+.chips-sub .chip {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+/* The vuelta chips' "Ver vuelta completa" link sits next to the section title */
+.section-head .text-button {
+  min-height: 32px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 /* ---------- 4b. Search page ---------- */
 .search-top-bar {
   gap: 4px;
@@ -730,6 +759,17 @@ mark {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
+}
+
+/* "Parte de la Vuelta: abdomen en pelota · paso 3 de 7" under the tags */
+.vuelta-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .tag {
@@ -995,6 +1035,19 @@ mark {
   margin-top: 2px;
   font-size: 13px;
   color: var(--muted);
+}
+
+/* A vuelta step: every exercise of the vuelta in one line (kept in Modo gym) */
+.step-vuelta-list {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.gym-mode .step-vuelta-list {
+  font-size: 16px;
+  color: var(--text);
 }
 
 .step-ex-prescription {

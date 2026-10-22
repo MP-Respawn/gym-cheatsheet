@@ -14,6 +14,10 @@
  *   - every id inside an "alternatives" array exists
  *   - every trainer exercise has at least 2 alternatives
  *   - every id used in routines.js exists
+ *   - core vueltas: every `vuelta` and `measure` value is valid, each step is
+ *     either exercises or a vuelta, and each vuelta routine lists exactly the
+ *     exercises tagged with that vuelta
+ *   - no data file still uses an old id from renamedIds.js
  *   - every exercise has its own animation (src/animations/exercises/<id>.js)
  *     and no animation file is left without an exercise
  *   - every animation compiles, loops back to its start pose, and never
@@ -24,7 +28,8 @@ import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { EXERCISES, GROUPS } from "../src/data/exercises.js";
+import { EXERCISES, GROUPS, VUELTAS } from "../src/data/exercises.js";
+import { RENAMED_IDS } from "../src/data/renamedIds.js";
 import { ROUTINES } from "../src/data/routines.js";
 import { validate } from "../src/animations/engine/kinematics.js";
 
@@ -51,6 +56,13 @@ for (const ex of EXERCISES) {
   if (ex.source !== "trainer" && ex.source !== "added") {
     errors.push(`${ex.id}: source debe ser "trainer" o "added"`);
   }
+  if (ex.vuelta !== undefined && !VUELTAS.some((v) => v.key === ex.vuelta)) {
+    errors.push(`${ex.id}: vuelta inexistente "${ex.vuelta}"`);
+  }
+  if (ex.measure !== undefined && ex.measure !== "reps" && ex.measure !== "secs") {
+    errors.push(`${ex.id}: measure debe ser "reps" o "secs"`);
+  }
+  if (RENAMED_IDS[ex.id]) errors.push(`${ex.id}: este id figura como viejo en renamedIds.js`);
 }
 
 /* ---- Exercises: alternatives (needs the full id set, so a second pass) ---- */
@@ -64,15 +76,51 @@ for (const ex of EXERCISES) {
   }
 }
 
+/* ---- Old ids: every new id exists, and nothing still points at an old one ---- */
+for (const [oldId, newId] of Object.entries(RENAMED_IDS)) {
+  if (!exerciseIds.has(newId)) errors.push(`renamedIds.js: "${oldId}" apunta a "${newId}", que no existe`);
+}
+for (const ex of EXERCISES) {
+  for (const alt of ex.alternatives ?? []) {
+    if (RENAMED_IDS[alt]) errors.push(`${ex.id}: alternativa con id viejo "${alt}" (ahora "${RENAMED_IDS[alt]}")`);
+  }
+}
+
 /* ---- Routines ---- */
+const routineIds = new Set(ROUTINES.map((r) => r.id));
 for (const routine of ROUTINES) {
   routine.steps.forEach((step, i) => {
-    for (const id of step.exerciseIds) {
-      if (!exerciseIds.has(id)) {
-        errors.push(`rutina ${routine.id}, paso ${i + 1}: ejercicio inexistente "${id}"`);
-      }
+    const where = `rutina ${routine.id}, paso ${i + 1}`;
+    const hasIds = Array.isArray(step.exerciseIds);
+    if (hasIds === (step.vuelta !== undefined)) {
+      errors.push(`${where}: tiene que tener exerciseIds o vuelta (uno de los dos)`);
+    }
+    if (step.vuelta !== undefined && !VUELTAS.some((v) => v.key === step.vuelta)) {
+      errors.push(`${where}: vuelta inexistente "${step.vuelta}"`);
+    }
+    for (const id of step.exerciseIds ?? []) {
+      if (RENAMED_IDS[id]) errors.push(`${where}: id viejo "${id}" (ahora "${RENAMED_IDS[id]}")`);
+      else if (!exerciseIds.has(id)) errors.push(`${where}: ejercicio inexistente "${id}"`);
     }
   });
+}
+
+/* ---- Vueltas: each routine holds exactly the exercises tagged with it ---- */
+for (const vuelta of VUELTAS) {
+  if (!routineIds.has(vuelta.routineId)) {
+    errors.push(`vuelta ${vuelta.key}: falta la rutina "${vuelta.routineId}"`);
+    continue;
+  }
+  const routine = ROUTINES.find((r) => r.id === vuelta.routineId);
+  const inRoutine = new Set(routine.steps.flatMap((step) => step.exerciseIds ?? []));
+  for (const id of inRoutine) {
+    if (EXERCISES.find((ex) => ex.id === id)?.vuelta !== vuelta.key) {
+      errors.push(`vuelta ${vuelta.key}: "${id}" está en la rutina pero no tiene vuelta: "${vuelta.key}"`);
+    }
+  }
+  for (const ex of EXERCISES.filter((e) => e.vuelta === vuelta.key)) {
+    if (!inRoutine.has(ex.id)) errors.push(`vuelta ${vuelta.key}: "${ex.id}" tiene la etiqueta pero falta en la rutina`);
+  }
 }
 
 /* ---- Animations ----

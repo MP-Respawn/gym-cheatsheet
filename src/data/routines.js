@@ -7,11 +7,15 @@
  * Shape of one routine:
  *   id      kebab-case key, used in the URL (#/rutina/<id>)
  *   name    title shown in the list
- *   block   "Bloque A" or "Bloque B"
+ *   block   "Bloque A", "Bloque B" or "Vueltas de abdomen"
  *   focus   short summary of the day
  *   steps   ordered list of what to do. Each step is:
  *             exerciseIds   one id, or several when they are done together
  *                           (a superset: two or three exercises back to back)
+ *             vuelta        INSTEAD of exerciseIds: a VUELTAS key from
+ *                           exercises.js ("pelota"...). The step is that whole
+ *                           core circuit; its sequence is the matching
+ *                           "Vueltas de abdomen" routine at the end of this file.
  *             note          the trainer's note for this step ("" if none)
  *             prescription  OPTIONAL. Reps/sets for THIS routine only. When it
  *                           is missing, the screen shows each exercise's own
@@ -20,6 +24,8 @@
  * Every id here must exist in exercises.js. `node scripts/check-data.mjs`
  * checks that for you.
  */
+
+import { getVuelta } from "./exercises.js";
 
 export const ROUTINES = [
   /* ---------------- Bloque A, Día 1 ---------------- */
@@ -31,7 +37,7 @@ export const ROUTINES = [
     steps: [
       { exerciseIds: ["movilidad-arquero"], note: "Las tres variantes, rangos amplios." },
       {
-        exerciseIds: ["plancha-frontal", "plancha-lateral", "plegado-isometrico"],
+        vuelta: "isometrico",
         note: "Abdomen isométrico: tensión en el abdomen, no en cuello ni cintura.",
         prescription: "10 segundos por posición, 3 series de cada una",
       },
@@ -74,7 +80,7 @@ export const ROUTINES = [
     focus: "Cadena posterior + espalda",
     steps: [
       { exerciseIds: ["movilidad-parado"], note: "" },
-      { exerciseIds: ["abdomen-pelota"], note: "Hombros bien arriba." },
+      { vuelta: "pelota", note: "Hombros bien arriba." },
       {
         exerciseIds: ["tobillo-pared", "balanzas-una-pierna"],
         note: "Balanzas: primero una pierna y después la otra, casi sin descanso.",
@@ -111,7 +117,7 @@ export const ROUTINES = [
     steps: [
       { exerciseIds: ["rolo-movilidad-inferior"], note: "" },
       {
-        exerciseIds: ["abdomen-pelota"],
+        vuelta: "pelota",
         note: "Si no hay pelota: vuelta de abdomen estirado.",
       },
       {
@@ -152,7 +158,7 @@ export const ROUTINES = [
     steps: [
       { exerciseIds: ["rolo-movilidad-superior"], note: "" },
       {
-        exerciseIds: ["plancha-frontal", "plancha-lateral", "plegado-isometrico"],
+        vuelta: "isometrico",
         note: "Abdomen isométrico.",
         prescription: "10 segundos por posición, 3 series de cada una",
       },
@@ -189,7 +195,7 @@ export const ROUTINES = [
     focus: "Cadena posterior + glúteos",
     steps: [
       { exerciseIds: ["rolo-movilidad-inferior"], note: "Rolo + movilidad." },
-      { exerciseIds: ["abdomen-clasico"], note: "" },
+      { vuelta: "clasico", note: "" },
       {
         exerciseIds: ["equilibrio-un-pie"],
         note: "Con ojos cerrados.",
@@ -214,9 +220,102 @@ export const ROUTINES = [
       },
     ],
   },
+
+  /* ---------------- Vueltas de abdomen ----------------
+   * The trainer's four core circuits, each exercise in order, done one after
+   * the other without rest. Day routines point at them with `vuelta`.
+   */
+  {
+    id: "vuelta-abdomen-en-pelota",
+    name: "Vuelta: abdomen en pelota",
+    block: "Vueltas de abdomen",
+    focus: "Pelota, en orden y sin descanso",
+    steps: [
+      { exerciseIds: ["abdominal-pies-en-pelota"], note: "" },
+      { exerciseIds: ["elevacion-tronco-pelota"], note: "Hombros bien arriba." },
+      { exerciseIds: ["elevacion-piernas-pelota"], note: "" },
+      { exerciseIds: ["puente-piernas-pelota"], note: "" },
+      { exerciseIds: ["abdominal-lateral-pelota"], note: "Un lado y después el otro." },
+      { exerciseIds: ["espinal-pelota-tronco"], note: "" },
+      { exerciseIds: ["espinal-pelota-piernas"], note: "" },
+    ],
+  },
+  {
+    id: "vuelta-abdomen-clasico",
+    name: "Vuelta: abdomen clásico",
+    block: "Vueltas de abdomen",
+    focus: "Colchoneta, en orden y sin descanso",
+    steps: [
+      { exerciseIds: ["abdominal-tradicional"], note: "" },
+      { exerciseIds: ["abdominal-cruzado"], note: "Con un brazo." },
+      { exerciseIds: ["abdominal-cruzado"], note: "Con el otro brazo." },
+      { exerciseIds: ["abdominal-lateral"], note: "Apoyado sobre el lateral." },
+      { exerciseIds: ["patadas-piernas"], note: "Brazos debajo de la cola." },
+      { exerciseIds: ["espinal-brazos"], note: "" },
+      { exerciseIds: ["espinal-piernas"], note: "" },
+      { exerciseIds: ["espinal-brazos-piernas"], note: "" },
+    ],
+  },
+  {
+    id: "vuelta-abdomen-estirado",
+    name: "Vuelta: abdomen estirado",
+    block: "Vueltas de abdomen",
+    focus: "Colchoneta, rueda y barra, en orden",
+    steps: [
+      { exerciseIds: ["abdominal-estirado"], note: "Brazos por encima de la cabeza." },
+      { exerciseIds: ["elevacion-piernas"], note: "" },
+      { exerciseIds: ["elevacion-piernas-cruzadas"], note: "" },
+      { exerciseIds: ["rueda-abdominal"], note: "" },
+      { exerciseIds: ["rueda-abdominal-lateral"], note: "Izquierda y derecha." },
+      { exerciseIds: ["elevacion-piernas-colgado"], note: "" },
+    ],
+  },
+  {
+    id: "vuelta-abdomen-isometrico",
+    name: "Vuelta: abdomen isométrico",
+    block: "Vueltas de abdomen",
+    focus: "10 segundos por posición, 3 series de cada una",
+    steps: [
+      { exerciseIds: ["plegado-en-v"], note: "Hombros elevados." },
+      { exerciseIds: ["plegado-en-v-torcido"], note: "Torcido hacia la izquierda." },
+      { exerciseIds: ["plegado-en-v-torcido"], note: "Torcido hacia la derecha." },
+      { exerciseIds: ["plancha-frontal"], note: "" },
+      { exerciseIds: ["plancha-lateral"], note: "Cada lado, apretando glúteos." },
+      { exerciseIds: ["bird-dog"], note: "Mantené el equilibrio." },
+    ],
+  },
 ];
 
 // Returns the routine with that id, or undefined if it does not exist.
 export function getRoutine(id) {
   return ROUTINES.find((r) => r.id === id);
+}
+
+// The routine that holds a vuelta's full sequence ("pelota" -> its routine).
+export function vueltaRoutine(key) {
+  return getRoutine(getVuelta(key)?.routineId);
+}
+
+/*
+ * The exercises a step stands for, in order. A normal step is its own
+ * exerciseIds; a vuelta step expands to every exercise of that vuelta (an
+ * exercise done twice, like "abdominal cruzado" with each arm, appears
+ * twice). Screens and the workout log use this instead of exerciseIds.
+ */
+export function stepExerciseIds(step) {
+  if (step.vuelta) return (vueltaRoutine(step.vuelta)?.steps ?? []).flatMap((s) => s.exerciseIds);
+  return step.exerciseIds ?? [];
+}
+
+/*
+ * Where an exercise sits in its vuelta: { vuelta, routine, positions, total },
+ * positions being its step numbers (1-based; two when it is done with each
+ * arm or to each side). Null for exercises that are not part of a vuelta.
+ */
+export function vueltaPlace(exercise) {
+  const vuelta = getVuelta(exercise?.vuelta);
+  const routine = vuelta && getRoutine(vuelta.routineId);
+  if (!routine) return null;
+  const positions = routine.steps.flatMap((step, i) => (step.exerciseIds.includes(exercise.id) ? [i + 1] : []));
+  return { vuelta, routine, positions, total: routine.steps.length };
 }

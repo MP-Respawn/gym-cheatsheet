@@ -5,18 +5,21 @@
  * picker in the routine editor and the search page (which also looks
  * through routines).
  */
-import { EXERCISES, GROUPS } from "../data/exercises.js";
+import { EXERCISES, GROUPS, getVuelta } from "../data/exercises.js";
+import { stepExerciseIds } from "../data/routines.js";
 
 // Lowercase and strip accents, so "biceps" finds "Bíceps" and "cuadri" finds "Cuádriceps".
 export function normalize(text) {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
-// Does this exercise match what was typed? Looks at name, cues and equipment.
+// Does this exercise match what was typed? Looks at name, cues, equipment
+// and the vuelta it belongs to (so "pelota" finds the whole ball vuelta).
 // Every word typed must appear somewhere ("remo barra" finds "Remo cruz con barra").
 export function matchesSearch(exercise, query) {
   if (!query) return true;
-  const haystack = normalize([exercise.name, ...exercise.cues, ...exercise.equipment].join(" "));
+  const vuelta = getVuelta(exercise.vuelta)?.label ?? "";
+  const haystack = normalize([exercise.name, ...exercise.cues, ...exercise.equipment, vuelta].join(" "));
   return normalize(query)
     .split(/\s+/)
     .filter(Boolean)
@@ -62,7 +65,7 @@ export function searchRoutines(routines, query) {
       results.push({ routine, why: routine.focus || routine.block || "" });
       continue;
     }
-    const ids = routine.steps.flatMap((step) => step.exerciseIds);
+    const ids = routine.steps.flatMap(stepExerciseIds);
     const hit = ids.map((id) => EXERCISES.find((ex) => ex.id === id)).find((ex) => ex && matchesSearch(ex, query));
     if (hit) results.push({ routine, why: `Incluye ${hit.name}` });
   }

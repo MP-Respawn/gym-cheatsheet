@@ -7,15 +7,35 @@
  *   { id, ownerId, routineId, routineName, startedAt, finishedAt,
  *     entries: [{ exerciseId, sets: [{ kg, reps }] }], updatedAt }
  *
+ * A set holds kg and reps, except for exercises with a `measure` (core
+ * work, see exercises.js): those log only { reps } or only { secs }.
+ *
  * While you train, the session is "active" (finishedAt is null) and every
  * change is saved right away, so closing the app mid-workout loses nothing.
  * When you tap "Terminar", empty sets are dropped and it joins your history.
  *
- * In an active session kg and reps are kept as typed text ("42,5"), so the
+ * In an active session the values are kept as typed text ("42,5"), so the
  * inputs never fight you while typing. Finishing turns them into numbers.
  */
 import { getExercise } from "../data/exercises.js";
+import { stepExerciseIds } from "../data/routines.js";
 import { LOCAL_OWNER, newId, now, readData, updateData } from "./storage.js";
+
+/* ---- What a set holds ---- */
+
+// The boxes the log shows for an exercise, in order: ["kg", "reps"] by
+// default, ["reps"] or ["secs"] for exercises with a measure.
+export function setFields(exerciseId) {
+  const measure = getExercise(exerciseId)?.measure;
+  if (measure === "reps") return ["reps"];
+  if (measure === "secs") return ["secs"];
+  return ["kg", "reps"];
+}
+
+// An empty set row for an exercise: { kg: "", reps: "" }, { secs: "" }...
+export function emptySet(exerciseId) {
+  return Object.fromEntries(setFields(exerciseId).map((field) => [field, ""]));
+}
 
 /* ---- Reading ---- */
 
@@ -66,22 +86,53 @@ export function pyramidReps(text = "") {
 
 /* ---- Writing ---- */
 
+// A fresh entry: as many empty set rows as last time, or as the prescription says.
+function newEntry(exerciseId, step, sessions) {
+  const last = lastSetsFor(exerciseId, sessions);
+  const prescription = step.prescription || getExercise(exerciseId)?.prescription || "";
+  const count = last?.length ?? setsInPrescription(prescription);
+  return { exerciseId, sets: Array.from({ length: count }, () => emptySet(exerciseId)) };
+}
+
+/*
+ * Adds an entry for every exercise of the routine the session does not have
+ * yet (in routine order). Needed when a routine changed while a session was
+ * in progress, for example when core became the vueltas. Returns the same
+ * session if nothing was missing.
+ */
+function withMissingEntries(session, routine, sessions) {
+  const pool = [...session.entries];
+  const entries = [];
+  let added = false;
+  for (const step of routine.steps) {
+    for (const exerciseId of stepExerciseIds(step)) {
+      const index = pool.findIndex((e) => e.exerciseId === exerciseId);
+      if (index >= 0) entries.push(pool.splice(index, 1)[0]);
+      else {
+        entries.push(newEntry(exerciseId, step, sessions));
+        added = true;
+      }
+    }
+  }
+  // Entries the routine no longer lists are kept at the end, so nothing typed is lost.
+  return added ? { ...session, entries: [...entries, ...pool] } : session;
+}
+
 /*
  * Starts (or resumes) a session for a routine. Each exercise gets as many
- * empty set rows as last time, or as the prescription says.
+ * empty set rows as last time, or as the prescription says. A vuelta step
+ * expands to every exercise of the vuelta.
  */
 export async function startSession(routine) {
-  const active = getActiveSessionNow(routine.id);
-  if (active) return active;
-
   const sessions = readData().sessions;
+  const active = getActiveSessionNow(routine.id);
+  if (active) {
+    const synced = withMissingEntries(active, routine, sessions);
+    return synced === active ? active : saveSession(synced);
+  }
+
   const entries = routine.steps.flatMap((step) =>
-    step.exerciseIds.map((exerciseId) => {
-      const last = lastSetsFor(exerciseId, sessions);
-      const prescription = step.prescription || getExercise(exerciseId)?.prescription || "";
-      const count = last?.length ?? setsInPrescription(prescription);
-      return { exerciseId, sets: Array.from({ length: count }, () => ({ kg: "", reps: "" })) };
-    }),
+    stepExerciseIds(step).map((exerciseId) => newEntry(exerciseId, step, sessions)),
   );
 
   const session = {
@@ -112,17 +163,24 @@ function toNumber(text) {
 }
 
 /*
- * Closes the session: keeps only sets with a weight or reps, converts them to
- * numbers. If nothing was logged at all, the session is simply removed.
- * Returns the finished session, or null if it was empty.
+ * Closes the session: keeps only sets with at least one value (kg, reps or
+ * seconds) and converts them to numbers; empty boxes are dropped. If nothing
+ * was logged at all, the session is simply removed. Returns the finished
+ * session, or null if it was empty.
  */
 export async function finishSession(session) {
   const entries = session.entries
     .map((e) => ({
       exerciseId: e.exerciseId,
       sets: e.sets
-        .map((s) => ({ kg: toNumber(s.kg), reps: toNumber(s.reps) }))
-        .filter((s) => s.kg !== null || s.reps !== null),
+        .map((s) =>
+          Object.fromEntries(
+            Object.entries(s)
+              .map(([field, value]) => [field, toNumber(value)])
+              .filter(([, value]) => value !== null),
+          ),
+        )
+        .filter((s) => Object.keys(s).length > 0),
     }))
     .filter((e) => e.sets.length > 0);
 
@@ -146,12 +204,13 @@ export function formatNumber(n) {
   return n == null ? "" : String(n).replace(".", ",");
 }
 
-// One set as text: "40x8", "x12" (bodyweight), "40 kg".
-export function formatSet({ kg, reps }) {
+// One set as text: "40x8", "x12" (bodyweight), "40 kg", "10 s" (a hold).
+export function formatSet({ kg, reps, secs }) {
   const k = formatNumber(kg);
   const r = formatNumber(reps);
   if (k !== "" && r !== "") return `${k}x${r}`;
   if (r !== "") return `x${r}`;
+  if (secs != null) return `${formatNumber(secs)} s`;
   return `${k} kg`;
 }
 

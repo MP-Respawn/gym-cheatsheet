@@ -6,7 +6,9 @@
  *
  * Lists the steps in order. A step can hold one exercise or several done
  * together (superset / circuit). For each exercise you see its animation,
- * its name (tap to open the detail), the prescription and the note.
+ * its name (tap to open the detail), the prescription and the note. A
+ * vuelta step (core circuit) is shown compactly: the vuelta's name and all
+ * its exercises in one line, linking to the whole vuelta.
  *
  * Buttons: "Entrenar" opens the workout log (or "Continuar" if one is in
  * progress); "Editar" only shows on your own routines.
@@ -15,7 +17,8 @@
  * notes, so only the name, the prescription and the animation remain. Its
  * on/off state comes from App.jsx, which also remembers it between visits.
  */
-import { getExercise } from "../data/exercises.js";
+import { VUELTAS, getExercise, getVuelta } from "../data/exercises.js";
+import { stepExerciseIds, vueltaRoutine } from "../data/routines.js";
 import { useActiveSession } from "../store/useStore.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
@@ -25,6 +28,19 @@ function stepKind(count) {
   if (count === 2) return "Superserie";
   if (count > 2) return "Circuito";
   return null;
+}
+
+// "Abdominal tradicional, Abdominal cruzado x2, ...": a vuelta's exercises
+// in order, an exercise repeated right after itself counted once.
+function vueltaSummary(step) {
+  const names = [];
+  for (const id of stepExerciseIds(step)) {
+    const name = getExercise(id)?.name ?? id;
+    const last = names[names.length - 1];
+    if (last?.name === name) last.count++;
+    else names.push({ name, count: 1 });
+  }
+  return names.map((n) => (n.count > 1 ? `${n.name} x${n.count}` : n.name)).join(", ");
 }
 
 export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChange }) {
@@ -40,6 +56,9 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
       </div>
     );
   }
+
+  // One of the trainer's core vueltas (Rutinas › Vueltas de abdomen).
+  const isVuelta = VUELTAS.some((v) => v.routineId === routine.id);
 
   return (
     <div className={gymMode ? "screen gym-mode" : "screen"}>
@@ -79,6 +98,28 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
 
         <ol className="steps">
           {routine.steps.map((step, index) => {
+            if (step.vuelta) {
+              const vuelta = getVuelta(step.vuelta);
+              const target = vueltaRoutine(step.vuelta);
+              return (
+                <li key={index} className="step">
+                  <div className="step-head">
+                    <span className="step-number">{index + 1}</span>
+                    <span className="step-kind">Vuelta</span>
+                  </div>
+                  {step.prescription && <p className="step-prescription">{step.prescription}</p>}
+                  <a className="step-exercise" href={`#/rutina/${target?.id}`}>
+                    <ExerciseAnimation id={stepExerciseIds(step)[0]} className="step-anim" />
+                    <div className="step-text">
+                      <span className="step-name">{vuelta?.label}</span>
+                      <span className="step-vuelta-list">{vueltaSummary(step)}</span>
+                    </div>
+                  </a>
+                  {step.note && <p className="step-note hide-in-gym">{step.note}</p>}
+                </li>
+              );
+            }
+
             const exercises = step.exerciseIds.map(getExercise).filter(Boolean);
             const kind = stepKind(exercises.length);
 
@@ -109,7 +150,10 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
                   </a>
                 ))}
 
-                {step.note && <p className="step-note hide-in-gym">{step.note}</p>}
+                {/* In a vuelta the note says which arm or side, so it stays in Modo gym */}
+                {step.note && (
+                  <p className={isVuelta ? "step-note" : "step-note hide-in-gym"}>{step.note}</p>
+                )}
               </li>
             );
           })}

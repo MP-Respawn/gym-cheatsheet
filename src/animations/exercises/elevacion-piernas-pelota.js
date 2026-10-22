@@ -1,9 +1,8 @@
 /*
- * Abdomen en pelota
- * Side view, lying on the back with the shoulders up and a ball between the
- * feet. Shows two of the trainer's three raises: straight legs all the way
- * up and down, then short "pataditas" with the legs low. (The third one,
- * lateral raises, moves toward the camera and cannot be seen from the side.)
+ * Elevación de piernas con pelota (vuelta: abdomen en pelota, paso 3)
+ * Side view, lying on the back with the shoulders up and a ball held
+ * between the feet. Straight legs go all the way up to vertical, then down
+ * slowly to just above the floor, without resting.
  */
 import { STAND_SIDE, arm, both } from "../engine/helpers.js";
 
@@ -29,17 +28,13 @@ export default {
   poses: {
     up: { ...both("thigh", 0) }, // legs vertical
     low: { ...both("thigh", 72) }, // legs low, not touching the floor
-    kickHigh: { ...both("thigh", 55) },
   },
 
   timeline: [
     { to: "up", s: 0.9, say: "Piernas rectas arriba" },
-    { to: "low", s: 1, ease: "slow", say: "Bajá sin apoyar" },
-    { to: "kickHigh", s: 0.3, say: "Pataditas" },
-    { to: "low", s: 0.3, say: "Pataditas" },
-    { to: "kickHigh", s: 0.3, say: "Pataditas" },
-    { to: "low", s: 0.3, say: "Pataditas" },
-    { to: "start", s: 0.6 },
+    { to: "low", s: 1.2, ease: "slow", say: "Bajá sin apoyar" },
+    { to: "start", s: 0.4 },
+    { to: "start", s: 0.3 },
   ],
 
   props: [

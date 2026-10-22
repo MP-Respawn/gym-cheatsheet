@@ -1,5 +1,5 @@
 /*
- * Abdomen clásico
+ * Abdominal tradicional (vuelta: abdomen clásico, paso 1)
  * Side view, lying on the back with the head to the left, knees bent and
  * feet flat on the floor, hands behind the head (elbows open). Two quick
  * crunches: the shoulders curl up with the abs (~0.5 s), a tiny squeeze,

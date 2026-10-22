@@ -5,6 +5,8 @@
  * URL, which works on any static host (Vercel included) with zero config:
  *
  *   #/                  -> home, exercise list
+ *   #/?d=yoga           -> home filtered to one discipline (any page can
+ *                          carry a ?query; it comes back in route.query)
  *   #/buscar            -> search exercises and routines
  *   #/ejercicio/<id>    -> one exercise
  *   #/rutinas           -> routine list
@@ -13,14 +15,21 @@
  *   #/rutina/<id>/editar   -> edit one of your routines
  *   #/rutina/<id>/entrenar -> log weights while doing a routine
  *
- * The hook returns { name, id } for the current page and re-renders the
- * component whenever the hash changes (a tapped link, the back button...).
+ * The hook returns { name, id, query } for the current page and re-renders
+ * the component whenever the hash changes (a tapped link, the back button...).
  */
 import { useEffect, useState } from "react";
 
-// Turns "#/ejercicio/peso-muerto" into { name: "exercise", id: "peso-muerto" }.
+// Turns "#/ejercicio/peso-muerto" into { name: "exercise", id: "peso-muerto" }
+// and "#/?d=yoga" into { name: "home", query: { d: "yoga" } }.
 export function parseHash(hash) {
-  const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const [path, search = ""] = hash.replace(/^#\/?/, "").split("?");
+  const query = Object.fromEntries(new URLSearchParams(search));
+  return { ...parsePath(path), query };
+}
+
+function parsePath(path) {
+  const parts = path.split("/").filter(Boolean);
   const [first, second, third] = parts.map(decodeURIComponent);
 
   if (first === "ejercicio" && second) return { name: "exercise", id: second };
@@ -33,6 +42,11 @@ export function parseHash(hash) {
   if (first === "rutinas") return { name: "routines" };
   if (first === "buscar") return { name: "search" };
   return { name: "home" };
+}
+
+// The home list for a discipline: "#/?d=yoga", or "#/" for all of them.
+export function homeHref(discipline) {
+  return discipline && discipline !== "todo" ? `#/?d=${encodeURIComponent(discipline)}` : "#/";
 }
 
 /*

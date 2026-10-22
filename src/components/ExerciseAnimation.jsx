@@ -11,16 +11,24 @@
  * ("Bajada lenta", "Subida explosiva"...), lighting up each one while it
  * happens.
  *
+ * An exercise can reuse another one's animation through its `anim` field
+ * (exercises.js): `from` picks the file, `hold` and `bare` change how it
+ * compiles, and `hold` also adds a slow breathing pulse (a CSS class on
+ * the wrapper).
+ *
  * Thumbnails that scroll off screen pause their animation (IntersectionObserver),
  * so a long list does not keep dozens of figures moving out of sight.
  */
 import { useEffect, useRef } from "react";
+import { getExercise } from "../data/exercises.js";
 import { getFigure } from "../animations/index.js";
 import Figure from "../animations/engine/Figure.jsx";
 
 export default function ExerciseAnimation({ id, className = "thumb", phases = false }) {
   const ref = useRef(null);
-  const compiled = getFigure(id);
+  const anim = getExercise(id)?.anim ?? {};
+  const compiled = getFigure(anim.from ?? id, { hold: anim.hold, bare: anim.bare });
+  const wrapClass = anim.hold ? "anim-wrap hold" : "anim-wrap";
 
   // Pause when the box is not visible. The class is toggled directly on the
   // element, so scrolling never re-renders React components.
@@ -36,7 +44,7 @@ export default function ExerciseAnimation({ id, className = "thumb", phases = fa
   }, []);
 
   return (
-    <div ref={ref} className="anim-wrap">
+    <div ref={ref} className={wrapClass}>
       <div className={`anim-box ${className}`}>{compiled && <Figure compiled={compiled} />}</div>
 
       {/* Phase names, each one highlighted in sync with the figure */}

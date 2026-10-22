@@ -192,6 +192,48 @@ function refPoint(ref, pos) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Variants of a spec (used by exercises that reuse another's file)    */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The same spec frozen in its held pose: the pose the timeline spends the
+ * most time in (a plank's "plank", a V's "v"). It becomes the start pose
+ * and the timeline just stays there, so nothing moves. No phase labels: a
+ * still hold has nothing to sequence, and the original's timing ("10
+ * segundos") may not match the new exercise. Equipment that slides per
+ * pose is moved to where it sits in that pose. Used for static yoga holds
+ * (the breathing pulse is CSS).
+ */
+export function holdSpec(spec) {
+  const time = {};
+  for (const st of spec.timeline ?? []) {
+    if (st.to === "start") continue;
+    time[st.to] = (time[st.to] ?? 0) + st.s;
+  }
+  const held = Object.keys(time).sort((a, b) => time[b] - time[a])[0];
+  if (!held) return spec;
+
+  const { $root, ...angles } = resolvePose(spec.start, spec.poses[held]);
+  const props = (spec.props ?? []).map((p) => {
+    if (!p.shift) return p;
+    const [dx, dy] = p.shift[held] ?? [0, 0];
+    const { shift: _shift, ...rest } = p;
+    if (rest.c) rest.c = [rest.c[0] + dx, rest.c[1] + dy];
+    if (rest.x !== undefined) rest.x += dx;
+    if (rest.y !== undefined) rest.y += dy;
+    return rest;
+  });
+  return {
+    ...spec,
+    at: [spec.at[0] + $root[0], spec.at[1] + $root[1]],
+    start: angles,
+    poses: {},
+    props,
+    timeline: [{ to: "start", s: 4 }],
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* compile(): spec -> everything the renderer needs                     */
 /* ------------------------------------------------------------------ */
 

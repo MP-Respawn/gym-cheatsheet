@@ -538,6 +538,47 @@ html:has(.drawer[open]) {
   font-weight: 600;
 }
 
+/* Discipline selector (Todo, Gimnasio, Yoga...): one joined bar, a level
+   above the chips. Scrolls sideways on a phone like the chip row. */
+.segmented {
+  display: flex;
+  margin: 12px 20px 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.segment {
+  flex: 1 0 auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-button);
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.segment:hover {
+  color: var(--text);
+}
+
+.segment.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .list-section {
   margin-top: 16px;
 }
@@ -589,6 +630,14 @@ html:has(.drawer[open]) {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
+}
+
+/* Original name under the name ("Adho Mukha Svanasana") */
+.card-original {
+  margin-top: 1px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
 }
 
 .card-meta {
@@ -754,6 +803,32 @@ mark {
   line-height: 1.15;
 }
 
+/* Original name under the title ("Adho Mukha Svanasana") */
+.detail-original {
+  margin-top: 4px;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Rutinas: one header per discipline, blocks under it */
+.discipline-section {
+  margin-top: 28px;
+}
+
+.discipline-title {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.discipline-section > .list-section:first-of-type {
+  margin-top: 12px;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -785,6 +860,13 @@ mark {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/* Discipline (Gimnasio, Yoga...): outlined in the accent, next to the group */
+.tag-discipline {
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -1765,6 +1847,12 @@ mark {
   .chips {
     flex-wrap: wrap;
     padding: 0;
+  }
+
+  /* Discipline selector: sized to its labels, aligned with the page */
+  .segmented {
+    display: inline-flex;
+    margin: 12px 0 2px;
   }
 
   .content {

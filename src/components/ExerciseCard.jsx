@@ -2,7 +2,8 @@
  * ExerciseCard.jsx
  *
  * One row in an exercise list: animation thumbnail on the left, then the
- * name, the muscle group (plus its vuelta, for core) and a one-line
+ * name (with the original name, like "Adho Mukha Svanasana", smaller below
+ * it), the muscle group (plus its vuelta, for core) and a one-line
  * description. `number` (optional) shows its step in a vuelta ("3", "2 y 3").
  *
  * Two modes:
@@ -20,10 +21,16 @@ export default function ExerciseCard({ exercise, onSelect, disabled = false, num
       <ExerciseAnimation id={exercise.id} className="thumb" />
       <div className="card-text">
         <span className="card-title">{exercise.name}</span>
+        {exercise.originalName && <span className="card-original">{exercise.originalName}</span>}
         <span className="card-meta">
           {number && <span className="tag-step">Paso {number}</span>}
           {groupLabel(exercise.group)}
-          {vuelta && <span className="tag-mini tag-vuelta">Vuelta {vuelta.chip.toLowerCase()}</span>}
+          {/* core vueltas read "Vuelta pelota"; discipline sequences use their own name */}
+          {vuelta && (
+            <span className="tag-mini tag-vuelta">
+              {vuelta.discipline ? vuelta.chip : `Vuelta ${vuelta.chip.toLowerCase()}`}
+            </span>
+          )}
           {/* Small marker so you can tell the coach's exercises from the extras */}
           {exercise.source === "added" && <span className="tag-mini">sugerido</span>}
         </span>

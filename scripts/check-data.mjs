@@ -10,6 +10,7 @@
  *
  * What it checks:
  *   - exercise ids are unique and kebab-case
+ *   - every exercise and routine has a valid discipline
  *   - every group and secondary group exists in GROUPS
  *   - every id inside an "alternatives" array exists
  *   - every trainer exercise has at least 2 alternatives
@@ -18,8 +19,10 @@
  *     either exercises or a vuelta, and each vuelta routine lists exactly the
  *     exercises tagged with that vuelta
  *   - no data file still uses an old id from renamedIds.js
- *   - every exercise has its own animation (src/animations/exercises/<id>.js)
- *     and no animation file is left without an exercise
+ *   - every exercise's animation resolves: its own file
+ *     (src/animations/exercises/<id>.js), or another exercise's file through
+ *     `anim.from`; and no animation file is left unused
+ *   - "Estirá después" (stretches) and routineLink point at real items
  *   - every animation compiles, loops back to its start pose, and never
  *     pushes a joint through the floor or out of the drawing
  */
@@ -28,10 +31,10 @@ import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { EXERCISES, GROUPS, VUELTAS } from "../src/data/exercises.js";
+import { DISCIPLINES, EXERCISES, GROUPS, VUELTAS } from "../src/data/exercises.js";
 import { RENAMED_IDS } from "../src/data/renamedIds.js";
 import { ROUTINES } from "../src/data/routines.js";
-import { validate } from "../src/animations/engine/kinematics.js";
+import { holdSpec, validate } from "../src/animations/engine/kinematics.js";
 
 // Absolute path of the project root (one folder up from /scripts).
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -40,6 +43,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
 
 const groupKeys = new Set(GROUPS.map((g) => g.key));
+const disciplineKeys = new Set(DISCIPLINES.map((d) => d.key));
+const SOURCES = ["trainer", "added", "research"];
 const exerciseIds = new Set();
 const kebab = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -53,8 +58,12 @@ for (const ex of EXERCISES) {
   for (const g of ex.secondary ?? []) {
     if (!groupKeys.has(g)) errors.push(`${ex.id}: grupo secundario inexistente "${g}"`);
   }
-  if (ex.source !== "trainer" && ex.source !== "added") {
-    errors.push(`${ex.id}: source debe ser "trainer" o "added"`);
+  if (!SOURCES.includes(ex.source)) {
+    errors.push(`${ex.id}: source debe ser uno de ${SOURCES.join(", ")}`);
+  }
+  if (!disciplineKeys.has(ex.discipline)) errors.push(`${ex.id}: disciplina inexistente "${ex.discipline}"`);
+  if (ex.originalName !== undefined && typeof ex.originalName !== "string") {
+    errors.push(`${ex.id}: originalName tiene que ser texto`);
   }
   if (ex.vuelta !== undefined && !VUELTAS.some((v) => v.key === ex.vuelta)) {
     errors.push(`${ex.id}: vuelta inexistente "${ex.vuelta}"`);
@@ -74,6 +83,10 @@ for (const ex of EXERCISES) {
   if (ex.source === "trainer" && (ex.alternatives ?? []).length < 2) {
     errors.push(`${ex.id}: ejercicio del entrenador con menos de 2 alternativas`);
   }
+  for (const id of ex.stretches ?? []) {
+    if (!exerciseIds.has(id)) errors.push(`${ex.id}: estiramiento inexistente "${id}"`);
+    if (id === ex.id) errors.push(`${ex.id}: se lista a sí mismo como estiramiento`);
+  }
 }
 
 /* ---- Old ids: every new id exists, and nothing still points at an old one ---- */
@@ -88,7 +101,15 @@ for (const ex of EXERCISES) {
 
 /* ---- Routines ---- */
 const routineIds = new Set(ROUTINES.map((r) => r.id));
+for (const ex of EXERCISES) {
+  if (ex.routineLink !== undefined && !routineIds.has(ex.routineLink)) {
+    errors.push(`${ex.id}: routineLink a una rutina inexistente "${ex.routineLink}"`);
+  }
+}
 for (const routine of ROUTINES) {
+  if (!disciplineKeys.has(routine.discipline)) {
+    errors.push(`rutina ${routine.id}: disciplina inexistente "${routine.discipline}"`);
+  }
   routine.steps.forEach((step, i) => {
     const where = `rutina ${routine.id}, paso ${i + 1}`;
     const hasIds = Array.isArray(step.exerciseIds);
@@ -107,6 +128,15 @@ for (const routine of ROUTINES) {
 
 /* ---- Vueltas: each routine holds exactly the exercises tagged with it ---- */
 for (const vuelta of VUELTAS) {
+  // Where its filter chip shows: inside a group or inside a discipline.
+  const inGroup = vuelta.group !== undefined && groupKeys.has(vuelta.group);
+  const inDiscipline = vuelta.discipline !== undefined && disciplineKeys.has(vuelta.discipline);
+  if (inGroup === inDiscipline) {
+    errors.push(`vuelta ${vuelta.key}: tiene que tener un group o una discipline válidos (uno solo)`);
+  }
+  if (typeof vuelta.partOf !== "string" || !vuelta.partOf) {
+    errors.push(`vuelta ${vuelta.key}: falta partOf (la frase "Parte de..." de la ficha)`);
+  }
   if (!routineIds.has(vuelta.routineId)) {
     errors.push(`vuelta ${vuelta.key}: falta la rutina "${vuelta.routineId}"`);
     continue;
@@ -124,28 +154,46 @@ for (const vuelta of VUELTAS) {
 }
 
 /* ---- Animations ----
- * Each exercise has one file in src/animations/exercises/ named like its id.
- * The files are plain JavaScript, so we can load them here and run the same
- * engine the app uses to look for problems.
+ * Each exercise has one file in src/animations/exercises/ named like its id,
+ * or reuses another exercise's file through `anim.from` (optionally held
+ * or without equipment). The files are plain JavaScript, so we can
+ * load them here and run the same engine the app uses to look for problems.
  */
 const animDir = join(root, "src", "animations", "exercises");
 const animFiles = existsSync(animDir)
   ? readdirSync(animDir).filter((f) => f.endsWith(".js")).map((f) => f.replace(/\.js$/, ""))
   : [];
+const usedFiles = new Set();
 let animated = 0;
 for (const ex of EXERCISES) {
-  const file = join(animDir, `${ex.id}.js`);
+  const anim = ex.anim ?? {};
+  for (const key of Object.keys(anim)) {
+    if (!["from", "hold", "bare"].includes(key)) errors.push(`${ex.id}: anim.${key} no existe (from, hold, bare)`);
+  }
+  const from = anim.from ?? ex.id;
+  if (anim.from !== undefined) {
+    const source = EXERCISES.find((e) => e.id === anim.from);
+    if (!source) {
+      errors.push(`${ex.id}: anim.from a un ejercicio inexistente "${anim.from}"`);
+      continue;
+    }
+    if (source.anim?.from) errors.push(`${ex.id}: anim.from apunta a "${anim.from}", que a su vez reusa otra animación`);
+  }
+  const file = join(animDir, `${from}.js`);
   if (!existsSync(file)) {
-    errors.push(`${ex.id}: falta su animación src/animations/exercises/${ex.id}.js`);
+    errors.push(`${ex.id}: falta su animación src/animations/exercises/${from}.js`);
     continue;
   }
-  const spec = (await import(pathToFileURL(file).href)).default;
+  usedFiles.add(from);
+  let spec = (await import(pathToFileURL(file).href)).default;
+  if (anim.bare) spec = { ...spec, props: [] };
+  if (anim.hold) spec = holdSpec(spec);
   const problems = validate(spec, ex.id);
   for (const p of problems) errors.push(`${ex.id} (animación): ${p}`);
   if (problems.length === 0) animated++;
 }
 for (const file of animFiles) {
-  if (!exerciseIds.has(file)) errors.push(`animación sin ejercicio: src/animations/exercises/${file}.js`);
+  if (!usedFiles.has(file)) errors.push(`animación sin usar: src/animations/exercises/${file}.js`);
 }
 
 /* ---- Report ---- */
@@ -155,5 +203,10 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `check-data: OK. ${EXERCISES.length} ejercicios, ${ROUTINES.length} rutinas, ${animated} animaciones.`,
+  `check-data: OK. ${EXERCISES.length} ejercicios, ${ROUTINES.length} rutinas, ${animated} animaciones válidas (${animFiles.length} archivos).`,
 );
+for (const d of DISCIPLINES) {
+  const exercises = EXERCISES.filter((ex) => ex.discipline === d.key).length;
+  const routines = ROUTINES.filter((r) => r.discipline === d.key).length;
+  console.log(`  ${d.label.padEnd(12)} ${String(exercises).padStart(3)} ejercicios, ${routines} rutinas`);
+}

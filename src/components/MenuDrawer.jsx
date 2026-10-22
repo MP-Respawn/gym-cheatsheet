@@ -21,7 +21,7 @@ import { Brand } from "./AppHeader.jsx";
 import { LINKS } from "./navLinks.js";
 import { BackupControls, GymSwitch, Icon, StorageNote } from "./navShared.jsx";
 
-export default function MenuDrawer({ open, onClose, activeTab, gymMode, onGymModeChange }) {
+export default function MenuDrawer({ exercisesHref = "#/", open, onClose, activeTab, gymMode, onGymModeChange }) {
   const dialog = useRef(null);
   const persistent = useIsPersistent();
   const [backupMessage, setBackupMessage] = useState("");
@@ -63,7 +63,7 @@ export default function MenuDrawer({ open, onClose, activeTab, gymMode, onGymMod
             return (
               <a
                 key={link.href}
-                href={link.href}
+                href={link.tab === "exercises" ? exercisesHref : link.href}
                 className={current ? "drawer-link active" : "drawer-link"}
                 aria-current={current ? "page" : undefined}
                 onClick={onClose}

@@ -6,12 +6,16 @@
  * group) and decides what to do with them. The home screen uses the chips
  * alone (its search lives in the top nav); the exercise picker uses both.
  */
-import { GROUPS } from "../data/exercises.js";
+import { EXERCISES, GROUPS } from "../data/exercises.js";
 
-export function GroupChips({ group, onGroupChange }) {
+// Groups that have at least one exercise (a new group can be empty for a while).
+const GROUPS_IN_USE = GROUPS.filter((g) => EXERCISES.some((ex) => ex.group === g.key));
+
+// `groups` limits the chips (the home list passes the ones in the chosen discipline).
+export function GroupChips({ group, onGroupChange, groups = GROUPS_IN_USE }) {
   return (
     <div className="chips" role="group" aria-label="Grupo muscular">
-      {[{ key: "todos", label: "Todos" }, ...GROUPS].map((g) => (
+      {[{ key: "todos", label: "Todos" }, ...groups].map((g) => (
         <button
           key={g.key}
           type="button"

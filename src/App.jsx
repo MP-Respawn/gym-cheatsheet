@@ -5,7 +5,9 @@
  *   1. Reads the current page from the URL hash (useHashRoute) and shows the
  *      matching screen.
  *   2. Keeps the little bits of state that must survive moving between pages:
- *      the search text, the chosen muscle-group chip, and Modo gym.
+ *      the search text, the chosen muscle-group chip, and Modo gym. The
+ *      chosen discipline lives in the URL instead (#/?d=yoga), so the back
+ *      button walks through your filters.
  *   3. Owns the side menu (MenuDrawer): the hamburger in the top nav opens
  *      it, and moving to another page closes it.
  *   4. Draws the navigation: the bottom tab bar on phones, the side nav on
@@ -13,7 +15,8 @@
  *      other depending on the screen width).
  */
 import { useEffect, useLayoutEffect, useState } from "react";
-import { savedScroll, useHashRoute } from "./hooks/useHashRoute.js";
+import { homeHref, savedScroll, useHashRoute } from "./hooks/useHashRoute.js";
+import { DISCIPLINES } from "./data/exercises.js";
 import MenuDrawer from "./components/MenuDrawer.jsx";
 import SideNav from "./components/SideNav.jsx";
 import TabBar from "./components/TabBar.jsx";
@@ -53,8 +56,20 @@ export default function App() {
   // exercise and coming back.
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("todos");
-  // Vuelta chip inside "Abdomen y core": "todas", a VUELTAS key, or "otros".
+  // Sequence chip (core vueltas, Flow básico): "todas", a VUELTAS key, or "otros".
   const [vuelta, setVuelta] = useState("todas");
+
+  // Discipline filter of the home list, read from the URL ("todo" = all).
+  // The last one used is remembered, so the Ejercicios tab and menu links
+  // go back to it from any other page.
+  const urlDiscipline = DISCIPLINES.some((d) => d.key === route.query.d) ? route.query.d : "todo";
+  const [lastDiscipline, setLastDiscipline] = useState(urlDiscipline);
+  if (route.name === "home" && urlDiscipline !== lastDiscipline) setLastDiscipline(urlDiscipline);
+  const exercisesHref = homeHref(lastDiscipline);
+  // Picking a discipline adds a history entry, so Back returns to the previous one.
+  const changeDiscipline = (d) => {
+    window.location.hash = homeHref(d);
+  };
 
   // The side menu. Closed again on every page change (a menu link, the
   // phone's back button...), using React's "adjust state while rendering".
@@ -116,6 +131,8 @@ export default function App() {
   } else {
     screen = (
       <ExerciseList
+        discipline={urlDiscipline}
+        onDisciplineChange={changeDiscipline}
         group={group}
         onGroupChange={setGroup}
         vuelta={vuelta}
@@ -132,10 +149,11 @@ export default function App() {
 
   return (
     <div className="app">
-      <SideNav activeTab={activeTab} gymMode={gymMode} onGymModeChange={changeGymMode} />
+      <SideNav activeTab={activeTab} exercisesHref={exercisesHref} gymMode={gymMode} onGymModeChange={changeGymMode} />
       <main>{screen}</main>
-      <TabBar active={activeTab} />
+      <TabBar active={activeTab} exercisesHref={exercisesHref} />
       <MenuDrawer
+        exercisesHref={exercisesHref}
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         activeTab={activeTab}

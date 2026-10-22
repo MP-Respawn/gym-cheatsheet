@@ -7,7 +7,10 @@
  * Shape of one routine:
  *   id      kebab-case key, used in the URL (#/rutina/<id>)
  *   name    title shown in the list
- *   block   "Bloque A", "Bloque B" or "Vueltas de abdomen"
+ *   discipline  one of the DISCIPLINES keys in exercises.js. Defaults to
+ *               "gym" (normalizeRoutine below), so gym routines leave it out
+ *   block   "Bloque A", "Bloque B", "Vueltas de abdomen"; for the other
+ *           disciplines the discipline's own name ("Yoga")
  *   focus   short summary of the day
  *   steps   ordered list of what to do. Each step is:
  *             exerciseIds   one id, or several when they are done together
@@ -27,7 +30,7 @@
 
 import { getVuelta } from "./exercises.js";
 
-export const ROUTINES = [
+const RAW_ROUTINES = [
   /* ---------------- Bloque A, Día 1 ---------------- */
   {
     id: "bloque-a-dia-1",
@@ -284,7 +287,77 @@ export const ROUTINES = [
       { exerciseIds: ["bird-dog"], note: "Mantené el equilibrio." },
     ],
   },
+
+  /* ---------------- Yoga ---------------- */
+  {
+    id: "yoga-cierre-gym",
+    name: "Yoga: cierre de entrenamiento (10 minutos)",
+    discipline: "yoga",
+    block: "Yoga",
+    focus: "Para bajar después del gimnasio",
+    steps: [
+      { exerciseIds: ["yoga-gato-vaca"], note: "Para entrar en calor la columna." },
+      { exerciseIds: ["yoga-perro-abajo"], note: "" },
+      { exerciseIds: ["yoga-zancada-baja"], note: "Un lado y después el otro." },
+      { exerciseIds: ["yoga-paloma"], note: "Un lado y después el otro." },
+      { exerciseIds: ["yoga-pinza-sentada"], note: "" },
+      { exerciseIds: ["yoga-mariposa"], note: "" },
+      { exerciseIds: ["yoga-torsion-acostado"], note: "Un lado y después el otro." },
+      { exerciseIds: ["yoga-rodillas-al-pecho"], note: "" },
+      { exerciseIds: ["yoga-cadaver"], note: "Hasta que se acabe el tiempo." },
+    ],
+  },
+
+  /* ---------------- Animal Flow ----------------
+   * Animal Flow is a trademarked system by Mike Fitch; personal reference.
+   */
+  {
+    id: "flow-basico",
+    name: "Flow básico",
+    discipline: "animal-flow",
+    block: "Animal Flow",
+    focus: "3 vueltas, sin pausa entre movimientos",
+    steps: [
+      { exerciseIds: ["af-movilidad-muneca"], note: "Para preparar las muñecas." },
+      { exerciseIds: ["af-bestia"], note: "Mantené la posición." },
+      { exerciseIds: ["af-alcance-bestia"], note: "" },
+      { exerciseIds: ["af-cangrejo"], note: "Mantené la posición." },
+      { exerciseIds: ["af-alcance-cangrejo"], note: "" },
+      { exerciseIds: ["af-cambio-por-debajo"], note: "" },
+      { exerciseIds: ["af-patada-lateral"], note: "" },
+      { exerciseIds: ["af-alcance-escorpion"], note: "" },
+      { exerciseIds: ["af-mono"], note: "Mantené la posición." },
+    ],
+  },
+
+  /* ---------------- Jiu Jitsu ---------------- */
+  {
+    id: "jj-calentamiento",
+    name: "Jiu Jitsu: calentamiento de suelo",
+    discipline: "jiu-jitsu",
+    block: "Jiu Jitsu",
+    focus: "2 vueltas, ritmo continuo",
+    steps: [
+      { exerciseIds: ["jj-rolo-adelante"], note: "" },
+      { exerciseIds: ["jj-rolo-atras"], note: "" },
+      { exerciseIds: ["jj-fuga-cadera"], note: "" },
+      { exerciseIds: ["jj-fuga-inversa"], note: "" },
+      { exerciseIds: ["jj-puente-upa"], note: "" },
+      { exerciseIds: ["jj-parada-tecnica"], note: "" },
+      { exerciseIds: ["jj-sentada"], note: "" },
+      { exerciseIds: ["jj-sprawl"], note: "" },
+      { exerciseIds: ["jj-granby"], note: "" },
+      { exerciseIds: ["jj-caminata-oso"], note: "" },
+    ],
+  },
 ];
+
+// Fills the defaults, like normalizeExercise in exercises.js.
+function normalizeRoutine(routine) {
+  return { discipline: "gym", ...routine };
+}
+
+export const ROUTINES = RAW_ROUTINES.map(normalizeRoutine);
 
 // Returns the routine with that id, or undefined if it does not exist.
 export function getRoutine(id) {

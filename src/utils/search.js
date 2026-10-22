@@ -5,7 +5,7 @@
  * picker in the routine editor and the search page (which also looks
  * through routines).
  */
-import { EXERCISES, GROUPS, getVuelta } from "../data/exercises.js";
+import { EXERCISES, GROUPS, disciplineLabel, getVuelta } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
 
 // Lowercase and strip accents, so "biceps" finds "Bíceps" and "cuadri" finds "Cuádriceps".
@@ -13,13 +13,23 @@ export function normalize(text) {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
-// Does this exercise match what was typed? Looks at name, cues, equipment
-// and the vuelta it belongs to (so "pelota" finds the whole ball vuelta).
+// Does this exercise match what was typed? Looks at name, original name
+// ("svanasana"), cues, equipment, discipline ("yoga") and the vuelta it
+// belongs to (so "pelota" finds the whole ball vuelta).
 // Every word typed must appear somewhere ("remo barra" finds "Remo cruz con barra").
 export function matchesSearch(exercise, query) {
   if (!query) return true;
   const vuelta = getVuelta(exercise.vuelta)?.label ?? "";
-  const haystack = normalize([exercise.name, ...exercise.cues, ...exercise.equipment, vuelta].join(" "));
+  const haystack = normalize(
+    [
+      exercise.name,
+      exercise.originalName ?? "",
+      ...exercise.cues,
+      ...exercise.equipment,
+      disciplineLabel(exercise.discipline),
+      vuelta,
+    ].join(" "),
+  );
   return normalize(query)
     .split(/\s+/)
     .filter(Boolean)
@@ -27,13 +37,17 @@ export function matchesSearch(exercise, query) {
 }
 
 /*
- * The exercises that pass both filters, split into one section per muscle
+ * The exercises that pass the filters, split into one section per muscle
  * group (in GROUPS order). Within a group, the coach's exercises come first
- * and the suggested extras after. `group` is a group key or "todos".
+ * and the suggested extras after. `group` is a group key or "todos";
+ * `discipline` a discipline key or "todo" (the default: all of them).
  */
-export function exerciseSections(query, group) {
+export function exerciseSections(query, group, discipline = "todo") {
   const visible = EXERCISES.filter(
-    (ex) => (group === "todos" || ex.group === group) && matchesSearch(ex, query),
+    (ex) =>
+      (discipline === "todo" || ex.discipline === discipline) &&
+      (group === "todos" || ex.group === group) &&
+      matchesSearch(ex, query),
   );
   return GROUPS.map((g) => ({
     ...g,

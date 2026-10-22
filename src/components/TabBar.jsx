@@ -3,7 +3,8 @@
  *
  * The bar fixed to the bottom of the screen with the two sections of the
  * app: Ejercicios and Rutinas. The active tab is highlighted. `active` is
- * either "exercises" or "routines" and comes from App.jsx.
+ * either "exercises" or "routines" and comes from App.jsx, like
+ * `exercisesHref` (the home list with the last discipline you picked).
  */
 
 // Each tab: where it goes, its label, and a simple line icon.
@@ -24,13 +25,13 @@ const TABS = [
   },
 ];
 
-export default function TabBar({ active }) {
+export default function TabBar({ active, exercisesHref = "#/" }) {
   return (
     <nav className="tab-bar" aria-label="Secciones">
       {TABS.map((tab) => (
         <a
           key={tab.key}
-          href={tab.href}
+          href={tab.key === "exercises" ? exercisesHref : tab.href}
           className={tab.key === active ? "tab active" : "tab"}
           aria-current={tab.key === active ? "page" : undefined}
         >

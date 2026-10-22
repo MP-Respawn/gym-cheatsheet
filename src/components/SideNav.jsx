@@ -12,7 +12,7 @@ import { Brand } from "./AppHeader.jsx";
 import { LINKS } from "./navLinks.js";
 import { BackupControls, GymSwitch, Icon, StorageNote } from "./navShared.jsx";
 
-export default function SideNav({ activeTab, gymMode, onGymModeChange }) {
+export default function SideNav({ activeTab, exercisesHref = "#/", gymMode, onGymModeChange }) {
   const persistent = useIsPersistent();
   const [backupMessage, setBackupMessage] = useState("");
 
@@ -27,7 +27,7 @@ export default function SideNav({ activeTab, gymMode, onGymModeChange }) {
         return (
           <a
             key={link.href}
-            href={link.href}
+            href={link.tab === "exercises" ? exercisesHref : link.href}
             className={current ? "sidenav-link active" : "sidenav-link"}
             aria-current={current ? "page" : undefined}
           >

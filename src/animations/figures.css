@@ -68,9 +68,26 @@
   transform-box: view-box;
 }
 
+/* A static hold (`anim.hold`): the figure stays in the pose and breathes,
+   growing 2% and back, slowly */
+.hold .figure {
+  transform-origin: 50% 100%;
+  animation: figure-breathe 4s ease-in-out infinite alternate;
+}
+
+@keyframes figure-breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
 /* Off-screen animations pause, so a long list stays light on the phone */
 .paused .mv,
-.paused .phase {
+.paused .phase,
+.paused.hold .figure {
   animation-play-state: paused !important;
 }
 
@@ -96,7 +113,8 @@
    and every phase name is shown at full strength */
 @media (prefers-reduced-motion: reduce) {
   .figure .mv,
-  .phase {
+  .phase,
+  .hold .figure {
     animation: none !important;
   }
   .phase {

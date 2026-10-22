@@ -498,12 +498,124 @@ html:has(.drawer[open]) {
   outline: none;
 }
 
-/* The chip row scrolls sideways by itself; the page never does */
+/*
+ * Filters, three levels with a clear hierarchy:
+ *   1. .disc-tabs   discipline (Todo, Gimnasio, Yoga...): tabs on a rule,
+ *                   teal underline + count on the active one. These are the
+ *                   SECTIONS of the catalogue, so they look like tabs.
+ *   2. .filter-row  muscle group: a small label ("Grupo") + outline chips;
+ *                   the active chip gets a teal outline, never a solid fill,
+ *                   so it does not compete with buttons.
+ *   3. .filter-row.sub  sequence ("Secuencia"): the same row, quieter chips.
+ * On a phone each row scrolls sideways on its own; the page never does.
+ */
+.disc-tabs {
+  display: flex;
+  gap: 20px;
+  margin: 14px 20px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.disc-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.disc-tab {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+/* The underline: invisible until the tab is active */
+.disc-tab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.disc-tab:hover {
+  color: var(--text);
+}
+
+.disc-tab.active {
+  color: var(--text);
+}
+
+.disc-tab.active::after {
+  background: var(--accent);
+}
+
+/* How many exercises the discipline has */
+.disc-count {
+  padding: 1px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.disc-tab.active .disc-count {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Label + chips on one line; the chips scroll, the label stays */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 20px;
+}
+
+.filter-row.sub {
+  margin-top: 8px;
+}
+
+.filter-label {
+  flex: none;
+  width: 74px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
 .chips {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 0 20px;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -513,70 +625,53 @@ html:has(.drawer[open]) {
   display: none;
 }
 
+/* Chips without a label row (the exercise picker, the search page) */
+.chips.standalone {
+  margin-top: 10px;
+  padding: 0 20px;
+}
+
 .chip {
   flex: none;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  background: var(--surface);
-  font-size: 14px;
+  background: none;
+  font-size: 13px;
   font-weight: 500;
+  color: var(--muted);
   white-space: nowrap;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
 }
 
 .chip:hover {
-  border-color: var(--accent);
-}
-
-.chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-}
-
-/* Discipline selector (Todo, Gimnasio, Yoga...): one joined bar, a level
-   above the chips. Scrolls sideways on a phone like the chip row. */
-.segmented {
-  display: flex;
-  margin: 12px 20px 2px;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-input);
-  background: var(--surface);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.segmented::-webkit-scrollbar {
-  display: none;
-}
-
-.segment {
-  flex: 1 0 auto;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: var(--radius-button);
-  background: none;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.segment:hover {
+  border-color: var(--muted);
   color: var(--text);
 }
 
-.segment.active {
+.chip.active {
+  border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
+  font-weight: 600;
+}
+
+/* Third level: no border at rest, so the row reads as lighter */
+.sub .chip {
+  min-height: 28px;
+  padding: 0 10px;
+  border-color: transparent;
+  font-size: 12px;
+}
+
+.sub .chip:hover {
+  border-color: var(--border);
+}
+
+.sub .chip.active {
+  border-color: transparent;
 }
 
 .list-section {
@@ -683,12 +778,6 @@ html:has(.drawer[open]) {
   color: var(--accent-ink);
   font-size: 11px;
   font-weight: 700;
-}
-
-/* Second chip row (vueltas inside "Abdomen y core"): smaller than the groups */
-.chips-sub .chip {
-  min-height: 34px;
-  font-size: 13px;
 }
 
 /* The vuelta chips' "Ver vuelta completa" link sits next to the section title */
@@ -1844,15 +1933,37 @@ mark {
     font-size: 36px;
   }
 
-  .chips {
-    flex-wrap: wrap;
+  /* Filters: tabs span the content width; chip rows wrap instead of scrolling */
+  .disc-tabs {
+    gap: 28px;
+    margin: 16px 0 0;
+  }
+
+  .disc-tab {
+    font-size: 16px;
+  }
+
+  .filter-row {
+    align-items: flex-start;
     padding: 0;
   }
 
-  /* Discipline selector: sized to its labels, aligned with the page */
-  .segmented {
-    display: inline-flex;
-    margin: 12px 0 2px;
+  .filter-label {
+    width: 84px;
+    padding-top: 9px;
+  }
+
+  .filter-row.sub .filter-label {
+    padding-top: 7px;
+  }
+
+  .chips {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chips.standalone {
+    padding: 0;
   }
 
   .content {
@@ -1973,7 +2084,7 @@ mark {
     margin: 0;
   }
 
-  .picker .chips {
+  .picker .chips.standalone {
     padding: 0;
   }
 

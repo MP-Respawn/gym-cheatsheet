@@ -2,8 +2,8 @@
  * ExerciseList.jsx: home screen (#/, #/?d=yoga)
  *
  * Top: the app's top nav (menu, name, search bar). Then the page title, the
- * discipline selector (Todo, Gimnasio, Yoga...) and a sideways-scrolling
- * row of muscle-group chips that filter within that discipline. Below: the
+ * discipline tabs (Todo, Gimnasio, Yoga...) and a labelled row of
+ * muscle-group chips that filter within that discipline. Below: the
  * exercises, under a heading per muscle group.
  *
  * Some groups and disciplines have fixed sequences (VUELTAS: the trainer's
@@ -24,19 +24,23 @@ import { DISCIPLINES, EXERCISES, GROUPS, VUELTAS, getExercise, getVuelta } from 
 import { vueltaPlace, vueltaRoutine } from "../data/routines.js";
 import { exerciseSections } from "../utils/search.js";
 
-// Disciplines that have exercises (a new one appears once it has content).
-const DISCIPLINE_OPTIONS = [
-  { key: "todo", label: "Todo" },
-  ...DISCIPLINES.filter((d) => EXERCISES.some((ex) => ex.discipline === d.key)),
-];
+// Disciplines that have exercises (a new one appears once it has content),
+// each with how many it has: the count is shown in its tab.
+const DISCIPLINE_OPTIONS = [{ key: "todo", label: "Todo" }, ...DISCIPLINES]
+  .map((d) => ({
+    ...d,
+    count: EXERCISES.filter((ex) => d.key === "todo" || ex.discipline === d.key).length,
+  }))
+  .filter((d) => d.count > 0);
 
-// Segmented control: one discipline at a time. On a phone the bar scrolls
-// sideways, so the chosen segment is scrolled into view.
-function DisciplineSelector({ discipline, onDisciplineChange }) {
+// Discipline tabs: one discipline at a time, drawn as tabs on a rule (they
+// are the sections of the catalogue, not a filter). On a phone the row
+// scrolls sideways, so the chosen tab is scrolled into view.
+function DisciplineTabs({ discipline, onDisciplineChange }) {
   const bar = useRef(null);
   useEffect(() => {
     const el = bar.current;
-    const active = el?.querySelector(".segment.active");
+    const active = el?.querySelector(".disc-tab.active");
     if (!el || !active) return;
     const left = active.offsetLeft - el.offsetLeft;
     if (left < el.scrollLeft || left + active.offsetWidth > el.scrollLeft + el.clientWidth) {
@@ -45,16 +49,20 @@ function DisciplineSelector({ discipline, onDisciplineChange }) {
   }, [discipline]);
 
   return (
-    <div ref={bar} className="segmented" role="group" aria-label="Disciplina">
+    <div ref={bar} className="disc-tabs" role="tablist" aria-label="Disciplina">
       {DISCIPLINE_OPTIONS.map((d) => (
         <button
           key={d.key}
           type="button"
-          className={d.key === discipline ? "segment active" : "segment"}
-          aria-pressed={d.key === discipline}
+          role="tab"
+          className={d.key === discipline ? "disc-tab active" : "disc-tab"}
+          aria-selected={d.key === discipline}
           onClick={() => onDisciplineChange(d.key)}
         >
           {d.label}
+          <span className="disc-count" aria-label={`${d.count} ejercicios`}>
+            {d.count}
+          </span>
         </button>
       ))}
     </div>
@@ -79,18 +87,23 @@ function SequenceChips({ sequences, vuelta, onVueltaChange }) {
     { key: "otros", label: "Otros" },
   ];
   return (
-    <div className="chips chips-sub" role="group" aria-label="Secuencia">
-      {chips.map((chip) => (
-        <button
-          key={chip.key}
-          type="button"
-          className={chip.key === vuelta ? "chip active" : "chip"}
-          aria-pressed={chip.key === vuelta}
-          onClick={() => onVueltaChange(chip.key)}
-        >
-          {chip.label}
-        </button>
-      ))}
+    <div className="filter-row sub">
+      <span className="filter-label" id="filter-secuencia">
+        Secuencia
+      </span>
+      <div className="chips" role="group" aria-labelledby="filter-secuencia">
+        {chips.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            className={chip.key === vuelta ? "chip active" : "chip"}
+            aria-pressed={chip.key === vuelta}
+            onClick={() => onVueltaChange(chip.key)}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -155,8 +168,8 @@ export default function ExerciseList({
         <h1 className="page-title">Ejercicios</h1>
         <span className="page-count">{inDiscipline.length} ejercicios</span>
       </div>
-      <DisciplineSelector discipline={discipline} onDisciplineChange={onDisciplineChange} />
-      <GroupChips group={activeGroup} onGroupChange={onGroupChange} groups={groups} />
+      <DisciplineTabs discipline={discipline} onDisciplineChange={onDisciplineChange} />
+      <GroupChips group={activeGroup} onGroupChange={onGroupChange} groups={groups} label="Grupo" />
       {sequences.length > 0 && (
         <SequenceChips sequences={sequences} vuelta={activeVuelta} onVueltaChange={onVueltaChange} />
       )}

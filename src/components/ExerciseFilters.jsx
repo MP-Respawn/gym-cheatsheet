@@ -11,10 +11,19 @@ import { EXERCISES, GROUPS } from "../data/exercises.js";
 // Groups that have at least one exercise (a new group can be empty for a while).
 const GROUPS_IN_USE = GROUPS.filter((g) => EXERCISES.some((ex) => ex.group === g.key));
 
-// `groups` limits the chips (the home list passes the ones in the chosen discipline).
-export function GroupChips({ group, onGroupChange, groups = GROUPS_IN_USE }) {
-  return (
-    <div className="chips" role="group" aria-label="Grupo muscular">
+/*
+ * `groups` limits the chips (the home list passes the ones in the chosen
+ * discipline). With `label` ("Grupo") the chips sit next to a small label
+ * in a .filter-row; without it they are a standalone row (picker, search).
+ */
+export function GroupChips({ group, onGroupChange, groups = GROUPS_IN_USE, label = null }) {
+  const chips = (
+    <div
+      className={label ? "chips" : "chips standalone"}
+      role="group"
+      aria-label={label ? undefined : "Grupo muscular"}
+      aria-labelledby={label ? "filter-grupo" : undefined}
+    >
       {[{ key: "todos", label: "Todos" }, ...groups].map((g) => (
         <button
           key={g.key}
@@ -26,6 +35,16 @@ export function GroupChips({ group, onGroupChange, groups = GROUPS_IN_USE }) {
           {g.label}
         </button>
       ))}
+    </div>
+  );
+
+  if (!label) return chips;
+  return (
+    <div className="filter-row">
+      <span className="filter-label" id="filter-grupo">
+        {label}
+      </span>
+      {chips}
     </div>
   );
 }

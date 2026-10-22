@@ -184,22 +184,23 @@ const RAW_EXERCISES = [
 
   /* Vuelta: abdomen en pelota */
   {
-    id: "abdominal-pies-en-pelota",
-    name: "Abdominales con pies en la pelota",
+    id: "abdominal-pelota-pies-suelo",
+    name: "Abdominales en pelota con pies en el suelo",
     group: "core",
     vuelta: "pelota",
     measure: "reps",
     pattern: "crunch",
-    equipment: ["pelota", "colchoneta"],
+    equipment: ["pelota"],
     description:
-      "Boca arriba con los pies apoyados arriba de la pelota, subís los hombros contrayendo el abdomen. Abre la vuelta con pelota.",
+      "Con la zona lumbar apoyada sobre la pelota y los pies en el piso, subís los hombros contrayendo el abdomen. Abre la vuelta con pelota.",
     cues: [
-      "Pies apoyados arriba de la pelota, rodillas a 90 grados.",
+      "Zona lumbar apoyada arriba de la pelota.",
+      "Pies firmes en el piso al ancho de cadera, rodillas a 90 grados.",
       "Hombros bien arriba en cada rep.",
     ],
     prescription: "30 reps (o lo que diga la rutina)",
     alternatives: ["abdominal-tradicional", "elevacion-tronco-pelota"],
-    youtubeQuery: "abdominales con pies sobre pelota suiza",
+    youtubeQuery: "abdominales sobre pelota suiza crunch",
     source: "trainer",
   },
   {
@@ -217,7 +218,7 @@ const RAW_EXERCISES = [
       "Hombros bien arriba, el cuello relajado.",
     ],
     prescription: "30 reps (o lo que diga la rutina)",
-    alternatives: ["abdominal-pies-en-pelota", "abdominal-estirado"],
+    alternatives: ["abdominal-pelota-pies-suelo", "abdominal-estirado"],
     youtubeQuery: "elevacion de tronco sosteniendo pelota abdominales",
     source: "trainer",
   },
@@ -335,7 +336,7 @@ const RAW_EXERCISES = [
       "Bajá controlado, sin apoyar del todo entre reps.",
     ],
     prescription: "30 reps (o lo que diga la rutina)",
-    alternatives: ["abdominal-pies-en-pelota", "abdominal-estirado"],
+    alternatives: ["abdominal-pelota-pies-suelo", "abdominal-estirado"],
     youtubeQuery: "crunch abdominal tecnica correcta",
     source: "trainer",
   },
@@ -360,6 +361,25 @@ const RAW_EXERCISES = [
     source: "trainer",
   },
   {
+    id: "abdominal-bolita",
+    name: "Abdominales bolita",
+    group: "core",
+    vuelta: "clasico",
+    measure: "reps",
+    pattern: "tuck-crunch",
+    equipment: ["colchoneta"],
+    description:
+      "Como el abdominal clásico, pero al subir llevás las rodillas al pecho y juntás codos con rodillas, quedando hecho una bolita.",
+    cues: [
+      "Manos detrás de la cabeza, codos hacia adelante.",
+      "Subí los hombros y traé las rodillas a la vez, hasta que se toquen con los codos.",
+    ],
+    prescription: "30 reps (o lo que diga la rutina)",
+    alternatives: ["abdominal-tradicional", "elevacion-piernas"],
+    youtubeQuery: "tuck crunch abdominales rodillas al pecho",
+    source: "trainer",
+  },
+  {
     id: "abdominal-lateral",
     name: "Abdominales laterales (oblicuos)",
     group: "core",
@@ -369,6 +389,7 @@ const RAW_EXERCISES = [
     equipment: ["colchoneta"],
     description: "Acostado de costado, subís el tronco de lado. Trabaja los oblicuos.",
     cues: [
+      "Brazo de abajo cruzado, agarrando el hombro de arriba.",
       "Apoyado sobre el lateral, piernas juntas.",
       "Subí de costado, sin girar el tronco.",
       "Hacé todas de un lado y después del otro.",
@@ -387,10 +408,11 @@ const RAW_EXERCISES = [
     pattern: "leg-raise",
     equipment: ["colchoneta"],
     description:
-      "Boca arriba con las manos debajo de la cola, alternás patadas cortas con las piernas estiradas (flutter kicks). Trabaja el abdomen bajo.",
+      "Boca arriba con las manos debajo de la cola, rodillas arriba con los muslos a 45 grados, alternás patadas cortas moviendo solo la parte de abajo de la pierna. Trabaja el abdomen bajo.",
     cues: [
       "Manos debajo de la cola y zona lumbar pegada al piso.",
-      "Patadas cortas y rápidas, piernas estiradas.",
+      "Muslos quietos a 45 grados, solo se mueve de la rodilla para abajo.",
+      "Patadas cortas y rápidas.",
     ],
     prescription: "30 reps (o lo que diga la rutina)",
     alternatives: ["elevacion-piernas", "dead-bug"],
@@ -464,9 +486,10 @@ const RAW_EXERCISES = [
     pattern: "crunch",
     equipment: ["colchoneta"],
     description:
-      "Crunch con los brazos estirados por encima de la cabeza. Más difícil que el tradicional porque los brazos alargan la palanca.",
+      "Crunch con los brazos estirados por encima de la cabeza y las piernas estiradas en el piso. Más difícil que el tradicional porque los brazos alargan la palanca.",
     cues: [
       "Brazos estirados por encima de la cabeza, junto a las orejas.",
+      "Piernas estiradas y apoyadas todo el tiempo.",
       "Subí los hombros sin tirar los brazos hacia adelante.",
     ],
     prescription: "30 reps (o lo que diga la rutina)",
@@ -579,9 +602,9 @@ const RAW_EXERCISES = [
     pattern: "v-hold",
     equipment: ["colchoneta"],
     description:
-      "Sentado sobre la cola, quedás en V con brazos y piernas estirados y sostenés. Abre la vuelta isométrica.",
+      "Sentado sobre la cola, quedás en V con los brazos estirados por encima de la cabeza, en línea con el tronco, y las piernas estiradas arriba, y sostenés. Abre la vuelta isométrica.",
     cues: [
-      "Brazos y piernas estirados, el cuerpo en V.",
+      "Brazos en línea con el tronco y piernas estiradas: el cuerpo en V.",
       "Hombros bien elevados.",
       "Tensión en el abdomen, no en el cuello ni en la cintura.",
     ],
@@ -2301,7 +2324,7 @@ const RAW_EXERCISES = [
     measure: "secs",
     pattern: "v-hold",
     equipment: ["colchoneta"],
-    anim: { from: "plegado-en-v", hold: true },
+    anim: { hold: true },
     description: "Sentado en equilibrio sobre la cola, piernas y torso arriba en V. Fortalece todo el abdomen.",
     cues: [
       "Pecho alto, sin redondear la espalda.",

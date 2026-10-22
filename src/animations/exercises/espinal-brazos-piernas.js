@@ -1,5 +1,5 @@
 /*
- * Espinales: brazos y piernas (vuelta: abdomen clásico, paso 8)
+ * Espinales: brazos y piernas (vuelta: abdomen clásico, paso 9)
  * Side view, facing right, lying face down with the arms straight out
  * past the head. The superman: arms, chest and legs all lift together, a
  * short hold, then back down slowly. Eyes on the floor. The hips are the

@@ -1,5 +1,5 @@
 /*
- * Espinales: solo brazos (vuelta: abdomen clásico, paso 6)
+ * Espinales: solo brazos (vuelta: abdomen clásico, paso 7)
  * Side view, facing right, lying face down with the arms straight out
  * past the head and the legs long behind. The arms and chest lift off the
  * floor while the legs stay down, a short hold, then back down slowly.

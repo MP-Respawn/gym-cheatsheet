@@ -234,7 +234,7 @@ const RAW_ROUTINES = [
     block: "Vueltas de abdomen",
     focus: "Pelota, en orden y sin descanso",
     steps: [
-      { exerciseIds: ["abdominal-pies-en-pelota"], note: "" },
+      { exerciseIds: ["abdominal-pelota-pies-suelo"], note: "" },
       { exerciseIds: ["elevacion-tronco-pelota"], note: "Hombros bien arriba." },
       { exerciseIds: ["elevacion-piernas-pelota"], note: "" },
       { exerciseIds: ["puente-piernas-pelota"], note: "" },
@@ -252,6 +252,7 @@ const RAW_ROUTINES = [
       { exerciseIds: ["abdominal-tradicional"], note: "" },
       { exerciseIds: ["abdominal-cruzado"], note: "Con un brazo." },
       { exerciseIds: ["abdominal-cruzado"], note: "Con el otro brazo." },
+      { exerciseIds: ["abdominal-bolita"], note: "Codos a las rodillas." },
       { exerciseIds: ["abdominal-lateral"], note: "Apoyado sobre el lateral." },
       { exerciseIds: ["patadas-piernas"], note: "Brazos debajo de la cola." },
       { exerciseIds: ["espinal-brazos"], note: "" },

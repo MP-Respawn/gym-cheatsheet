@@ -1,9 +1,10 @@
 /*
- * Abdominales laterales u oblicuos (vuelta: abdomen clásico, paso 4)
+ * Abdominales laterales u oblicuos (vuelta: abdomen clásico, paso 5)
  * Front view, lying on one side on the floor, legs straight and stacked to
- * the right, top hand behind the head and the bottom arm on the floor. The trunk bends sideways and lifts
- * off the floor toward the ceiling (a side crunch), then lowers under
- * control. The hips are the fixed point and the pelvis does not turn.
+ * the right, top hand behind the head and the bottom arm across the chest,
+ * holding the top shoulder. The trunk bends sideways and lifts off the
+ * floor toward the ceiling (a side crunch), then lowers under control. The
+ * hips are the fixed point and the pelvis does not turn.
  */
 import { STAND_FRONT, arm, leg, point } from "../engine/helpers.js";
 
@@ -13,14 +14,15 @@ const HIP = [90, 130]; // high enough that the lower shoulder and hip rest on th
 const T_DOWN = 274;
 const T_UP = 302;
 
-// Top hand behind the head, elbow open; the bottom arm lies along the floor
-// under the head, hand flat, for a torso tilt T.
+// Top hand behind the head, elbow open; the bottom arm crosses the chest and
+// the hand holds the top shoulder, for a torso tilt T.
 function upper(T) {
   const neck = point(HIP, 32, T);
   const head = point(neck, 15, T);
+  const topShoulder = point(neck, 13, T + 90);
   return {
-    ...arm("R", point(neck, 13, T + 90), point(head, 6, T + 90), "up"),
-    ...arm("L", point(neck, 13, T - 90), [T === T_DOWN ? 18 : 26, 141], "up"),
+    ...arm("R", topShoulder, point(head, 6, T + 90), "up"),
+    ...arm("L", point(neck, 13, T - 90), point(topShoulder, 2, T + 180), "fwd"),
   };
 }
 

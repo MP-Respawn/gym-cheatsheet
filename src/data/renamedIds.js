@@ -15,4 +15,6 @@ export const RENAMED_IDS = {
   "abdomen-clasico": "abdominal-tradicional",
   "vuelta-abdomen-estirado": "elevacion-piernas",
   "plegado-isometrico": "plegado-en-v",
+  // The ball crunch with the feet on the ball became the one with the feet on the floor.
+  "abdominal-pies-en-pelota": "abdominal-pelota-pies-suelo",
 };

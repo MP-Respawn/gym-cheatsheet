@@ -1,14 +1,14 @@
 /*
  * Abdominales estirados (vuelta: abdomen estirado, paso 1)
- * Side view, lying on the back with the head to the left, knees bent and
- * feet flat, arms straight out past the head along the floor. The crunch
- * lifts the shoulders with the arms staying in line with the trunk (they
- * do not swing forward), then lowers under control. The hips are the
+ * Side view, lying on the back with the head to the left, legs straight
+ * along the floor the whole time, arms straight out past the head. The
+ * crunch lifts the shoulders with the arms staying in line with the trunk
+ * (they do not swing forward), then lowers under control. The hips are the
  * fixed point.
  */
-import { STAND_SIDE, both, leg } from "../engine/helpers.js";
+import { STAND_SIDE, both } from "../engine/helpers.js";
 
-const HIP = [90, 140];
+const HIP = [86, 140];
 
 export default {
   view: "side",
@@ -19,9 +19,10 @@ export default {
     ...STAND_SIDE,
     torso: 276,
     head: 280,
-    ...leg("R", HIP, [120, 144], "up"),
-    ...leg("L", HIP, [116, 144], "up"),
-    ...both("foot", 90),
+    // legs straight and resting on the floor, toes up
+    ...both("thigh", 90),
+    ...both("shin", 90),
+    ...both("foot", 10),
     // arms straight past the head, next to the ears
     armR: 274,
     forearmR: 274,

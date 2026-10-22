@@ -1,5 +1,5 @@
 /*
- * Espinales: solo piernas (vuelta: abdomen clásico, paso 7)
+ * Espinales: solo piernas (vuelta: abdomen clásico, paso 8)
  * Side view, facing right, lying face down with the arms straight out
  * past the head. Both legs lift straight and together, squeezing the
  * glutes, while the chest and arms stay on the floor; a short hold, then

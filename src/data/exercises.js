@@ -204,6 +204,27 @@ const RAW_EXERCISES = [
     source: "trainer",
   },
   {
+    id: "abdominal-pelota-oblicuos",
+    name: "Abdominales en pelota oblicuos",
+    group: "core",
+    vuelta: "pelota",
+    measure: "reps",
+    pattern: "crunch",
+    equipment: ["pelota"],
+    description:
+      "Igual que el abdominal en pelota con pies en el suelo, pero subís en diagonal hacia adelante, llevando el hombro hacia la rodilla contraria. Trabaja los oblicuos.",
+    cues: [
+      "Sentado en la pelota con la zona lumbar apoyada y los pies firmes en el piso.",
+      "Subí en diagonal hacia adelante, hombro hacia la rodilla contraria.",
+      "Girá desde el abdomen, no desde el cuello.",
+      "Alterná los lados.",
+    ],
+    prescription: "30 reps alternando lados (o lo que diga la rutina)",
+    alternatives: ["abdominal-pelota-pies-suelo", "abdominal-cruzado"],
+    youtubeQuery: "abdominales oblicuos en pelota suiza",
+    source: "trainer",
+  },
+  {
     id: "elevacion-tronco-pelota",
     name: "Elevación de tronco con pelota",
     group: "core",

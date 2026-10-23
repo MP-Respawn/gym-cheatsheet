@@ -235,6 +235,7 @@ const RAW_ROUTINES = [
     focus: "Pelota, en orden y sin descanso",
     steps: [
       { exerciseIds: ["abdominal-pelota-pies-suelo"], note: "" },
+      { exerciseIds: ["abdominal-pelota-oblicuos"], note: "En diagonal, alternando lados." },
       { exerciseIds: ["elevacion-tronco-pelota"], note: "Hombros bien arriba." },
       { exerciseIds: ["elevacion-piernas-pelota"], note: "" },
       { exerciseIds: ["puente-piernas-pelota"], note: "" },

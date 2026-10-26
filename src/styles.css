@@ -1504,6 +1504,57 @@ mark {
   flex: none;
 }
 
+/* Routines divided into days ---------------------------------------- */
+
+/* Day tabs in the editor and day chips on the routine page: they wrap
+   onto a second line instead of scrolling, so every day stays visible */
+.day-tabs,
+.day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.day-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.chip.chip-add {
+  border-style: dashed;
+  color: var(--accent);
+}
+
+/* Under the day's exercises: move the day, remove it */
+.day-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.day-tools .day-remove {
+  margin-left: auto;
+  color: #ff8a8a;
+}
+
+.split-button {
+  margin-top: 12px;
+}
+
+/* "Mis rutinas": a divided routine's name above its day cards */
+.my-program {
+  margin-bottom: 10px;
+}
+
+.my-program-title {
+  margin: 6px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 /* Bar stuck to the bottom (above the tab bar) with the main action */
 .action-bar {
   position: fixed;

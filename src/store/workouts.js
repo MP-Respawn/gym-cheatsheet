@@ -139,7 +139,8 @@ export async function startSession(routine) {
     id: newId(),
     ownerId: LOCAL_OWNER,
     routineId: routine.id,
-    routineName: routine.name,
+    // A day of one of your divided routines reads "Mi programa · Día 2"
+    routineName: routine.programId ? `${routine.block} · ${routine.name}` : routine.name,
     startedAt: now(),
     finishedAt: null,
     entries,

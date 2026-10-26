@@ -2,7 +2,9 @@
  * RoutineDetail.jsx: one routine (#/rutina/<id>)
  *
  * Works for the trainer's routines and for yours: App.jsx finds the routine
- * and passes it in, with `isMine` telling which kind it is.
+ * and passes it in, with `isMine` telling which kind it is. When the routine
+ * is one day of several (yours divided into days, or a trainer block like
+ * Bloque A), chips under the title switch between the days.
  *
  * Lists the steps in order. A step can hold one exercise or several done
  * together (superset / circuit). For each exercise you see its animation,
@@ -19,7 +21,7 @@
  */
 import { VUELTAS, getExercise, getVuelta } from "../data/exercises.js";
 import { stepExerciseIds, vueltaRoutine } from "../data/routines.js";
-import { useActiveSession } from "../store/useStore.js";
+import { useActiveSession, useRoutineDays } from "../store/useStore.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
 
@@ -45,6 +47,7 @@ function vueltaSummary(step) {
 
 export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChange }) {
   const active = useActiveSession(routine?.id);
+  const days = useRoutineDays(routine, isMine);
 
   if (!routine) {
     return (
@@ -80,9 +83,31 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
       </div>
 
       <div className="content">
-        <p className="routine-block">{isMine ? "Mi rutina" : routine.block}</p>
+        <p className="routine-block">{isMine ? (routine.block ?? "Mi rutina") : routine.block}</p>
         <h1 className="detail-title">{routine.name}</h1>
         {routine.focus && <p className="routine-focus hide-in-gym">{routine.focus}</p>}
+
+        {/* A routine split into days (yours, or a trainer block): jump between
+            them. Switching days replaces this page in the history, so "Volver"
+            still goes back to the list. */}
+        {days.length > 1 && (
+          <nav className="day-chips" aria-label="Días">
+            {days.map((d) => (
+              <a
+                key={d.id}
+                href={`#/rutina/${d.id}`}
+                className={d.id === routine.id ? "chip active" : "chip"}
+                aria-current={d.id === routine.id ? "page" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (d.id !== routine.id) window.location.replace(`#/rutina/${d.id}`);
+                }}
+              >
+                {d.name}
+              </a>
+            ))}
+          </nav>
+        )}
 
         {/* Train (log weights) and, for your own routines, edit */}
         <div className="routine-actions">

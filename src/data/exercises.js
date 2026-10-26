@@ -1234,6 +1234,27 @@ const RAW_EXERCISES = [
     source: "added",
   },
   {
+    id: "puente-gluteos-talones",
+    name: "Puente de glúteos en talones (puntas arriba)",
+    group: "gluteos",
+    secondary: ["isquios"],
+    measure: "reps",
+    pattern: "glute-bridge",
+    equipment: ["colchoneta"],
+    description:
+      "El puente al revés: los pies más lejos de la cola, apoyando solo los talones con las puntas hacia arriba. Así los isquiotibiales hacen más trabajo que en el puente común.",
+    cues: [
+      "Talones apoyados, puntas de los pies hacia arriba.",
+      "Pies un poco más lejos de la cola que en el puente común.",
+      "Empujá con los talones y apretá glúteos arriba.",
+      "Bajá controlado sin apoyar del todo.",
+    ],
+    prescription: "12 reps x 3 series",
+    alternatives: ["hip-thrust-mancuerna", "curl-isquios-pelota"],
+    youtubeQuery: "puente de gluteos apoyando talones isquiotibiales",
+    source: "added",
+  },
+  {
     id: "patada-gluteo-polea",
     name: "Patada de glúteo en polea",
     group: "gluteos",

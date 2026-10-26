@@ -1,7 +1,8 @@
 /*
  * RoutineEditor.jsx: create or edit one of your routines
  *   #/rutina/nueva          -> blank routine
- *   #/rutina/<id>/editar    -> edit an existing one of yours
+ *   #/rutina/<id>/editar    -> edit an existing one of yours (if it is divided
+ *                              into days, the whole routine opens on that day)
  *
  * The editor works on a private copy ("draft"); nothing is saved until you
  * tap "Guardar rutina". Leaving with unsaved changes asks first.
@@ -9,10 +10,18 @@
  * A routine is a list of steps. Each step has 1 exercise, or 2 or 3 done
  * together (superset / circuit), plus optional "Series y reps" and "Nota".
  * Steps can be moved up and down, and removed.
+ *
+ * "Dividir en días" splits the routine into days (Día 1, Día 2...), each
+ * with its own name, focus and steps; tabs switch between them. Each day is
+ * saved as its own routine (see saveProgram in store/routines.js), so it can
+ * be opened and trained on its own.
+ *
+ * The draft: { programId, name, days: [{ id, name, focus, steps }] }.
+ * An undivided routine is simply a draft with one day.
  */
 import { useState } from "react";
 import { getExercise } from "../data/exercises.js";
-import { deleteRoutine, getRoutineNow, newRoutineDraft, newStep, saveRoutine } from "../store/routines.js";
+import { deleteProgram, getRoutineNow, newDay, newStep, programDaysOf, saveProgram } from "../store/routines.js";
 import BackButton from "../components/BackButton.jsx";
 import ExercisePicker from "../components/ExercisePicker.jsx";
 
@@ -22,6 +31,8 @@ const MAX_PER_STEP = 3;
 const ICONS = {
   up: "M6 15l6-6 6 6",
   down: "M6 9l6 6 6-6",
+  left: "M15 6l-6 6 6 6",
+  right: "M9 6l6 6-6 6",
   close: "M6 6l12 12M18 6L6 18",
 };
 function Icon({ name }) {
@@ -39,12 +50,37 @@ function stepKind(count) {
   return null;
 }
 
+// "Día 2" when the day has no name of its own.
+const dayLabel = (day, index) => day.name.trim() || `Día ${index + 1}`;
+
+// Builds the draft from what is saved (or a blank one), plus the day to open.
+function loadDraft(id) {
+  const routine = id ? getRoutineNow(id) : null;
+  if (!routine) return { draft: { programId: null, name: "", days: [newDay()] }, dayIndex: 0 };
+  const days = programDaysOf(routine);
+  if (!routine.programId) {
+    const only = { id: routine.id, name: "", focus: routine.focus ?? "", steps: routine.steps };
+    return { draft: { programId: null, name: routine.name, days: [only] }, dayIndex: 0 };
+  }
+  return {
+    draft: {
+      programId: routine.programId,
+      name: routine.block ?? "",
+      days: days.map((d) => ({ id: d.id, name: d.name, focus: d.focus ?? "", steps: d.steps })),
+    },
+    dayIndex: Math.max(0, days.findIndex((d) => d.id === id)),
+  };
+}
+
 export default function RoutineEditor({ id = null }) {
   const existing = id ? getRoutineNow(id) : null;
 
-  // The working copy, and a snapshot of how it started (to detect changes).
-  const [draft, setDraft] = useState(() => (existing ? structuredClone(existing) : newRoutineDraft()));
-  const [initial] = useState(() => JSON.stringify(draft));
+  // The working copy, a snapshot of how it started (to detect changes), and
+  // which day is on screen.
+  const [loaded] = useState(() => loadDraft(id));
+  const [draft, setDraft] = useState(() => structuredClone(loaded.draft));
+  const [initial] = useState(() => JSON.stringify(loaded.draft));
+  const [current, setCurrent] = useState(loaded.dayIndex);
   const [picker, setPicker] = useState(null); // null | { stepId: null | string }
   const [error, setError] = useState("");
 
@@ -60,6 +96,8 @@ export default function RoutineEditor({ id = null }) {
   }
 
   const dirty = JSON.stringify(draft) !== initial;
+  const divided = draft.days.length > 1;
+  const day = draft.days[current];
 
   /* ---- Changes to the draft ---- */
 
@@ -68,78 +106,122 @@ export default function RoutineEditor({ id = null }) {
     setError("");
   }
 
+  // Changes the day on screen: `change` gets the day and returns the new one.
+  function updateDay(change) {
+    setDraft((d) => ({ ...d, days: d.days.map((x, i) => (i === current ? change(x) : x)) }));
+    setError("");
+  }
+
   function updateStep(stepId, fields) {
-    setDraft((d) => ({ ...d, steps: d.steps.map((s) => (s.id === stepId ? { ...s, ...fields } : s)) }));
+    updateDay((x) => ({ ...x, steps: x.steps.map((s) => (s.id === stepId ? { ...s, ...fields } : s)) }));
   }
 
   // Called by the picker with the chosen exercise.
   function pick(exerciseId) {
     if (picker.stepId) {
-      setDraft((d) => ({
-        ...d,
-        steps: d.steps.map((s) =>
-          s.id === picker.stepId ? { ...s, exerciseIds: [...s.exerciseIds, exerciseId] } : s,
-        ),
+      updateDay((x) => ({
+        ...x,
+        steps: x.steps.map((s) => (s.id === picker.stepId ? { ...s, exerciseIds: [...s.exerciseIds, exerciseId] } : s)),
       }));
     } else {
-      setDraft((d) => ({ ...d, steps: [...d.steps, newStep(exerciseId)] }));
+      updateDay((x) => ({ ...x, steps: [...x.steps, newStep(exerciseId)] }));
     }
     setPicker(null);
-    setError("");
   }
 
   // Removing the last exercise of a step removes the whole step.
   function removeExercise(stepId, exerciseId) {
-    setDraft((d) => ({
-      ...d,
-      steps: d.steps
-        .map((s) => (s.id === stepId ? { ...s, exerciseIds: s.exerciseIds.filter((x) => x !== exerciseId) } : s))
+    updateDay((x) => ({
+      ...x,
+      steps: x.steps
+        .map((s) => (s.id === stepId ? { ...s, exerciseIds: s.exerciseIds.filter((e) => e !== exerciseId) } : s))
         .filter((s) => s.exerciseIds.length > 0),
     }));
   }
 
   function moveStep(index, delta) {
-    setDraft((d) => {
-      const steps = [...d.steps];
+    updateDay((x) => {
+      const steps = [...x.steps];
       const target = index + delta;
-      if (target < 0 || target >= steps.length) return d;
+      if (target < 0 || target >= steps.length) return x;
       [steps[index], steps[target]] = [steps[target], steps[index]];
-      return { ...d, steps };
+      return { ...x, steps };
     });
   }
 
   function removeStep(stepId) {
-    setDraft((d) => ({ ...d, steps: d.steps.filter((s) => s.id !== stepId) }));
+    updateDay((x) => ({ ...x, steps: x.steps.filter((s) => s.id !== stepId) }));
+  }
+
+  /* ---- Days ---- */
+
+  // Adds a day at the end and shows it. The first time, this is "Dividir en días".
+  function addDay() {
+    setDraft((d) => ({ ...d, days: [...d.days, newDay()] }));
+    setCurrent(draft.days.length);
+    setError("");
+  }
+
+  function moveDay(delta) {
+    const target = current + delta;
+    if (target < 0 || target >= draft.days.length) return;
+    setDraft((d) => {
+      const days = [...d.days];
+      [days[current], days[target]] = [days[target], days[current]];
+      return { ...d, days };
+    });
+    setCurrent(target);
+  }
+
+  // With one day left, the routine is no longer divided.
+  function removeDay() {
+    if (day.steps.length > 0 && !window.confirm(`¿Eliminar ${dayLabel(day, current)} y sus ejercicios?`)) return;
+    setDraft((d) => ({ ...d, days: d.days.filter((_, i) => i !== current) }));
+    setCurrent(Math.max(0, current - 1));
+    setError("");
   }
 
   /* ---- Save and delete ---- */
 
   async function save() {
-    if (draft.steps.length === 0) {
-      setError("Agregá al menos un ejercicio.");
+    const empty = draft.days.findIndex((d) => d.steps.length === 0);
+    if (empty >= 0) {
+      setCurrent(empty);
+      setError(divided ? `${dayLabel(draft.days[empty], empty)} no tiene ejercicios.` : "Agregá al menos un ejercicio.");
       return;
     }
-    const saved = await saveRoutine({
-      ...draft,
+    const saved = await saveProgram({
+      programId: draft.programId,
       name: draft.name.trim() || "Mi rutina",
-      focus: draft.focus.trim(),
-      steps: draft.steps.map((s) => ({ ...s, prescription: s.prescription.trim(), note: s.note.trim() })),
+      days: draft.days.map((d) => ({
+        ...d,
+        name: d.name.trim(),
+        focus: d.focus.trim(),
+        steps: d.steps.map((s) => ({ ...s, prescription: s.prescription.trim(), note: s.note.trim() })),
+      })),
     });
-    // New routine: replace the editor in the history with the routine page,
-    // so "Volver" from there goes to the list. Editing: go back to the routine.
-    if (existing) window.history.back();
-    else window.location.replace(`#/rutina/${saved.id}`);
+    // Go to the day that was on screen. Editing the same page we came from:
+    // go back to it. Otherwise replace the editor in the history, so "Volver"
+    // from there goes to the list.
+    const target = saved[current]?.id ?? saved[0].id;
+    if (existing && target === id) window.history.back();
+    else window.location.replace(`#/rutina/${target}`);
   }
 
   async function remove() {
-    if (!window.confirm("¿Eliminar esta rutina? No se puede deshacer.")) return;
-    await deleteRoutine(draft.id);
+    const count = programDaysOf(existing).length;
+    const question =
+      count > 1
+        ? `¿Eliminar esta rutina y sus ${count} días? No se puede deshacer.`
+        : "¿Eliminar esta rutina? No se puede deshacer.";
+    if (!window.confirm(question)) return;
+    await deleteProgram(existing);
     window.location.replace("#/rutinas");
   }
 
   /* ---- Screen ---- */
 
-  const pickerStep = picker?.stepId ? draft.steps.find((s) => s.id === picker.stepId) : null;
+  const pickerStep = picker?.stepId ? day.steps.find((s) => s.id === picker.stepId) : null;
 
   return (
     <div className="screen has-action-bar">
@@ -150,31 +232,68 @@ export default function RoutineEditor({ id = null }) {
 
       <div className="content">
         <label className="field">
-          <span className="field-label">Nombre</span>
+          <span className="field-label">{divided ? "Nombre de la rutina" : "Nombre"}</span>
           <input
             className="input"
             value={draft.name}
-            placeholder="Ej: Piernas del lunes"
+            placeholder={divided ? "Ej: Plan de 3 días" : "Ej: Piernas del lunes"}
             maxLength={60}
             onChange={(e) => update({ name: e.target.value })}
           />
         </label>
+
+        {/* Divided: one tab per day, plus "+ Día" */}
+        {divided && (
+          <div className="day-tabs" role="tablist" aria-label="Días de la rutina">
+            {draft.days.map((d, i) => (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                aria-selected={i === current}
+                className={i === current ? "chip active" : "chip"}
+                onClick={() => {
+                  setCurrent(i);
+                  setError("");
+                }}
+              >
+                {dayLabel(d, i)}
+              </button>
+            ))}
+            <button type="button" className="chip chip-add" onClick={addDay}>
+              + Día
+            </button>
+          </div>
+        )}
+
+        {divided && (
+          <label className="field">
+            <span className="field-label">Nombre del día</span>
+            <input
+              className="input"
+              value={day.name}
+              placeholder={`Día ${current + 1}`}
+              maxLength={40}
+              onChange={(e) => updateDay((x) => ({ ...x, name: e.target.value }))}
+            />
+          </label>
+        )}
         <label className="field">
           <span className="field-label">Enfoque (opcional)</span>
           <input
             className="input"
-            value={draft.focus}
+            value={day.focus}
             placeholder="Ej: Cuádriceps + glúteos"
             maxLength={60}
-            onChange={(e) => update({ focus: e.target.value })}
+            onChange={(e) => updateDay((x) => ({ ...x, focus: e.target.value }))}
           />
         </label>
 
-        <h2 className="block-title">Ejercicios</h2>
-        {draft.steps.length === 0 && <p className="hint">Todavía no agregaste ejercicios.</p>}
+        <h2 className="block-title">{divided ? `Ejercicios de ${dayLabel(day, current)}` : "Ejercicios"}</h2>
+        {day.steps.length === 0 && <p className="hint">Todavía no agregaste ejercicios.</p>}
 
         <ol className="steps">
-          {draft.steps.map((step, index) => {
+          {day.steps.map((step, index) => {
             const kind = stepKind(step.exerciseIds.length);
             const defaultPrescription = getExercise(step.exerciseIds[0])?.prescription ?? "";
             return (
@@ -191,7 +310,7 @@ export default function RoutineEditor({ id = null }) {
                       type="button"
                       className="icon-button"
                       aria-label="Bajar"
-                      disabled={index === draft.steps.length - 1}
+                      disabled={index === day.steps.length - 1}
                       onClick={() => moveStep(index, 1)}
                     >
                       <Icon name="down" />
@@ -250,6 +369,31 @@ export default function RoutineEditor({ id = null }) {
         <button type="button" className="add-button" onClick={() => setPicker({ stepId: null })}>
           + Agregar ejercicio
         </button>
+
+        {/* Days: split the routine, or move / remove the day on screen */}
+        {divided ? (
+          <div className="day-tools">
+            <button type="button" className="icon-button" aria-label="Mover el día a la izquierda" disabled={current === 0} onClick={() => moveDay(-1)}>
+              <Icon name="left" />
+            </button>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Mover el día a la derecha"
+              disabled={current === draft.days.length - 1}
+              onClick={() => moveDay(1)}
+            >
+              <Icon name="right" />
+            </button>
+            <button type="button" className="text-button day-remove" onClick={removeDay}>
+              Eliminar {dayLabel(day, current)}
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="secondary-button split-button" onClick={addDay}>
+            Dividir en días
+          </button>
+        )}
 
         {existing && (
           <button type="button" className="danger-button" onClick={remove}>

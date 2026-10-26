@@ -9,7 +9,8 @@
  * routines.js / workouts.js.
  */
 import { useMemo, useSyncExternalStore } from "react";
-import { getRoutine as getTrainerRoutine } from "../data/routines.js";
+import { ROUTINES as TRAINER_ROUTINES, getRoutine as getTrainerRoutine } from "../data/routines.js";
+import { programDaysOf } from "./routines.js";
 import { isPersistent, readData, subscribe } from "./storage.js";
 import { historyForNow } from "./workouts.js";
 
@@ -25,6 +26,22 @@ export function useMyRoutines() {
     () => [...data.routines].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")),
     [data],
   );
+}
+
+/*
+ * The days that go with a routine, in order, for the day chips on the
+ * routine page: for yours, the days it was divided into; for the trainer's,
+ * the other routines of the same block (Bloque A: Día 1, Día 2).
+ * A single routine returns just [routine].
+ */
+export function useRoutineDays(routine, isMine) {
+  const data = usePersonalData();
+  return useMemo(() => {
+    if (!routine) return [];
+    if (isMine) return programDaysOf(routine, data.routines);
+    if (!routine.block) return [routine];
+    return TRAINER_ROUTINES.filter((r) => r.block === routine.block && r.discipline === routine.discipline);
+  }, [data, routine, isMine]);
 }
 
 /*

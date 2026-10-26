@@ -3,6 +3,7 @@
  *
  * Top: the app's top nav (menu, name, search bar). Then "Mis rutinas", the
  * ones you built (saved on this device), with a button to create a new one.
+ * A routine divided into days shows its name with one card per day.
  * Below: the app's routines, under a header per discipline (Gimnasio,
  * Yoga...) and, inside it, per block ("Bloque A", "Vueltas de abdomen").
  * The backup tools ("Tus datos") live in the side menu (MenuDrawer).
@@ -27,7 +28,9 @@ function RoutineCard({ routine }) {
       <div className="card-text">
         <span className="card-title">{routine.name}</span>
         {routine.focus && <span className="card-meta">{routine.focus}</span>}
-        <span className="card-desc">{routine.steps.length} pasos</span>
+        <span className="card-desc">
+          {routine.steps.length} {routine.steps.length === 1 ? "paso" : "pasos"}
+        </span>
       </div>
       <Chevron />
     </a>
@@ -36,6 +39,18 @@ function RoutineCard({ routine }) {
 
 export default function RoutineList({ onMenuClick }) {
   const mine = useMyRoutines();
+
+  // Your routines, with the days of a divided one kept together (in day
+  // order) where its most recently edited day would be.
+  const myGroups = [];
+  for (const routine of mine) {
+    const key = routine.programId ?? routine.id;
+    if (myGroups.some((g) => g.key === key)) continue;
+    const days = routine.programId
+      ? mine.filter((r) => r.programId === key).sort((a, b) => (a.dayIndex ?? 0) - (b.dayIndex ?? 0))
+      : [routine];
+    myGroups.push({ key, name: routine.block ?? routine.name, days });
+  }
 
   // Disciplines that have routines, each with its blocks in first-appearance
   // order ("Bloque A", "Bloque B", "Vueltas de abdomen"). A block named like
@@ -59,9 +74,21 @@ export default function RoutineList({ onMenuClick }) {
         <section className="list-section">
           <h2 className="section-title">Mis rutinas</h2>
           <div className="card-list">
-            {mine.map((routine) => (
-              <RoutineCard key={routine.id} routine={routine} />
-            ))}
+            {myGroups.map((group) =>
+              group.days.length === 1 ? (
+                <RoutineCard key={group.key} routine={group.days[0]} />
+              ) : (
+                // A routine divided into days: its name, then one card per day
+                <div key={group.key} className="my-program">
+                  <h3 className="my-program-title">{group.name}</h3>
+                  <div className="card-list">
+                    {group.days.map((day) => (
+                      <RoutineCard key={day.id} routine={day} />
+                    ))}
+                  </div>
+                </div>
+              ),
+            )}
             <a className="add-button" href="#/rutina/nueva">
               + Nueva rutina
             </a>

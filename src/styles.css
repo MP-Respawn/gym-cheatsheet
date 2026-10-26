@@ -1334,6 +1334,75 @@ mark {
   color: var(--accent);
 }
 
+/* ---------- 7a. Sign-in and invitation ---------- */
+
+/* Centered card on an otherwise empty page (no navigation while signed out) */
+.auth-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.auth-title {
+  margin-top: 20px;
+}
+
+.auth-intro {
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.auth-intro strong {
+  color: var(--text);
+}
+
+.auth-code {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.3em;
+}
+
+.auth-error {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--danger);
+}
+
+.auth-submit {
+  margin-top: 20px;
+}
+
+.auth-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+/* "No routines yet" inside a section: left aligned like the cards */
+.list-empty {
+  padding: 4px 0 0;
+  text-align: left;
+}
+
 /* ---------- 7b. Your routines, editor, workout log, history ---------- */
 
 /* Title shown next to "Volver" on the editor and the workout log */

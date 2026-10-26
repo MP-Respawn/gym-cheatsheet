@@ -64,12 +64,17 @@ Funciones que llama la app (`supabase.rpc`): `create_client_invitation`, `create
 - **Entrenar**: el cliente abre el día, registra series (pantalla actual de `WorkoutLog.jsx`), se guarda local y se sincroniza. El entrenador ve progreso.
 - **Solicitar ejercicio**: el entrenador pide → email a vos (Edge Function + Resend) → lo agregan en código → lo marcan `accepted` con el id nuevo.
 
-## Frontend (próximas etapas)
+## Frontend
 
-- `@supabase/supabase-js` + TanStack Query; router con rutas por rol (el hash router actual no escala a tres áreas).
-- `src/store/` pasa a hablar con Supabase; `storage.js` queda como caché/cola offline.
-- Se reutilizan `ExerciseList`, `ExerciseDetail`, `Search` y las animaciones para todos; `RoutineDetail`/`ProgramDetail` para el cliente; `RoutineEditor` se vuelve el constructor del entrenador; `WorkoutLog` sirve al cliente y, en lectura, al entrenador.
-- `src/data/routines.js` se importa como plantillas de tu entrenador con un script de seed.
+Hecho en la etapa 2:
+- Todo pide cuenta. Login con código por email (sin contraseña); solo un link de invitación puede crear una cuenta nueva.
+- `src/store/` habla con Supabase (`auth.js`, `remote.js`) y guarda una copia por cuenta en el teléfono (`storage.js`): la rutina abre sin señal y un entrenamiento se registra offline y se sube después con `save_workout_session` (todo o nada, reintentar no duplica).
+- `RoutineList`, `RoutineDetail`, `ProgramDetail` y `WorkoutLog` muestran las rutinas asignadas, convertidas a la forma de siempre por `assigned.js`. Las secuencias del catálogo (vueltas, Flow básico, yoga, Jiu Jitsu) siguen en el código.
+- Se quitaron las rutinas propias, el editor y la copia de seguridad local. El editor (`src/screens/RoutineEditor.jsx` y `src/components/ExercisePicker.jsx`) está en el historial de git para reusarlo como constructor del entrenador en la etapa 3.
+- `scripts/seed-trainer.mjs` importa Bloque A y B como plantillas de un entrenador, se las asigna a un cliente e imprime su link.
+
+Pendiente:
+- Router con rutas por rol para el panel del entrenador (el hash router alcanza para el cliente).
 - PWA instalable con catálogo y rutina asignada offline.
 
 ## Operación
@@ -82,7 +87,7 @@ Funciones que llama la app (`supabase.rpc`): `create_client_invitation`, `create
 ## Etapas
 
 1. **Base** ✅ esquema, permisos, invitaciones y asignación, con tests.
-2. **Cliente**: login por invitación, rutina asignada desde la base, catálogo de solo lectura, registro sincronizado.
+2. **Cliente** ✅ login por invitación, rutina asignada desde la base, catálogo de solo lectura, registro sincronizado.
 3. **Panel entrenador**: clientes, constructor de plantillas, asignación con ajuste por cliente, progreso.
 4. **Panel SuperAdmin**: entrenadores y solicitudes de ejercicios con emails.
 5. **PWA offline + pulido**; después, textos y definiciones del catálogo.

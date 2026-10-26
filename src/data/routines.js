@@ -1,8 +1,14 @@
 /*
  * routines.js
  *
- * Your saved routines, in the order the trainer gave them. Pure data: the
- * Rutinas screens read this array and draw it.
+ * Routines written in the code, in the order the trainer gave them. Pure data.
+ * Two kinds:
+ *   - the catalog's sequences (one-day routines: the core vueltas, Flow
+ *     básico, the yoga and Jiu Jitsu routines). The app shows them to
+ *     everyone, under Rutinas, like the exercise catalog.
+ *   - the days of PROGRAMS below (Bloque A, Bloque B). The app does NOT
+ *     show these: they were imported into the database as the trainer's
+ *     templates (scripts/seed-trainer.mjs) and reach clients by assignment.
  *
  * Shape of one routine:
  *   id      kebab-case key, used in the URL (#/rutina/<id>)
@@ -358,12 +364,12 @@ const RAW_ROUTINES = [
  * Routines with days. Every routine has days; most of the trainer's have
  * just one (each vuelta, each flow), so they are a single routine above.
  * These group several of the routines above as the days of one routine:
- *   id      key, used in the URL (#/programa/<id>)
+ *   id      key of the program
  *   name    title of the routine page ("Bloque A")
  *   focus   short summary
  *   dayIds  the day routines, in order
- * normalizeRoutine gives each day its programId and dayIndex, the same
- * fields your own routines use (src/store/routines.js).
+ * normalizeRoutine gives each day its programId and dayIndex. These are the
+ * source scripts/seed-trainer.mjs imports as the trainer's templates.
  */
 export const PROGRAMS = [
   {
@@ -394,12 +400,12 @@ export function getRoutine(id) {
   return ROUTINES.find((r) => r.id === id);
 }
 
-// A trainer routine with days, as { id, name, focus, discipline, days, isMine: false }.
+// A program with its day routines, as { id, name, focus, discipline, days }.
 export function getTrainerProgram(id) {
   const program = PROGRAMS.find((p) => p.id === id);
   if (!program) return undefined;
   const days = program.dayIds.map(getRoutine).filter(Boolean);
-  return { id: program.id, name: program.name, focus: program.focus, discipline: days[0]?.discipline, days, isMine: false };
+  return { id: program.id, name: program.name, focus: program.focus, discipline: days[0]?.discipline, days };
 }
 
 // The routine that holds a vuelta's full sequence ("pelota" -> its routine).

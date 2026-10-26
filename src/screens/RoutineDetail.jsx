@@ -1,10 +1,10 @@
 /*
  * RoutineDetail.jsx: one routine (#/rutina/<id>)
  *
- * Works for the trainer's routines and for yours: App.jsx finds the routine
- * and passes it in, with `isMine` telling which kind it is. When the routine
- * is one day of several (yours divided into days, or a trainer block like
- * Bloque A), chips under the title switch between the days.
+ * Works for the routines your trainer assigned you and for the catalog's
+ * sequences (the vueltas...): App.jsx finds the routine and passes it in.
+ * When the routine is one day of several (Bloque A: Día 1, Día 2), chips
+ * under the title switch between the days.
  *
  * Lists the steps in order. A step can hold one exercise or several done
  * together (superset / circuit). For each exercise you see its animation,
@@ -12,8 +12,8 @@
  * vuelta step (core circuit) is shown compactly: the vuelta's name and all
  * its exercises in one line, linking to the whole vuelta.
  *
- * Buttons: "Entrenar" opens the workout log (or "Continuar" if one is in
- * progress); "Editar" only shows on your own routines.
+ * Button: "Entrenar" opens the workout log (or "Continuar" if one is in
+ * progress). Routines are read-only: only the trainer changes them.
  *
  * "Modo gym" switch: bigger text and animations, and hides descriptions and
  * notes, so only the name, the prescription and the animation remain. Its
@@ -45,9 +45,9 @@ function vueltaSummary(step) {
   return names.map((n) => (n.count > 1 ? `${n.name} x${n.count}` : n.name)).join(", ");
 }
 
-export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChange }) {
+export default function RoutineDetail({ routine, gymMode, onGymModeChange }) {
   const active = useActiveSession(routine?.id);
-  const days = useRoutineDays(routine, isMine);
+  const days = useRoutineDays(routine);
   // The routine page, when this is one day of several (#/programa/<id>).
   const programHref = days.length > 1 ? `#/programa/${routine.programId}` : null;
 
@@ -91,12 +91,12 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
             {routine.block}
           </a>
         ) : (
-          <p className="routine-block">{isMine ? "Mi rutina" : routine.block}</p>
+          <p className="routine-block">{routine.block}</p>
         )}
         <h1 className="detail-title">{routine.name}</h1>
         {routine.focus && <p className="routine-focus hide-in-gym">{routine.focus}</p>}
 
-        {/* A routine split into days (yours, or a trainer block): jump between
+        {/* A routine split into days: jump between
             them. Switching days replaces this page in the history, so "Volver"
             still goes back to the list. */}
         {days.length > 1 && (
@@ -118,16 +118,11 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
           </nav>
         )}
 
-        {/* Train (log weights) and, for your own routines, edit */}
+        {/* Train (log weights) */}
         <div className="routine-actions">
           <a className="primary-button" href={`#/rutina/${routine.id}/entrenar`}>
             {active ? "Continuar entrenamiento" : "Entrenar"}
           </a>
-          {isMine && (
-            <a className="secondary-button" href={`#/rutina/${routine.id}/editar`}>
-              Editar
-            </a>
-          )}
         </div>
 
         <ol className="steps">

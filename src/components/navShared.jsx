@@ -3,14 +3,15 @@
  *
  * Pieces shared by the two navigations: the phone side menu (MenuDrawer)
  * and the desktop side nav (SideNav). Both show the same links, the Modo
- * gym switch and the backup tools, just laid out differently.
+ * gym switch and your account, just laid out differently.
  *
- *   Icon            a line icon drawn from one SVG path (RPWN style: 1.8 stroke)
- *   GymSwitch       the Modo gym on/off switch
- *   BackupControls  "Exportar copia" / "Importar copia" + the result message
+ *   Icon             a line icon drawn from one SVG path (RPWN style: 1.8 stroke)
+ *   GymSwitch        the Modo gym on/off switch
+ *   AccountControls  who is signed in + "Cerrar sesión"
+ *   SyncNote         where your data lives, and what is still waiting to upload
  */
-import { useRef } from "react";
-import { exportData, importData } from "../store/storage.js";
+import { signOut } from "../store/auth.js";
+import { useAuth, useIsPersistent, usePendingCount, useRemoteStatus } from "../store/useStore.js";
 
 export function Icon({ d, size = 18 }) {
   return (
@@ -46,75 +47,47 @@ export function GymSwitch({ on, onChange, className, hint = false }) {
   );
 }
 
-// Downloads all your personal data as a .json file.
-function downloadBackup() {
-  const blob = new Blob([exportData()], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `respawn-fitness-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 /*
- * Export / import buttons plus the "Listo: ..." message after an import.
- * `linkClass` styles each button like a nav row; `noteClass` styles the
- * message. `message` and `onMessage` live in the parent so it can clear
- * the text when the menu closes.
+ * The signed-in email and the sign-out button. `linkClass` styles the button
+ * like a nav row; `noteClass` styles the email line.
  */
-export function BackupControls({ linkClass, noteClass, message, onMessage }) {
-  const fileInput = useRef(null);
-
-  // Reads the chosen backup file and merges it into your data.
-  async function restore(event) {
-    const file = event.target.files?.[0];
-    event.target.value = ""; // allow choosing the same file again
-    if (!file) return;
-    try {
-      const result = importData(await file.text());
-      onMessage(`Listo: ${result.routines} rutinas y ${result.sessions} entrenamientos importados.`);
-    } catch (error) {
-      onMessage(error.message || "No se pudo leer el archivo.");
-    }
-  }
-
+export function AccountControls({ linkClass, noteClass }) {
+  const { user } = useAuth();
   return (
     <>
-      <button type="button" className={linkClass} onClick={downloadBackup}>
-        <Icon d="M12 4v11M7 10l5 5 5-5M5 20h14" />
-        Exportar copia
+      <p className={noteClass}>{user?.email}</p>
+      <button type="button" className={linkClass} onClick={() => signOut()}>
+        <Icon d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" />
+        Cerrar sesión
       </button>
-      <button type="button" className={linkClass} onClick={() => fileInput.current?.click()}>
-        <Icon d="M12 15V4M7 9l5-5 5 5M5 20h14" />
-        Importar copia
-      </button>
-      <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={restore} />
-      {message && (
-        <p className={noteClass} role="status">
-          {message}
-        </p>
-      )}
     </>
   );
 }
 
 /*
- * The note at the bottom of both navs: where your data lives, or a warning
- * when the browser refuses to save (private window).
+ * The note at the bottom of both navs: workouts still waiting to upload (no
+ * signal), or where your data lives; a warning when the browser refuses to
+ * save (private window).
  */
-export function StorageNote({ persistent }) {
+export function SyncNote() {
+  const persistent = useIsPersistent();
+  const pending = usePendingCount();
+  const { offline, uploadError } = useRemoteStatus();
   if (!persistent) {
     return (
       <p className="warning">
-        Este navegador no permite guardar datos (¿ventana privada?): lo que cargues se pierde al cerrar.
+        Este navegador no permite guardar datos (¿ventana privada?): un entrenamiento sin subir se pierde al cerrar.
       </p>
     );
   }
-  return (
-    <p>
-      Tus rutinas y tu historial se guardan en este dispositivo. Agregá la app a la pantalla de inicio para que el
-      navegador no los borre, y bajate una copia de vez en cuando.
-    </p>
-  );
+  if (pending > 0) {
+    return (
+      <p className="warning">
+        {pending === 1 ? "1 entrenamiento espera" : `${pending} entrenamientos esperan`} para subirse
+        {offline ? ": se suben solos cuando vuelva la señal." : "."}
+        {uploadError && !offline && ` No se pudo subir: ${uploadError}`}
+      </p>
+    );
+  }
+  return <p>Tus rutinas y tu historial están en tu cuenta. Se guardan en el teléfono para cuando no hay señal.</p>;
 }

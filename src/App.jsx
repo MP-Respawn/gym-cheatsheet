@@ -1,7 +1,9 @@
 /*
  * App.jsx
  *
- * The top of the app. It does four things:
+ * The top of the app. It does five things:
+ *   0. Shows the sign-in screen while nobody is signed in (everything needs
+ *      an account), and the invitation page for a trainer's link.
  *   1. Reads the current page from the URL hash (useHashRoute) and shows the
  *      matching screen.
  *   2. Keeps the little bits of state that must survive moving between pages:
@@ -25,10 +27,11 @@ import ExerciseDetail from "./screens/ExerciseDetail.jsx";
 import RoutineList from "./screens/RoutineList.jsx";
 import RoutineDetail from "./screens/RoutineDetail.jsx";
 import ProgramDetail from "./screens/ProgramDetail.jsx";
-import RoutineEditor from "./screens/RoutineEditor.jsx";
 import WorkoutLog from "./screens/WorkoutLog.jsx";
 import Search from "./screens/Search.jsx";
-import { useAnyRoutine } from "./store/useStore.js";
+import SignIn from "./screens/SignIn.jsx";
+import Invitation from "./screens/Invitation.jsx";
+import { useAnyRoutine, useAuth } from "./store/useStore.js";
 
 const GYM_MODE_KEY = "gym-mode";
 
@@ -108,9 +111,15 @@ export default function App() {
     window.scrollTo(0, isList ? (savedScroll[hash] ?? 0) : 0);
   }, [route]);
 
-  // Routine pages need the routine itself: the trainer's (in the code) or
-  // yours (on the device). Looked up here so every routine screen shares it.
-  const { routine, isMine } = useAnyRoutine(route.id ?? "");
+  // Routine pages need the routine itself: one assigned to you (downloaded)
+  // or a catalog sequence. Looked up here so every routine screen shares it.
+  const routine = useAnyRoutine(route.id ?? "");
+
+  const auth = useAuth();
+  if (route.name === "invite") return <Invitation key={route.id} token={route.id} />;
+  // Checking the login saved on the phone: a blank page for a moment.
+  if (auth.status === "loading") return <div className="app" />;
+  if (auth.status === "signed-out") return <SignIn />;
 
   // Pick the screen for the current route.
   let screen;
@@ -122,15 +131,11 @@ export default function App() {
     screen = <ProgramDetail key={route.id} id={route.id} />;
   } else if (route.name === "search") {
     screen = <Search query={query} onQueryChange={setQuery} />;
-  } else if (route.name === "routine-new") {
-    screen = <RoutineEditor key="new" />;
-  } else if (route.name === "routine-edit") {
-    screen = <RoutineEditor key={route.id} id={route.id} />;
   } else if (route.name === "routine-train" && routine) {
     screen = <WorkoutLog key={route.id} routine={routine} gymMode={gymMode} />;
   } else if (route.name === "routine" || route.name === "routine-train") {
     // (a workout for a routine that does not exist falls here: "not found")
-    screen = <RoutineDetail routine={routine} isMine={isMine} gymMode={gymMode} onGymModeChange={changeGymMode} />;
+    screen = <RoutineDetail routine={routine} gymMode={gymMode} onGymModeChange={changeGymMode} />;
   } else {
     screen = (
       <ExerciseList

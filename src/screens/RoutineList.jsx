@@ -1,20 +1,25 @@
 /*
  * RoutineList.jsx: routine list (#/rutinas)
  *
- * Top: the app's top nav (menu, name, search bar). Then "Mis rutinas", the
- * ones you built (saved on this device), with a button to create a new one.
- * Below: the app's routines, under a header per discipline (Gimnasio,
- * Yoga...): first the routines with days (Bloque A, Bloque B), then the
- * one-day ones under their block ("Vueltas de abdomen").
+ * Top: the app's top nav (menu, name, search bar). Then "Tus rutinas", the
+ * ones your trainer assigned you (downloaded from the database, kept on the
+ * phone for when there is no signal). Below: the catalog's sequences (the
+ * core vueltas, Flow básico, yoga and Jiu Jitsu routines), under a header
+ * per discipline.
  *
  * Every routine is one card. With several days it opens the routine page
  * (one lane per day); with one day it opens that day directly.
- * The backup tools ("Tus datos") live in the side menu (MenuDrawer).
  */
 import AppHeader from "../components/AppHeader.jsx";
 import { DISCIPLINES } from "../data/exercises.js";
-import { PROGRAMS, ROUTINES, getTrainerProgram, stepExerciseIds } from "../data/routines.js";
-import { routineHref, useMyRoutines } from "../store/useStore.js";
+import { stepExerciseIds } from "../data/routines.js";
+import {
+  CATALOG_ROUTINES,
+  routineHref,
+  useAssignedPrograms,
+  useAssignedState,
+  useRemoteStatus,
+} from "../store/useStore.js";
 
 // Right-pointing chevron, hints that the card opens.
 function Chevron() {
@@ -49,35 +54,24 @@ function RoutineCard({ name, focus, days }) {
   );
 }
 
+// The catalog's sequences per discipline, one-day routines grouped by block.
+// A block named like its discipline ("Yoga") gets no sub-header of its own.
+const CATALOG = DISCIPLINES.map((d) => {
+  const singles = CATALOG_ROUTINES.filter((r) => r.discipline === d.key);
+  const blocks = [...new Set(singles.map((r) => r.block ?? ""))];
+  return { ...d, blocks: blocks.map((name) => ({ name, routines: singles.filter((r) => (r.block ?? "") === name) })) };
+}).filter((d) => d.blocks.length > 0);
+
 export default function RoutineList({ onMenuClick }) {
-  const mine = useMyRoutines();
+  const programs = useAssignedPrograms();
+  const { downloaded } = useAssignedState();
+  const { loading, offline } = useRemoteStatus();
 
-  // Your routines, one per programId (its days in order), most recently
-  // edited first. Old routines saved without days count as one day.
-  const myRoutines = [];
-  for (const routine of mine) {
-    const key = routine.programId ?? routine.id;
-    if (myRoutines.some((g) => g.key === key)) continue;
-    const days = routine.programId
-      ? mine.filter((r) => r.programId === key).sort((a, b) => (a.dayIndex ?? 0) - (b.dayIndex ?? 0))
-      : [routine];
-    const focus = days.length === 1 ? days[0].focus : days.map((d) => d.focus).filter(Boolean).join(", ");
-    myRoutines.push({ key, name: routine.block ?? routine.name, focus, days });
-  }
-
-  // The app's routines per discipline: its routines with days, then the
-  // one-day ones grouped by block. A block named like its discipline
-  // ("Yoga") gets no sub-header of its own.
-  const disciplines = DISCIPLINES.map((d) => {
-    const programs = PROGRAMS.map((p) => getTrainerProgram(p.id)).filter((p) => p.discipline === d.key);
-    const singles = ROUTINES.filter((r) => r.discipline === d.key && !r.programId);
-    const blocks = [...new Set(singles.map((r) => r.block ?? ""))];
-    return {
-      ...d,
-      programs,
-      blocks: blocks.map((name) => ({ name, routines: singles.filter((r) => (r.block ?? "") === name) })),
-    };
-  }).filter((d) => d.programs.length > 0 || d.blocks.length > 0);
+  // What to say when there are no routines: still downloading, no signal on
+  // the very first time, or the trainer has not assigned anything yet.
+  let emptyText = "Todavía no tenés rutinas asignadas. Cuando tu entrenador te asigne una, aparece acá.";
+  if (!downloaded && loading) emptyText = "Cargando tus rutinas...";
+  else if (!downloaded && offline) emptyText = "Sin conexión. Tus rutinas aparecen cuando vuelva la señal.";
 
   return (
     <div className="screen">
@@ -88,32 +82,27 @@ export default function RoutineList({ onMenuClick }) {
       </div>
 
       <div className="content">
-        {/* Your own routines */}
+        {/* Assigned by your trainer */}
         <section className="list-section">
-          <h2 className="section-title">Mis rutinas</h2>
-          <div className="card-list">
-            {myRoutines.map((r) => (
-              <RoutineCard key={r.key} name={r.name} focus={r.focus} days={r.days} />
-            ))}
-            <a className="add-button" href="#/rutina/nueva">
-              + Nueva rutina
-            </a>
-          </div>
+          <h2 className="section-title">Tus rutinas</h2>
+          {programs.length > 0 ? (
+            <div className="card-list">
+              {programs.map((p) => (
+                <RoutineCard key={p.id} name={p.name} focus={p.focus} days={p.days} />
+              ))}
+            </div>
+          ) : (
+            <p className="empty list-empty">{emptyText}</p>
+          )}
+          {downloaded && offline && (
+            <p className="hint warning">Sin conexión: estás viendo lo último que se bajó.</p>
+          )}
         </section>
 
-        {/* The app's routines, by discipline */}
-        {disciplines.map((d) => (
+        {/* The catalog's sequences, by discipline */}
+        {CATALOG.map((d) => (
           <section key={d.key} className="discipline-section">
             <h2 className="discipline-title">{d.label}</h2>
-            {d.programs.length > 0 && (
-              <div className="list-section">
-                <div className="card-list">
-                  {d.programs.map((p) => (
-                    <RoutineCard key={p.id} name={p.name} focus={p.focus} days={p.days} />
-                  ))}
-                </div>
-              </div>
-            )}
             {d.blocks.map((block) => (
               <div key={block.name} className="list-section">
                 {block.name && block.name !== d.label && <h3 className="section-title">{block.name}</h3>}

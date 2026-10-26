@@ -1,22 +1,23 @@
 /*
  * WorkoutLog.jsx: log your weights while doing a routine
- *   #/rutina/<id>/entrenar   (works for the trainer's routines and yours)
+ *   #/rutina/<id>/entrenar   (assigned routines and catalog sequences)
  *
  * For every exercise of the routine you get one row per set with two boxes:
  * kg and reps (core exercises get a single box instead: reps, or seconds
  * for holds). A vuelta step lists every exercise of the vuelta in order.
  * "Última vez" shows what you did the previous time, and the empty boxes
- * show those numbers as hints. Everything is saved as you type,
+ * show those numbers as hints. Everything is saved on the phone as you type,
  * so closing the app mid-workout loses nothing.
  *
- * "Terminar entrenamiento" closes the session and adds it to your history
- * (empty sets are ignored). "Descartar" throws it away.
+ * "Terminar entrenamiento" closes the session, adds it to your history
+ * (empty sets are ignored) and uploads it to your account, where your
+ * trainer sees it (later, if there is no signal). "Descartar" throws it away.
  */
 import { useEffect } from "react";
 import { VUELTAS, getExercise, getVuelta } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
 import { hasInAppHistory } from "../hooks/useHashRoute.js";
-import { useActiveSession, usePersonalData } from "../store/useStore.js";
+import { useActiveSession, useAssignedState, usePersonalData } from "../store/useStore.js";
 import {
   discardSession,
   emptySet,
@@ -55,6 +56,7 @@ function leave(routineId) {
 export default function WorkoutLog({ routine, gymMode }) {
   const data = usePersonalData();
   const session = useActiveSession(routine.id);
+  const { isClient } = useAssignedState();
   // One of the trainer's core vueltas: its steps carry "which arm / side" notes.
   const isVuelta = VUELTAS.some((v) => v.routineId === routine.id);
 
@@ -120,9 +122,17 @@ export default function WorkoutLog({ routine, gymMode }) {
       </div>
 
       <div className="content">
-        <p className="routine-block">{routine.block ?? "Mi rutina"}</p>
+        <p className="routine-block">{routine.block}</p>
         <h1 className="detail-title">{routine.name}</h1>
-        <p className="hint">Se guarda solo mientras cargás. Los números grises son de la última vez.</p>
+        <p className="hint">
+          Se guarda en el teléfono mientras cargás y se sube a tu cuenta al terminar. Los números grises son de la
+          última vez.
+        </p>
+        {!isClient && (
+          <p className="hint warning">
+            Todavía no sos cliente de ningún entrenador: este entrenamiento queda solo en este teléfono.
+          </p>
+        )}
 
         <ol className="steps">
           {routine.steps.map((step, stepIndex) => {

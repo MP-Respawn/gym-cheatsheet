@@ -2,8 +2,9 @@
  * Search.jsx: search page (#/buscar)
  *
  * Opened from the search bar in the top nav. One box that looks through
- * every exercise and every routine (the trainer's and yours), with the
- * results in two groups and the typed words highlighted.
+ * every exercise and every routine (the ones assigned to you and the
+ * catalog's sequences), with the results in two groups and the typed words
+ * highlighted.
  *
  * With nothing typed it shows your recent searches. A search is remembered
  * when you open one of its results. The search text lives in App.jsx, so it
@@ -11,8 +12,7 @@
  */
 import { useState } from "react";
 import { EXERCISES, groupLabel } from "../data/exercises.js";
-import { ROUTINES } from "../data/routines.js";
-import { useMyRoutines } from "../store/useStore.js";
+import { CATALOG_ROUTINES, useAssignedPrograms } from "../store/useStore.js";
 import { highlightParts, matchesSearch, normalize, searchRoutines } from "../utils/search.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
@@ -44,7 +44,7 @@ function Highlighted({ text, query }) {
 }
 
 export default function Search({ query, onQueryChange }) {
-  const mine = useMyRoutines();
+  const assigned = useAssignedPrograms().flatMap((p) => p.days);
   const [recent, setRecent] = useState(loadRecent);
   const typed = query.trim();
 
@@ -55,7 +55,7 @@ export default function Search({ query, onQueryChange }) {
         return Number(nameHit(b)) - Number(nameHit(a));
       })
     : [];
-  const routines = searchRoutines([...mine, ...ROUTINES], typed);
+  const routines = searchRoutines([...assigned, ...CATALOG_ROUTINES], typed);
 
   // Called when a result is opened: move this search to the top of the list.
   function remember() {
@@ -164,7 +164,7 @@ export default function Search({ query, onQueryChange }) {
                       <Highlighted text={routine.name} query={typed} />
                     </span>
                     <span className="card-desc">
-                      {routine.block ?? "Mi rutina"}
+                      {routine.block}
                       {why && ` · ${why}`}
                     </span>
                   </div>

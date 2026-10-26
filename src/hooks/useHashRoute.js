@@ -10,11 +10,11 @@
  *   #/buscar            -> search exercises and routines
  *   #/ejercicio/<id>    -> one exercise
  *   #/rutinas           -> routine list
- *   #/rutina/<id>       -> one day of a routine (the trainer's or yours)
+ *   #/rutina/<id>       -> one day of a routine (assigned to you, or a
+ *                          catalog sequence such as a vuelta)
  *   #/programa/<id>     -> a routine with several days: one lane per day
- *   #/rutina/nueva      -> create your own routine
- *   #/rutina/<id>/editar   -> edit one of your routines
  *   #/rutina/<id>/entrenar -> log weights while doing a routine
+ *   #/invitacion/<token>   -> a trainer's invitation link
  *
  * The hook returns { name, id, query } for the current page and re-renders
  * the component whenever the hash changes (a tapped link, the back button...).
@@ -34,9 +34,7 @@ function parsePath(path) {
   const [first, second, third] = parts.map(decodeURIComponent);
 
   if (first === "ejercicio" && second) return { name: "exercise", id: second };
-  // Your own routines: #/rutina/nueva, #/rutina/<id>/editar
-  if (first === "rutina" && second === "nueva") return { name: "routine-new" };
-  if (first === "rutina" && second && third === "editar") return { name: "routine-edit", id: second };
+  if (first === "invitacion" && second) return { name: "invite", id: second };
   // Workout log for any routine: #/rutina/<id>/entrenar
   if (first === "rutina" && second && third === "entrenar") return { name: "routine-train", id: second };
   if (first === "rutina" && second) return { name: "routine", id: second };

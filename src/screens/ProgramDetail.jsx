@@ -7,9 +7,9 @@
  * "Entrenar" button. Tapping the lane opens that day (RoutineDetail), with
  * its full list of exercises.
  *
- * Works for the trainer's routines (Bloque A, Bloque B) and yours. A routine
- * with a single day has no lanes to show, so this page sends you straight
- * to that day.
+ * Shows a routine your trainer assigned you (Bloque A, Bloque B...). A
+ * routine with a single day has no lanes to show, so this page sends you
+ * straight to that day.
  */
 import { useEffect } from "react";
 import { disciplineLabel, getExercise } from "../data/exercises.js";
@@ -103,20 +103,12 @@ export default function ProgramDetail({ id }) {
       </div>
 
       <div className="content">
-        <p className="routine-block">{program.isMine ? "Mi rutina" : disciplineLabel(program.discipline)}</p>
+        <p className="routine-block">{disciplineLabel(program.discipline)}</p>
         <h1 className="detail-title">{program.name}</h1>
         {program.focus && <p className="routine-focus">{program.focus}</p>}
         <p className="program-meta">
           {program.days.length} días · {exercisesLabel(total)}
         </p>
-
-        {program.isMine && (
-          <div className="routine-actions">
-            <a className="secondary-button" href={`#/rutina/${program.days[0].id}/editar`}>
-              Editar
-            </a>
-          </div>
-        )}
 
         <div className="day-lanes">
           {program.days.map((day, i) => (

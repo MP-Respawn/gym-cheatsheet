@@ -1,16 +1,23 @@
 /*
  * useStore.js
  *
- * React hooks that read personal data and re-render the component whenever
- * it changes (after any save). Built on React's own useSyncExternalStore, so
- * no state library is needed.
+ * React hooks that read the signed-in person's data and re-render the
+ * component whenever it changes (a save, a download, a sign-in). Built on
+ * React's own useSyncExternalStore, so no state library is needed.
  *
  * Screens READ through these hooks and WRITE through the async functions in
- * routines.js / workouts.js.
+ * workouts.js and auth.js.
+ *
+ * Routines come from two places:
+ *   assigned  the ones the trainer assigned (downloaded, see assigned.js)
+ *   catalog   the fixed sequences in the code (the vueltas, Flow básico,
+ *             yoga and Jiu Jitsu routines in src/data/routines.js)
  */
 import { useMemo, useSyncExternalStore } from "react";
-import { getRoutine as getTrainerRoutine, getTrainerProgram } from "../data/routines.js";
-import { myProgram, programDaysOf } from "./routines.js";
+import { ROUTINES } from "../data/routines.js";
+import { assignedDays, assignedPrograms } from "./assigned.js";
+import { getAuth, subscribeAuth } from "./auth.js";
+import { getStatus, pendingSessions, subscribeStatus } from "./remote.js";
 import { isPersistent, readData, subscribe } from "./storage.js";
 import { historyForNow } from "./workouts.js";
 
@@ -19,37 +26,58 @@ export function usePersonalData() {
   return useSyncExternalStore(subscribe, readData);
 }
 
-// Your routines, most recently edited first.
-export function useMyRoutines() {
+// { status: "loading" | "signed-out" | "signed-in", user }
+export function useAuth() {
+  return useSyncExternalStore(subscribeAuth, getAuth);
+}
+
+// { loading, offline }: is a download running, did the last one find no signal.
+export function useRemoteStatus() {
+  return useSyncExternalStore(subscribeStatus, getStatus);
+}
+
+/*
+ * The catalog's sequences: the routines in the code that are not days of a
+ * trainer program (Bloque A and B moved to the database as the trainer's).
+ */
+export const CATALOG_ROUTINES = ROUTINES.filter((r) => !r.programId);
+const catalogRoutine = (id) => CATALOG_ROUTINES.find((r) => r.id === id);
+
+// The routines assigned to you, oldest first: [{ id, name, focus, days, ... }].
+export function useAssignedPrograms() {
   const data = usePersonalData();
-  return useMemo(
-    () => [...data.routines].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")),
-    [data],
-  );
+  return assignedPrograms(data.assigned);
+}
+
+/*
+ * What the routines tab can say: has anything been downloaded yet, and are
+ * you anybody's client (only then can workouts be uploaded).
+ */
+export function useAssignedState() {
+  const data = usePersonalData();
+  return {
+    downloaded: data.assigned != null,
+    isClient: (data.assigned?.clients?.length ?? 0) > 0,
+  };
 }
 
 /*
  * The days of the routine a day belongs to, in order (for the day chips on
- * the day page): yours, or the trainer's (Bloque A: Día 1, Día 2). A
- * one-day routine returns just [routine].
+ * the day page). A catalog routine returns just [routine].
  */
-export function useRoutineDays(routine, isMine) {
-  const data = usePersonalData();
+export function useRoutineDays(routine) {
+  const programs = useAssignedPrograms();
   return useMemo(() => {
     if (!routine) return [];
-    if (isMine) return programDaysOf(routine, data.routines);
-    return routine.programId ? (getTrainerProgram(routine.programId)?.days ?? [routine]) : [routine];
-  }, [data, routine, isMine]);
+    if (routine.source !== "assigned") return [routine];
+    return programs.find((p) => p.id === routine.programId)?.days ?? [routine];
+  }, [programs, routine]);
 }
 
-/*
- * A routine with its days, for the routine page (#/programa/<id>): the
- * trainer's (PROGRAMS in data/routines.js) or yours.
- * Returns { id, name, focus, days, isMine } or undefined.
- */
+// An assigned routine with its days, for #/programa/<id>, or undefined.
 export function useProgram(id) {
-  const data = usePersonalData();
-  return useMemo(() => getTrainerProgram(id) ?? myProgram(id, data.routines), [data, id]);
+  const programs = useAssignedPrograms();
+  return useMemo(() => programs.find((p) => p.id === id), [programs, id]);
 }
 
 // Where a routine card should lead: the routine page when it has several
@@ -59,18 +87,15 @@ export function routineHref(days) {
 }
 
 /*
- * Finds a routine by id, wherever it lives: first the trainer's routines
- * (in the code), then yours (on the device).
- * Returns { routine, isMine } or { routine: undefined }.
+ * Finds a routine by id: first a day of your assigned routines, then a
+ * catalog sequence. Returns the routine or undefined.
  */
 export function useAnyRoutine(id) {
   const data = usePersonalData();
-  return useMemo(() => {
-    const trainer = getTrainerRoutine(id);
-    if (trainer) return { routine: trainer, isMine: false };
-    const mine = data.routines.find((r) => r.id === id);
-    return { routine: mine, isMine: Boolean(mine) };
-  }, [data, id]);
+  return useMemo(
+    () => assignedDays(data.assigned).find((d) => d.id === id) ?? catalogRoutine(id),
+    [data, id],
+  );
 }
 
 // The workout in progress for a routine, if any.
@@ -83,6 +108,12 @@ export function useActiveSession(routineId) {
 export function useExerciseHistory(exerciseId) {
   const data = usePersonalData();
   return useMemo(() => historyForNow(exerciseId, data.sessions), [data, exerciseId]);
+}
+
+// How many finished workouts are still waiting to be uploaded.
+export function usePendingCount() {
+  const data = usePersonalData();
+  return useMemo(() => pendingSessions(data.sessions).length, [data]);
 }
 
 // False when the browser refuses to save (private window): the UI warns.

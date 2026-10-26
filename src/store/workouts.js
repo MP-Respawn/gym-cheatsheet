@@ -4,22 +4,30 @@
  * The workout log: what weight and reps you did, set by set, each time you
  * train a routine. One "session" = one time you did a routine:
  *
- *   { id, ownerId, routineId, routineName, startedAt, finishedAt,
- *     entries: [{ exerciseId, sets: [{ kg, reps }] }], updatedAt }
+ *   { id, clientId, programId, dayId, routineId, routineName, programName,
+ *     dayName, startedAt, finishedAt, updatedAt, syncedAt,
+ *     entries: [{ exerciseId, stepId, planned, sets: [{ kg, reps }] }] }
+ *
+ * clientId is who trained (their record with that trainer); programId and
+ * dayId point at the assigned routine in the database (null for a catalog
+ * sequence such as a vuelta). planned = the trainer's { sets, reps, loadKg }
+ * when the workout started, so history stays true if the routine changes.
  *
  * A set holds kg and reps, except for exercises with a `measure` (core
  * work, see exercises.js): those log only { reps } or only { secs }.
  *
  * While you train, the session is "active" (finishedAt is null) and every
- * change is saved right away, so closing the app mid-workout loses nothing.
- * When you tap "Terminar", empty sets are dropped and it joins your history.
+ * change is saved on the phone right away, so closing the app mid-workout
+ * loses nothing. When you tap "Terminar", empty sets are dropped, it joins
+ * your history and remote.js uploads it (syncedAt = the version uploaded).
  *
  * In an active session the values are kept as typed text ("42,5"), so the
  * inputs never fight you while typing. Finishing turns them into numbers.
  */
 import { getExercise } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
-import { LOCAL_OWNER, newId, now, readData, updateData } from "./storage.js";
+import { pushPending } from "./remote.js";
+import { newId, now, readData, updateData } from "./storage.js";
 
 /* ---- What a set holds ---- */
 
@@ -86,12 +94,28 @@ export function pyramidReps(text = "") {
 
 /* ---- Writing ---- */
 
-// A fresh entry: as many empty set rows as last time, or as the prescription says.
+// A fresh entry: as many empty set rows as last time, or as the trainer's
+// number of sets, or as the prescription text says.
 function newEntry(exerciseId, step, sessions) {
   const last = lastSetsFor(exerciseId, sessions);
   const prescription = step.prescription || getExercise(exerciseId)?.prescription || "";
-  const count = last?.length ?? setsInPrescription(prescription);
-  return { exerciseId, sets: Array.from({ length: count }, () => emptySet(exerciseId)) };
+  const count = last?.length ?? step.sets ?? setsInPrescription(prescription);
+  const entry = { exerciseId, sets: Array.from({ length: count }, () => emptySet(exerciseId)) };
+  // A step of an assigned routine (from the database): remember which, and what it asked for.
+  if (step.id) {
+    entry.stepId = step.id;
+    entry.planned = { sets: step.sets ?? null, reps: step.reps ?? null, loadKg: step.loadKg ?? null };
+  }
+  return entry;
+}
+
+/*
+ * Who is training, for the database: the client record the routine belongs
+ * to, or for a catalog sequence (a vuelta) the person's first one. Null when
+ * the person is nobody's client yet: the workout then stays on the phone.
+ */
+function clientFor(routine) {
+  return routine.clientId ?? readData().assigned?.clients?.[0]?.id ?? null;
 }
 
 /*
@@ -135,9 +159,14 @@ export async function startSession(routine) {
     stepExerciseIds(step).map((exerciseId) => newEntry(exerciseId, step, sessions)),
   );
 
+  const assigned = routine.source === "assigned";
   const session = {
     id: newId(),
-    ownerId: LOCAL_OWNER,
+    clientId: clientFor(routine),
+    programId: assigned ? routine.programId : null,
+    dayId: assigned ? routine.id : null,
+    programName: routine.block ?? "",
+    dayName: routine.name,
     routineId: routine.id,
     // A day of a routine with several days reads "Plan semanal · Día 2"
     routineName:
@@ -194,6 +223,8 @@ export async function finishSession(session) {
   }
   const finished = { ...session, entries, finishedAt: now(), updatedAt: now() };
   updateData((d) => ({ ...d, sessions: d.sessions.map((s) => (s.id === finished.id ? finished : s)) }));
+  // Upload now if there is signal; if not, remote.js retries later.
+  pushPending().catch(() => {});
   return finished;
 }
 

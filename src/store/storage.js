@@ -1,14 +1,19 @@
 /*
  * storage.js
  *
- * The ONLY file that touches the browser's storage. Everything personal
- * (your routines, your workout log) is kept here as one JSON object:
+ * The ONLY file that touches the browser's storage. What this phone keeps
+ * for the signed-in person is one JSON object:
  *
- *   { version: 1, routines: [...], sessions: [...] }
+ *   { version: 2, sessions: [...], assigned: { clients, programs, fetchedAt } | null }
  *
- * Why one place: today the data lives on this device (localStorage). The day
- * the app gets accounts and a database, only the files in src/store/ change;
- * the screens keep calling the same functions.
+ *   sessions  the workout log (see workouts.js). Kept here first, so a
+ *             workout survives a dropped connection; remote.js uploads it.
+ *   assigned  the last copy downloaded of this person's routines (see
+ *             remote.js / assigned.js), so they open without signal.
+ *
+ * Each account gets its own box (the key ends with the user id), so two
+ * people sharing a phone never see each other's data. setStorageUser()
+ * switches the box when someone signs in or out.
  *
  * How screens get updates: they subscribe (see useStore.js). Every write
  * notifies the subscribers, so the UI refreshes on its own.
@@ -19,62 +24,62 @@
 
 import { RENAMED_IDS } from "../data/renamedIds.js";
 
-const KEY = "gym-cheatsheet:v1";
-export const DATA_VERSION = 1;
+const KEY_PREFIX = "gym-cheatsheet:v2:";
+export const DATA_VERSION = 2;
 
-const empty = () => ({ version: DATA_VERSION, routines: [], sessions: [] });
+const empty = () => ({ version: DATA_VERSION, sessions: [], assigned: null });
 
+let key = null; // storage key of the signed-in account; null = nobody
 let data = null; // in-memory copy, loaded on first use
 let persistent = true; // false when the browser refuses to save
 let askedToPersist = false;
 const listeners = new Set();
 
+/* ---- Which account ---- */
+
+// Switches to the box of this user (or to none, for null) and refreshes the UI.
+export function setStorageUser(userId) {
+  const next = userId ? `${KEY_PREFIX}${userId}` : null;
+  if (next === key) return;
+  key = next;
+  data = null;
+  listeners.forEach((listener) => listener());
+}
+
 /* ---- Loading ---- */
 
 // The current id for an exercise id that may have been renamed.
-const currentId = (id) => RENAMED_IDS[id] ?? id;
+export const currentId = (id) => RENAMED_IDS[id] ?? id;
 
-/*
- * Points your routines and logged workouts at the current exercise ids
- * (renamedIds.js), so history saved under an old id keeps showing up.
- * Safe to run on every load: current ids are left as they are.
- */
-function renameOldIds(routines, sessions) {
-  return {
-    routines: routines.map((r) => ({
-      ...r,
-      steps: (r.steps ?? []).map((step) =>
-        step.exerciseIds ? { ...step, exerciseIds: step.exerciseIds.map(currentId) } : step,
-      ),
-    })),
-    sessions: sessions.map((s) => ({
-      ...s,
-      entries: (s.entries ?? []).map((e) => ({ ...e, exerciseId: currentId(e.exerciseId) })),
-    })),
-  };
+// Points logged workouts at the current exercise ids (renamedIds.js), so
+// history saved under an old id keeps showing up. Safe to run on every load.
+function renameOldIds(sessions) {
+  return sessions.map((s) => ({
+    ...s,
+    entries: (s.entries ?? []).map((e) => ({ ...e, exerciseId: currentId(e.exerciseId) })),
+  }));
 }
 
-// Upgrades data saved by an older version of the app. Only version 1 exists
-// for now; future changes to the shape go here.
+// Upgrades data saved by an older version of the app; future changes to the
+// shape go here.
 function migrate(raw) {
   if (!raw || typeof raw !== "object") return empty();
   return {
     version: DATA_VERSION,
-    ...renameOldIds(
-      Array.isArray(raw.routines) ? raw.routines : [],
-      Array.isArray(raw.sessions) ? raw.sessions : [],
-    ),
+    sessions: renameOldIds(Array.isArray(raw.sessions) ? raw.sessions : []),
+    assigned: raw.assigned && typeof raw.assigned === "object" ? raw.assigned : null,
   };
 }
 
 function load() {
   if (data) return data;
+  if (!key) return (data = empty());
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(key);
     data = raw ? migrate(JSON.parse(raw)) : empty();
     // Probe once: some browsers allow reading but throw on writing.
-    window.localStorage.setItem(`${KEY}:probe`, "1");
-    window.localStorage.removeItem(`${KEY}:probe`);
+    window.localStorage.setItem(`${key}:probe`, "1");
+    window.localStorage.removeItem(`${key}:probe`);
   } catch {
     persistent = false;
     data = data ?? empty();
@@ -94,12 +99,14 @@ export function readData() {
 // the new data (never modify the old object in place).
 export function updateData(change) {
   data = change(load());
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(data));
-  } catch {
-    persistent = false;
+  if (key) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(data));
+    } catch {
+      persistent = false;
+    }
+    requestPersistence();
   }
-  requestPersistence();
   listeners.forEach((listener) => listener());
   return data;
 }
@@ -131,7 +138,7 @@ export function subscribe(listener) {
 // If the app is open in two tabs, a save in one refreshes the other.
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
-    if (event.key !== KEY) return;
+    if (!key || event.key !== key) return;
     try {
       data = event.newValue ? migrate(JSON.parse(event.newValue)) : empty();
     } catch {
@@ -141,52 +148,16 @@ if (typeof window !== "undefined") {
   });
 }
 
-/* ---- Backup ---- */
-
-// The whole personal data as a JSON text, for the "Exportar" button.
-export function exportData() {
-  return JSON.stringify({ ...load(), exportedAt: new Date().toISOString() }, null, 2);
-}
-
-/*
- * Merges a backup into the current data. Items are matched by id; when both
- * sides have the same item, the most recently updated one wins. Returns how
- * many routines and sessions came in. Throws if the file is not a backup.
- */
-export function importData(text) {
-  const incoming = JSON.parse(text);
-  if (!incoming || !Array.isArray(incoming.routines) || !Array.isArray(incoming.sessions)) {
-    throw new Error("El archivo no es una copia de seguridad de esta app.");
-  }
-  const merge = (current, extra) => {
-    const byId = new Map(current.map((item) => [item.id, item]));
-    for (const item of extra) {
-      if (!item?.id) continue;
-      const mine = byId.get(item.id);
-      if (!mine || (item.updatedAt ?? "") > (mine.updatedAt ?? "")) byId.set(item.id, item);
-    }
-    return [...byId.values()];
-  };
-  // An old backup may still use renamed exercise ids.
-  const renamed = renameOldIds(incoming.routines, incoming.sessions);
-  updateData((d) => ({
-    ...d,
-    routines: merge(d.routines, renamed.routines),
-    sessions: merge(d.sessions, renamed.sessions),
-  }));
-  return { routines: incoming.routines.length, sessions: incoming.sessions.length };
-}
-
 /* ---- Small shared helpers ---- */
 
-// Unique id for new items. Same format a database would use (UUID).
+// Unique id for new items, in the format the database uses (UUID v4).
 export function newId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export const now = () => new Date().toISOString();
-
-// Placeholder owner until there are accounts. With a backend this becomes
-// the signed-in user's id.
-export const LOCAL_OWNER = "local";

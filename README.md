@@ -1,12 +1,12 @@
 # Machete de gimnasio
 
-Personal, read-only exercise cheatsheet for the phone. React + Vite, no backend.
+Exercise cheatsheet and workout log for the phone, where trainers assign routines to their clients. React + Vite on Vercel, Supabase (Postgres + email-code login) behind it. Everything needs an account; clients get in through their trainer's invitation link. The plan is in `docs/arquitectura.md`.
 
 ## Run
 
 ```bash
 npm install
-npm run dev      # local dev server
+npm run dev      # local dev server (talks to the live Supabase project in .env)
 npm run build    # production build into dist/ (Vercel picks this up with zero config)
 npm run lint     # oxlint, catches unused imports and variables
 node scripts/check-data.mjs              # checks ids, groups, routines and every animation
@@ -17,21 +17,37 @@ npm run test:db  # database permission tests, in PGlite (no Docker needed)
 ## Where things live
 
 - `src/data/exercises.js`: muscle groups and every exercise (cues, prescription, alternatives).
-- `src/data/routines.js`: the five routines, step by step.
+- `src/data/routines.js`: routines written in code. The catalog's sequences (core vueltas, Flow básico, yoga, Jiu Jitsu) are shown to everyone; Bloque A and B are only the source for `scripts/seed-trainer.mjs`.
 - `src/animations/exercises/<id>.js`: one animation per exercise, named like its id. Each file lists poses (an angle per body segment), a timeline with the trainer's tempo, phase names, and equipment.
 - `src/animations/engine/`: turns those files into SVG and CSS keyframes (`kinematics.js`), with helpers for writing poses (`helpers.js`) and the renderer (`Figure.jsx`).
-- `src/store/`: your personal data (own routines and the workout log). Today it is saved on the device (localStorage) behind async functions shaped like a future database API; to add accounts and a backend later, only these files change.
-- `src/screens/`: the screens (exercise list and detail, routine list and detail, routine editor, workout log). `src/App.jsx` picks one based on the URL hash.
+- `src/store/`: the signed-in person's data. `auth.js` signs in with an email code; `remote.js` downloads the assigned routines and the workout history and uploads finished workouts; `storage.js` keeps a copy on the phone (one per account) so it works without signal; `assigned.js` turns database rows into the routine shape the screens use; `useStore.js` holds the React hooks.
+- `src/screens/`: the screens (sign-in, invitation, exercise list and detail, routine list and detail, workout log). `src/App.jsx` picks one based on the URL hash.
 - `src/styles.css`: all app styles; colors are the custom properties at the top.
-- `supabase/`: the database for the trainer → client version (not connected to the app yet). `migrations/` holds the tables and the permissions (who can read or write what); `tests/` checks every role against them. The plan behind it is in `docs/arquitectura.md`.
+- `.env`: the Supabase address and publishable key. Both are public by design; never put the secret key there.
+- `supabase/`: the database. `migrations/` holds the tables, the permissions (who can read or write what) and the functions the app calls; `tests/` checks every role against them.
 - `scripts/pglite/`: the small stand-ins (Supabase's auth, pgTAP) that let `npm run test:db` run the migrations and tests in memory.
 
-## Database setup (once, when connecting a Supabase project)
+## Database setup (once per Supabase project)
 
-1. Install the Supabase CLI, then `supabase init` (keeps the existing `supabase/` files) and `supabase link --project-ref <ref>`.
-2. `supabase db push` applies the migrations.
-3. Log in once with your email, then make yourself the superadmin in the SQL editor:
+1. `npx supabase login`, then `npx supabase link --project-ref <ref>`.
+2. `npx supabase db push` applies the migrations (run it again after adding one).
+3. Add your user in the dashboard (Authentication → Users → Add user, auto-confirm), then make it the superadmin in the SQL editor:
    `update public.profiles set role = 'superadmin' where email = '<your email>';`
-4. In Auth settings, enable email sign-in with a one-time code.
+4. Authentication → Emails → Templates: put `{{ .Token }}` in "Magic Link" and "Confirm signup", so people get a code.
+5. Before inviting people outside your Supabase team, connect a custom SMTP sender (Resend): the built-in one only emails team members.
+
+## A trainer and their first client
+
+Until the trainer panel exists, this script does it. Add the trainer's login in the dashboard first, then:
+
+```bash
+node scripts/seed-trainer.mjs --trainer-email <email> --trainer-name "<name>" --client-email <email> --client-name "<name>" --app-url <app url>
+```
+
+```bash
+npx supabase db query --linked -f supabase/.temp/seed-trainer.sql
+```
+
+It imports Bloque A and B as the trainer's templates, assigns them to the client and prints the client's invitation link.
 
 To add an exercise, copy a block in `exercises.js`, copy a similar animation file with the new id, and run the check script.

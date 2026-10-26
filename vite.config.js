@@ -5,9 +5,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // The whole app (catalog, 160+ animations, screens) ships as one file of
-    // about 500 kB, 140 kB once compressed: fine for a phone. Vite warns from
-    // 500 kB; the limit is raised so the build stays quiet until it really grows.
-    chunkSizeWarningLimit: 700,
+    // The whole app (catalog, 160+ animations, screens, the Supabase client)
+    // ships as one file of about 720 kB, 200 kB once compressed: fine for a
+    // phone. Vite warns from 500 kB; the limit is raised so the build stays
+    // quiet until it really grows.
+    chunkSizeWarningLimit: 850,
   },
 })

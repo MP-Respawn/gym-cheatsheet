@@ -21,7 +21,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(41);
 
 /* ---- Test helpers (rolled back with everything else) ---- */
 
@@ -224,6 +224,37 @@ select throws_ok(
   $$ insert into public.workout_sessions (id, client_id)
        values (gen_random_uuid(), 'd2000000-0000-0000-0000-000000000000') $$,
   '42501', null, 'Ana cannot log a session as Beto'
+);
+
+-- The phone uploads the same session twice (a retry after a dropped
+-- connection), once with a step the trainer has since deleted.
+select lives_ok(
+  $$
+    select public.save_workout_session(jsonb_build_object(
+      'id', '5e000000-0000-0000-0000-000000000000',
+      'client_id', 'd1000000-0000-0000-0000-000000000000',
+      'finished_at', now(),
+      'sets', jsonb_build_array(jsonb_build_object(
+        'entry_index', 0, 'set_index', 0, 'exercise_id', 'sentadilla-barra',
+        'step_id', gen_random_uuid(), 'kg', 50, 'reps', 8))));
+    select public.save_workout_session(jsonb_build_object(
+      'id', '5e000000-0000-0000-0000-000000000000',
+      'client_id', 'd1000000-0000-0000-0000-000000000000',
+      'finished_at', now(),
+      'sets', jsonb_build_array(jsonb_build_object(
+        'entry_index', 0, 'set_index', 0, 'exercise_id', 'sentadilla-barra',
+        'step_id', gen_random_uuid(), 'kg', 50, 'reps', 8))));
+  $$,
+  'Ana uploads the same session twice'
+);
+select "is"(
+  (select count(*)::int from public.workout_sets where session_id = '5e000000-0000-0000-0000-000000000000'),
+  1, 'uploading twice leaves one copy of each set'
+);
+select throws_ok(
+  $$ select public.save_workout_session(jsonb_build_object(
+       'id', gen_random_uuid(), 'client_id', 'd2000000-0000-0000-0000-000000000000')) $$,
+  '42501', null, 'Ana cannot upload a session as Beto'
 );
 
 select tests.login('b1000000-0000-0000-0000-000000000000');

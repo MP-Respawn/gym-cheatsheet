@@ -3,9 +3,9 @@
  *
  * The side menu the hamburger button opens on phones. It slides in from the
  * left over the page and holds:
- *   - links to the main pages (Ejercicios, Rutinas, Nueva rutina)
+ *   - links to the main pages (Ejercicios, Rutinas)
  *   - the Modo gym switch
- *   - "Tus datos": download or restore a backup of your routines and history
+ *   - "Tu cuenta": who is signed in, and "Cerrar sesión"
  *
  * Built on the browser's own <dialog>: showModal() keeps keyboard focus
  * inside, Escape closes it, and focus goes back to the hamburger afterwards.
@@ -13,18 +13,15 @@
  * and closes the menu whenever the page changes.
  *
  * On wide screens the same content lives in SideNav.jsx; the links, switch
- * and backup tools are shared through navShared.jsx.
+ * and account pieces are shared through navShared.jsx.
  */
-import { useEffect, useRef, useState } from "react";
-import { useIsPersistent } from "../store/useStore.js";
+import { useEffect, useRef } from "react";
 import { Brand } from "./AppHeader.jsx";
 import { LINKS } from "./navLinks.js";
-import { BackupControls, GymSwitch, Icon, StorageNote } from "./navShared.jsx";
+import { AccountControls, GymSwitch, Icon, SyncNote } from "./navShared.jsx";
 
 export default function MenuDrawer({ exercisesHref = "#/", open, onClose, activeTab, gymMode, onGymModeChange }) {
   const dialog = useRef(null);
-  const persistent = useIsPersistent();
-  const [backupMessage, setBackupMessage] = useState("");
 
   // Open or close the native dialog to match `open`.
   useEffect(() => {
@@ -35,9 +32,8 @@ export default function MenuDrawer({ exercisesHref = "#/", open, onClose, active
   }, [open]);
 
   // The dialog's "close" event fires however it closed (Escape, a link, the
-  // X, a page change): forget the backup message and keep App.jsx in sync.
+  // X, a page change): keep App.jsx in sync.
   function onDialogClose() {
-    setBackupMessage("");
     onClose();
   }
 
@@ -77,17 +73,12 @@ export default function MenuDrawer({ exercisesHref = "#/", open, onClose, active
           <h2 className="drawer-section">Entrenamiento</h2>
           <GymSwitch on={gymMode} onChange={onGymModeChange} className="drawer-link drawer-switch" hint />
 
-          <h2 className="drawer-section">Tus datos</h2>
-          <BackupControls
-            linkClass="drawer-link"
-            noteClass="drawer-note"
-            message={backupMessage}
-            onMessage={setBackupMessage}
-          />
+          <h2 className="drawer-section">Tu cuenta</h2>
+          <AccountControls linkClass="drawer-link" noteClass="drawer-note" />
         </nav>
 
         <div className="drawer-foot">
-          <StorageNote persistent={persistent} />
+          <SyncNote />
         </div>
       </div>
     </dialog>

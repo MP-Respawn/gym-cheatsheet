@@ -10,7 +10,8 @@
  *   #/buscar            -> search exercises and routines
  *   #/ejercicio/<id>    -> one exercise
  *   #/rutinas           -> routine list
- *   #/rutina/<id>       -> one routine (the trainer's or yours)
+ *   #/rutina/<id>       -> one day of a routine (the trainer's or yours)
+ *   #/programa/<id>     -> a routine with several days: one lane per day
  *   #/rutina/nueva      -> create your own routine
  *   #/rutina/<id>/editar   -> edit one of your routines
  *   #/rutina/<id>/entrenar -> log weights while doing a routine
@@ -39,6 +40,8 @@ function parsePath(path) {
   // Workout log for any routine: #/rutina/<id>/entrenar
   if (first === "rutina" && second && third === "entrenar") return { name: "routine-train", id: second };
   if (first === "rutina" && second) return { name: "routine", id: second };
+  // A routine with several days: its page with one lane per day
+  if (first === "programa" && second) return { name: "program", id: second };
   if (first === "rutinas") return { name: "routines" };
   if (first === "buscar") return { name: "search" };
   return { name: "home" };

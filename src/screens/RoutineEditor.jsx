@@ -1,8 +1,8 @@
 /*
  * RoutineEditor.jsx: create or edit one of your routines
  *   #/rutina/nueva          -> blank routine
- *   #/rutina/<id>/editar    -> edit an existing one of yours (if it is divided
- *                              into days, the whole routine opens on that day)
+ *   #/rutina/<id>/editar    -> edit an existing one of yours (the whole
+ *                              routine opens, on that day)
  *
  * The editor works on a private copy ("draft"); nothing is saved until you
  * tap "Guardar rutina". Leaving with unsaved changes asks first.
@@ -11,13 +11,13 @@
  * together (superset / circuit), plus optional "Series y reps" and "Nota".
  * Steps can be moved up and down, and removed.
  *
- * "Dividir en días" splits the routine into days (Día 1, Día 2...), each
- * with its own name, focus and steps; tabs switch between them. Each day is
- * saved as its own routine (see saveProgram in store/routines.js), so it can
- * be opened and trained on its own.
+ * Every routine has days. A new routine starts with a short step: its name
+ * and how many days (1 to 7). Then each day has a tab, with its own name,
+ * focus and steps; "+ Día" adds one, and a day can be moved or removed
+ * (never the last one). Each day is saved as its own routine (see
+ * saveProgram in store/routines.js), so it can be opened and trained alone.
  *
  * The draft: { programId, name, days: [{ id, name, focus, steps }] }.
- * An undivided routine is simply a draft with one day.
  */
 import { useState } from "react";
 import { getExercise } from "../data/exercises.js";
@@ -66,7 +66,8 @@ function loadDraft(id) {
     draft: {
       programId: routine.programId,
       name: routine.block ?? "",
-      days: days.map((d) => ({ id: d.id, name: d.name, focus: d.focus ?? "", steps: d.steps })),
+      // with one day, the day's name is the routine's: leave its own empty
+      days: days.map((d) => ({ id: d.id, name: days.length > 1 ? d.name : "", focus: d.focus ?? "", steps: d.steps })),
     },
     dayIndex: Math.max(0, days.findIndex((d) => d.id === id)),
   };
@@ -83,6 +84,9 @@ export default function RoutineEditor({ id = null }) {
   const [current, setCurrent] = useState(loaded.dayIndex);
   const [picker, setPicker] = useState(null); // null | { stepId: null | string }
   const [error, setError] = useState("");
+  // New routine: first ask the name and how many days.
+  const [setup, setSetup] = useState(!id);
+  const [dayCount, setDayCount] = useState(3);
 
   if (id && !existing) {
     return (
@@ -96,8 +100,15 @@ export default function RoutineEditor({ id = null }) {
   }
 
   const dirty = JSON.stringify(draft) !== initial;
-  const divided = draft.days.length > 1;
+  const several = draft.days.length > 1;
   const day = draft.days[current];
+
+  // "Armar días": create that many empty days and start on Día 1.
+  function startDays() {
+    setDraft((d) => ({ ...d, days: Array.from({ length: dayCount }, () => newDay()) }));
+    setCurrent(0);
+    setSetup(false);
+  }
 
   /* ---- Changes to the draft ---- */
 
@@ -155,7 +166,7 @@ export default function RoutineEditor({ id = null }) {
 
   /* ---- Days ---- */
 
-  // Adds a day at the end and shows it. The first time, this is "Dividir en días".
+  // Adds a day at the end and shows it.
   function addDay() {
     setDraft((d) => ({ ...d, days: [...d.days, newDay()] }));
     setCurrent(draft.days.length);
@@ -173,8 +184,9 @@ export default function RoutineEditor({ id = null }) {
     setCurrent(target);
   }
 
-  // With one day left, the routine is no longer divided.
+  // The last day cannot be removed (the button is disabled).
   function removeDay() {
+    if (!several) return;
     if (day.steps.length > 0 && !window.confirm(`¿Eliminar ${dayLabel(day, current)} y sus ejercicios?`)) return;
     setDraft((d) => ({ ...d, days: d.days.filter((_, i) => i !== current) }));
     setCurrent(Math.max(0, current - 1));
@@ -187,7 +199,7 @@ export default function RoutineEditor({ id = null }) {
     const empty = draft.days.findIndex((d) => d.steps.length === 0);
     if (empty >= 0) {
       setCurrent(empty);
-      setError(divided ? `${dayLabel(draft.days[empty], empty)} no tiene ejercicios.` : "Agregá al menos un ejercicio.");
+      setError(several ? `${dayLabel(draft.days[empty], empty)} no tiene ejercicios.` : "Agregá al menos un ejercicio.");
       return;
     }
     const saved = await saveProgram({
@@ -200,12 +212,14 @@ export default function RoutineEditor({ id = null }) {
         steps: d.steps.map((s) => ({ ...s, prescription: s.prescription.trim(), note: s.note.trim() })),
       })),
     });
-    // Go to the day that was on screen. Editing the same page we came from:
-    // go back to it. Otherwise replace the editor in the history, so "Volver"
-    // from there goes to the list.
-    const target = saved[current]?.id ?? saved[0].id;
-    if (existing && target === id) window.history.back();
-    else window.location.replace(`#/rutina/${target}`);
+    // Editing: go back to the page we came from (if that day still exists).
+    // Otherwise open the routine page (several days) or its only day,
+    // replacing the editor in the history so "Volver" goes to the list.
+    if (existing && saved.some((d) => d.id === id)) {
+      window.history.back();
+      return;
+    }
+    window.location.replace(saved.length > 1 ? `#/programa/${saved[0].programId}` : `#/rutina/${saved[0].id}`);
   }
 
   async function remove() {
@@ -223,6 +237,54 @@ export default function RoutineEditor({ id = null }) {
 
   const pickerStep = picker?.stepId ? day.steps.find((s) => s.id === picker.stepId) : null;
 
+  // New routine, first step: the name and how many days.
+  if (setup) {
+    return (
+      <div className="screen has-action-bar">
+        <div className="top-bar">
+          <BackButton fallback="#/rutinas" />
+          <span className="top-bar-title">Nueva rutina</span>
+        </div>
+
+        <div className="content">
+          <label className="field">
+            <span className="field-label">Nombre de la rutina</span>
+            <input
+              className="input"
+              value={draft.name}
+              placeholder="Ej: Plan semanal"
+              maxLength={60}
+              onChange={(e) => update({ name: e.target.value })}
+            />
+          </label>
+
+          <h2 className="block-title">¿Cuántos días?</h2>
+          <div className="days-count" role="radiogroup" aria-label="Cantidad de días">
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <button
+                key={n}
+                type="button"
+                role="radio"
+                aria-checked={n === dayCount}
+                className={n === dayCount ? "chip active" : "chip"}
+                onClick={() => setDayCount(n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+          <p className="hint">Después podés agregar o quitar días cuando quieras.</p>
+        </div>
+
+        <div className="action-bar">
+          <button type="button" className="primary-button" onClick={startDays}>
+            {dayCount === 1 ? "Armar la rutina" : `Armar los ${dayCount} días`}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="screen has-action-bar">
       <div className="top-bar">
@@ -232,41 +294,39 @@ export default function RoutineEditor({ id = null }) {
 
       <div className="content">
         <label className="field">
-          <span className="field-label">{divided ? "Nombre de la rutina" : "Nombre"}</span>
+          <span className="field-label">Nombre de la rutina</span>
           <input
             className="input"
             value={draft.name}
-            placeholder={divided ? "Ej: Plan de 3 días" : "Ej: Piernas del lunes"}
+            placeholder="Ej: Plan semanal"
             maxLength={60}
             onChange={(e) => update({ name: e.target.value })}
           />
         </label>
 
-        {/* Divided: one tab per day, plus "+ Día" */}
-        {divided && (
-          <div className="day-tabs" role="tablist" aria-label="Días de la rutina">
-            {draft.days.map((d, i) => (
-              <button
-                key={d.id}
-                type="button"
-                role="tab"
-                aria-selected={i === current}
-                className={i === current ? "chip active" : "chip"}
-                onClick={() => {
-                  setCurrent(i);
-                  setError("");
-                }}
-              >
-                {dayLabel(d, i)}
-              </button>
-            ))}
-            <button type="button" className="chip chip-add" onClick={addDay}>
-              + Día
+        {/* One tab per day, plus "+ Día" */}
+        <div className="day-tabs" role="tablist" aria-label="Días de la rutina">
+          {draft.days.map((d, i) => (
+            <button
+              key={d.id}
+              type="button"
+              role="tab"
+              aria-selected={i === current}
+              className={i === current ? "chip active" : "chip"}
+              onClick={() => {
+                setCurrent(i);
+                setError("");
+              }}
+            >
+              {dayLabel(d, i)}
             </button>
-          </div>
-        )}
+          ))}
+          <button type="button" className="chip chip-add" onClick={addDay}>
+            + Día
+          </button>
+        </div>
 
-        {divided && (
+        {several && (
           <label className="field">
             <span className="field-label">Nombre del día</span>
             <input
@@ -289,7 +349,7 @@ export default function RoutineEditor({ id = null }) {
           />
         </label>
 
-        <h2 className="block-title">{divided ? `Ejercicios de ${dayLabel(day, current)}` : "Ejercicios"}</h2>
+        <h2 className="block-title">Ejercicios de {dayLabel(day, current)}</h2>
         {day.steps.length === 0 && <p className="hint">Todavía no agregaste ejercicios.</p>}
 
         <ol className="steps">
@@ -370,8 +430,8 @@ export default function RoutineEditor({ id = null }) {
           + Agregar ejercicio
         </button>
 
-        {/* Days: split the routine, or move / remove the day on screen */}
-        {divided ? (
+        {/* Move or remove the day on screen */}
+        {several && (
           <div className="day-tools">
             <button type="button" className="icon-button" aria-label="Mover el día a la izquierda" disabled={current === 0} onClick={() => moveDay(-1)}>
               <Icon name="left" />
@@ -389,10 +449,6 @@ export default function RoutineEditor({ id = null }) {
               Eliminar {dayLabel(day, current)}
             </button>
           </div>
-        ) : (
-          <button type="button" className="secondary-button split-button" onClick={addDay}>
-            Dividir en días
-          </button>
         )}
 
         {existing && (

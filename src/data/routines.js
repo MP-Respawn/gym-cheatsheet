@@ -354,9 +354,37 @@ const RAW_ROUTINES = [
   },
 ];
 
+/*
+ * Routines with days. Every routine has days; most of the trainer's have
+ * just one (each vuelta, each flow), so they are a single routine above.
+ * These group several of the routines above as the days of one routine:
+ *   id      key, used in the URL (#/programa/<id>)
+ *   name    title of the routine page ("Bloque A")
+ *   focus   short summary
+ *   dayIds  the day routines, in order
+ * normalizeRoutine gives each day its programId and dayIndex, the same
+ * fields your own routines use (src/store/routines.js).
+ */
+export const PROGRAMS = [
+  {
+    id: "bloque-a",
+    name: "Bloque A",
+    focus: "Piernas y pecho, posterior y espalda",
+    dayIds: ["bloque-a-dia-1", "bloque-a-dia-2"],
+  },
+  {
+    id: "bloque-b",
+    name: "Bloque B",
+    focus: "Cuádriceps, tren superior, posterior y glúteos",
+    dayIds: ["bloque-b-dia-1", "bloque-b-dia-2", "bloque-b-dia-3"],
+  },
+];
+
 // Fills the defaults, like normalizeExercise in exercises.js.
 function normalizeRoutine(routine) {
-  return { discipline: "gym", ...routine };
+  const program = PROGRAMS.find((p) => p.dayIds.includes(routine.id));
+  const day = program ? { programId: program.id, dayIndex: program.dayIds.indexOf(routine.id) } : {};
+  return { discipline: "gym", ...routine, ...day };
 }
 
 export const ROUTINES = RAW_ROUTINES.map(normalizeRoutine);
@@ -364,6 +392,14 @@ export const ROUTINES = RAW_ROUTINES.map(normalizeRoutine);
 // Returns the routine with that id, or undefined if it does not exist.
 export function getRoutine(id) {
   return ROUTINES.find((r) => r.id === id);
+}
+
+// A trainer routine with days, as { id, name, focus, discipline, days, isMine: false }.
+export function getTrainerProgram(id) {
+  const program = PROGRAMS.find((p) => p.id === id);
+  if (!program) return undefined;
+  const days = program.dayIds.map(getRoutine).filter(Boolean);
+  return { id: program.id, name: program.name, focus: program.focus, discipline: days[0]?.discipline, days, isMine: false };
 }
 
 // The routine that holds a vuelta's full sequence ("pelota" -> its routine).

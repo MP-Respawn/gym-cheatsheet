@@ -9,8 +9,8 @@
  * routines.js / workouts.js.
  */
 import { useMemo, useSyncExternalStore } from "react";
-import { ROUTINES as TRAINER_ROUTINES, getRoutine as getTrainerRoutine } from "../data/routines.js";
-import { programDaysOf } from "./routines.js";
+import { getRoutine as getTrainerRoutine, getTrainerProgram } from "../data/routines.js";
+import { myProgram, programDaysOf } from "./routines.js";
 import { isPersistent, readData, subscribe } from "./storage.js";
 import { historyForNow } from "./workouts.js";
 
@@ -29,19 +29,33 @@ export function useMyRoutines() {
 }
 
 /*
- * The days that go with a routine, in order, for the day chips on the
- * routine page: for yours, the days it was divided into; for the trainer's,
- * the other routines of the same block (Bloque A: Día 1, Día 2).
- * A single routine returns just [routine].
+ * The days of the routine a day belongs to, in order (for the day chips on
+ * the day page): yours, or the trainer's (Bloque A: Día 1, Día 2). A
+ * one-day routine returns just [routine].
  */
 export function useRoutineDays(routine, isMine) {
   const data = usePersonalData();
   return useMemo(() => {
     if (!routine) return [];
     if (isMine) return programDaysOf(routine, data.routines);
-    if (!routine.block) return [routine];
-    return TRAINER_ROUTINES.filter((r) => r.block === routine.block && r.discipline === routine.discipline);
+    return routine.programId ? (getTrainerProgram(routine.programId)?.days ?? [routine]) : [routine];
   }, [data, routine, isMine]);
+}
+
+/*
+ * A routine with its days, for the routine page (#/programa/<id>): the
+ * trainer's (PROGRAMS in data/routines.js) or yours.
+ * Returns { id, name, focus, days, isMine } or undefined.
+ */
+export function useProgram(id) {
+  const data = usePersonalData();
+  return useMemo(() => getTrainerProgram(id) ?? myProgram(id, data.routines), [data, id]);
+}
+
+// Where a routine card should lead: the routine page when it has several
+// days, straight to the day when it has one. `days` = the routine's days.
+export function routineHref(days) {
+  return days.length > 1 ? `#/programa/${days[0].programId}` : `#/rutina/${days[0].id}`;
 }
 
 /*

@@ -1105,6 +1105,17 @@ mark {
   margin-top: 4px;
 }
 
+/* On a day page, the routine's name links back to the routine page */
+.routine-block-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.routine-block-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .routine-focus {
   margin-top: 4px;
   font-size: 14px;
@@ -1540,19 +1551,138 @@ mark {
   color: #ff8a8a;
 }
 
-.split-button {
+/* Routine page (#/programa/<id>): one lane per day ------------------- */
+.program-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.day-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* The lane is a card; its main link covers it, and the small "Entrenar"
+   button sits on top in the corner (two separate links, not nested) */
+.day-lane {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 0.2s;
+}
+
+.day-lane:hover {
+  border-color: var(--accent);
+}
+
+.day-lane-main {
+  display: block;
+  padding: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.day-lane-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 96px; /* room for the Entrenar button */
+}
+
+.day-badge {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.day-lane-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.day-lane-name {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.day-lane-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Four square thumbnails in a row; "+N" sits on the last one */
+.day-lane-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 96px));
+  gap: 8px;
   margin-top: 12px;
 }
 
-/* "Mis rutinas": a divided routine's name above its day cards */
-.my-program {
-  margin-bottom: 10px;
+.lane-thumb-cell {
+  position: relative;
+  min-width: 0;
 }
 
-.my-program-title {
-  margin: 6px 0 8px;
-  font-size: 15px;
+.anim-box.lane-thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.lane-more {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.day-lane-train {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-button);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
+}
+
+/* Day count step when creating a routine */
+.days-count {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* 7 chips fit in one row on a 375px phone */
+.days-count .chip {
+  min-width: 40px;
+  padding: 0 8px;
+  min-height: 44px;
+  justify-content: center;
+  font-size: 16px;
 }
 
 /* Bar stuck to the bottom (above the tab bar) with the main action */

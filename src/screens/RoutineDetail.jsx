@@ -48,6 +48,8 @@ function vueltaSummary(step) {
 export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChange }) {
   const active = useActiveSession(routine?.id);
   const days = useRoutineDays(routine, isMine);
+  // The routine page, when this is one day of several (#/programa/<id>).
+  const programHref = days.length > 1 ? `#/programa/${routine.programId}` : null;
 
   if (!routine) {
     return (
@@ -67,7 +69,7 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
     <div className={gymMode ? "screen gym-mode" : "screen"}>
       {/* Top bar: back on the left, Modo gym switch on the right */}
       <div className="top-bar">
-        <BackButton fallback="#/rutinas" />
+        <BackButton fallback={programHref ?? "#/rutinas"} />
         <button
           type="button"
           role="switch"
@@ -83,7 +85,14 @@ export default function RoutineDetail({ routine, isMine, gymMode, onGymModeChang
       </div>
 
       <div className="content">
-        <p className="routine-block">{isMine ? (routine.block ?? "Mi rutina") : routine.block}</p>
+        {/* The routine this day belongs to; with several days it links to its page */}
+        {programHref ? (
+          <a className="routine-block routine-block-link" href={programHref}>
+            {routine.block}
+          </a>
+        ) : (
+          <p className="routine-block">{isMine ? "Mi rutina" : routine.block}</p>
+        )}
         <h1 className="detail-title">{routine.name}</h1>
         {routine.focus && <p className="routine-focus hide-in-gym">{routine.focus}</p>}
 

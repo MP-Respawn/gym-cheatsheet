@@ -67,26 +67,38 @@ export async function deleteRoutine(id) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Routines split into days                                            */
+/* Days                                                                */
 /* ------------------------------------------------------------------ */
 /*
- * A routine can be divided into days (Día 1, Día 2...). Each day is saved as
- * its own routine, so the routine page, the workout log and the history work
- * per day exactly as before. The days of one routine share:
- *   programId   the same id on every day
+ * Every routine has days (Día 1, Día 2...), at least one. Each day is saved
+ * as its own routine, so the day page, the workout log and the history work
+ * per day. The days of one routine share:
+ *   programId   the same id on every day (the routine page is #/programa/<id>)
  *   dayIndex    0, 1, 2... (their order)
  *   block       the routine's name, shown above each day's title (like the
  *               trainer's "Bloque A") and found by the search
- * A routine without programId is a normal, undivided one.
+ * A routine with one day keeps the routine's name as its own name. Routines
+ * saved before days existed have no programId: they count as one-day routines.
  */
 
-// The days of the routine this one belongs to, in order (just [routine] if
-// it is not divided). `routines` defaults to everything saved.
+// The days of the routine this one belongs to, in order (just [routine] for
+// an old routine saved without days). `routines` defaults to everything saved.
 export function programDaysOf(routine, routines = readData().routines) {
   if (!routine?.programId) return routine ? [routine] : [];
   return routines
     .filter((r) => r.programId === routine.programId)
     .sort((a, b) => (a.dayIndex ?? 0) - (b.dayIndex ?? 0));
+}
+
+// One of your routines with days, as { id, name, focus, days, isMine: true },
+// or undefined. `focus` is the days' focus joined ("Piernas, Espalda").
+export function myProgram(programId, routines = readData().routines) {
+  const days = routines
+    .filter((r) => r.programId === programId)
+    .sort((a, b) => (a.dayIndex ?? 0) - (b.dayIndex ?? 0));
+  if (days.length === 0) return undefined;
+  const focus = days.map((d) => d.focus).filter(Boolean).join(", ");
+  return { id: programId, name: days[0].block ?? days[0].name, focus, days, isMine: true };
 }
 
 // A blank day for the editor.
@@ -95,16 +107,15 @@ export function newDay() {
 }
 
 /*
- * Saves a whole routine, divided or not, in one go:
+ * Saves a whole routine in one go:
  *   { programId, name, days: [{ id, name, focus, steps }] }
- * With one day it is saved as a normal routine (no programId), which is how
- * "undividing" works. Days that existed before and are no longer in `days`
- * are deleted. Returns the saved day routines, in order.
+ * Days that existed before and are no longer in `days` are deleted.
+ * Returns the saved day routines, in order.
  */
 export async function saveProgram({ programId, name, days }) {
   const stamp = now();
-  const divided = days.length > 1;
-  const pid = divided ? programId ?? newId() : null;
+  const several = days.length > 1;
+  const pid = programId ?? newId();
   let saved = [];
   updateData((d) => {
     const before = programId ? d.routines.filter((r) => r.programId === programId) : [];
@@ -115,13 +126,16 @@ export async function saveProgram({ programId, name, days }) {
       const routine = {
         id: day.id,
         ownerId: existing?.ownerId ?? LOCAL_OWNER,
-        name: divided ? day.name || `Día ${i + 1}` : name,
+        // one day: the routine's own name; several: "Día 2" or the day's own name
+        name: several ? day.name || `Día ${i + 1}` : name,
         focus: day.focus,
         steps: day.steps,
         createdAt: existing?.createdAt ?? stamp,
         updatedAt: stamp,
+        programId: pid,
+        dayIndex: i,
+        block: name,
       };
-      if (divided) Object.assign(routine, { programId: pid, dayIndex: i, block: name });
       return routine;
     });
     const savedIds = new Set(saved.map((r) => r.id));
@@ -131,7 +145,7 @@ export async function saveProgram({ programId, name, days }) {
   return saved;
 }
 
-// Deletes a routine and, if it is divided, all its days.
+// Deletes a routine with all its days.
 export async function deleteProgram(routine) {
   const ids = new Set(programDaysOf(routine).map((r) => r.id));
   updateData((d) => ({ ...d, routines: d.routines.filter((r) => !ids.has(r.id)) }));

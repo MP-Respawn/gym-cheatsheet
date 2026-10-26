@@ -24,6 +24,7 @@ import ExerciseList from "./screens/ExerciseList.jsx";
 import ExerciseDetail from "./screens/ExerciseDetail.jsx";
 import RoutineList from "./screens/RoutineList.jsx";
 import RoutineDetail from "./screens/RoutineDetail.jsx";
+import ProgramDetail from "./screens/ProgramDetail.jsx";
 import RoutineEditor from "./screens/RoutineEditor.jsx";
 import WorkoutLog from "./screens/WorkoutLog.jsx";
 import Search from "./screens/Search.jsx";
@@ -117,6 +118,8 @@ export default function App() {
     screen = <ExerciseDetail id={route.id} />;
   } else if (route.name === "routines") {
     screen = <RoutineList onMenuClick={openMenu} />;
+  } else if (route.name === "program") {
+    screen = <ProgramDetail key={route.id} id={route.id} />;
   } else if (route.name === "search") {
     screen = <Search query={query} onQueryChange={setQuery} />;
   } else if (route.name === "routine-new") {
@@ -144,7 +147,7 @@ export default function App() {
 
   // Exercise pages belong to the first tab, routine pages to the second;
   // the search page to neither.
-  let activeTab = route.name.startsWith("routine") ? "routines" : "exercises";
+  let activeTab = route.name.startsWith("routine") || route.name === "program" ? "routines" : "exercises";
   if (route.name === "search") activeTab = null;
 
   return (

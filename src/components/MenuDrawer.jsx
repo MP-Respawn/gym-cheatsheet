@@ -21,7 +21,7 @@ import { useEffect, useRef } from "react";
 import { useRoles } from "../store/useStore.js";
 import { Brand } from "./AppHeader.jsx";
 import { linksFor } from "./navLinks.js";
-import { AccountControls, GymSwitch, Icon, SyncNote } from "./navShared.jsx";
+import { AccountControls, GymSwitch, Icon, SyncNote, ThemeSwitch } from "./navShared.jsx";
 
 export default function MenuDrawer({ exercisesHref = "#/", open, onClose, activeTab, gymMode, onGymModeChange }) {
   const dialog = useRef(null);
@@ -76,6 +76,9 @@ export default function MenuDrawer({ exercisesHref = "#/", open, onClose, active
 
           <h2 className="drawer-section">Entrenamiento</h2>
           <GymSwitch on={gymMode} onChange={onGymModeChange} className="drawer-link drawer-switch" hint />
+
+          <h2 className="drawer-section">Tema</h2>
+          <ThemeSwitch />
 
           <h2 className="drawer-section">Tu cuenta</h2>
           <AccountControls linkClass="drawer-link" noteClass="drawer-note" />

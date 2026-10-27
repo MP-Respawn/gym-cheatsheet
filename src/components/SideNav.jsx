@@ -4,12 +4,12 @@
  * The navigation column shown on wide screens (900px and up) instead of the
  * bottom tab bar and the hamburger menu. Always rendered; styles.css hides
  * it on phones. Same content as MenuDrawer: the wordmark, the main links,
- * the Modo gym switch and your account.
+ * the Modo gym switch, the theme and your account.
  */
 import { useRoles } from "../store/useStore.js";
 import { Brand } from "./AppHeader.jsx";
 import { linksFor } from "./navLinks.js";
-import { AccountControls, GymSwitch, Icon, SyncNote } from "./navShared.jsx";
+import { AccountControls, GymSwitch, Icon, SyncNote, ThemeSwitch } from "./navShared.jsx";
 
 export default function SideNav({ activeTab, exercisesHref = "#/", gymMode, onGymModeChange }) {
   const roles = useRoles();
@@ -36,6 +36,9 @@ export default function SideNav({ activeTab, exercisesHref = "#/", gymMode, onGy
 
       <h2 className="sidenav-section">Entrenamiento</h2>
       <GymSwitch on={gymMode} onChange={onGymModeChange} className="sidenav-link sidenav-switch" />
+
+      <h2 className="sidenav-section">Tema</h2>
+      <ThemeSwitch />
 
       <h2 className="sidenav-section">Tu cuenta</h2>
       <AccountControls linkClass="sidenav-link" noteClass="sidenav-note" />

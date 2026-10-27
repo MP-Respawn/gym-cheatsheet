@@ -18,6 +18,7 @@ import { ROUTINES } from "../data/routines.js";
 import { assignedDays, assignedPrograms } from "./assigned.js";
 import { getAuth, subscribeAuth } from "./auth.js";
 import { installState, subscribeInstall } from "./install.js";
+import { getTheme, subscribeTheme } from "./theme.js";
 import { getStatus, pendingSessions, subscribeStatus } from "./remote.js";
 import { isPersistent, readData, subscribe } from "./storage.js";
 import { historyForNow } from "./workouts.js";
@@ -142,6 +143,11 @@ export function useExerciseHistory(exerciseId) {
 export function usePendingCount() {
   const data = usePersonalData();
   return useMemo(() => pendingSessions(data.sessions).length, [data]);
+}
+
+// "oscuro" | "claro" | "inca": see theme.js.
+export function useTheme() {
+  return useSyncExternalStore(subscribeTheme, getTheme);
 }
 
 // "installed" | "prompt" | "ios" | "none": see install.js.

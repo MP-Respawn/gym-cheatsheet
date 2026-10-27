@@ -97,8 +97,16 @@ Hecho en la etapa 5 (app instalable, sin tiendas):
 - Una versión nueva se baja sola y espera: "Hay una versión nueva · Actualizar", o entra la próxima vez que se abre. Nunca recarga en medio de un entrenamiento.
 - Las pantallas del coach y del superadmin se cargan aparte: un cliente baja menos código.
 
+Temas (después de la etapa 5):
+- En el menú, **Tema**: Oscuro (el original), Claro (Respawn en claro, tarjetas blancas con contorno) e INCA (la marca de INCA MMA según su manual: fondo Hueso, texto Noche, Gris Inca, Oro Inti en botones con texto Noche, Oro Viejo para texto dorado; Archivo expandido en títulos e IBM Plex Mono en etiquetas; la barra de navegación en Noche con el activo en oro).
+- Se guarda en cada teléfono (`src/store/theme.js`) y se aplica antes de pintar (`index.html`), así no parpadea. Un tema es solo otra lista de valores para las variables de `styles.css`; las animaciones también las usan.
+- Las fuentes de INCA no se guardan de entrada para usar sin señal: se guardan la primera vez que alguien elige ese tema.
+- La marca en INCA: el isotipo (la corona en su círculo) con "INCA MMA" en la barra y el menú, y el sello completo en el inicio de sesión. Las dos imágenes (`public/brand/inca-isotipo.png`, `inca-sello.png`) están recortadas del manual de marca v1.0; se reemplazan cuando haya un SVG del logo.
+- En Ejercicios, el título sigue a la pestaña ("Ejercicios de yoga", con el número al lado) y "↳ GRUPO" marca los chips como subcategoría de la disciplina.
+
 Pendiente:
 - Gráficos de progreso por ejercicio.
+- Que un coach pueda fijar el tema de sus clientes (hoy cada uno lo elige).
 
 ## Operación
 

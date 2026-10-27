@@ -42,6 +42,10 @@ export function GroupChips({ group, onGroupChange, groups = GROUPS_IN_USE, label
   return (
     <div className="filter-row">
       <span className="filter-label" id="filter-grupo">
+        {/* A branch (↳): this row hangs from the discipline tab above */}
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <path d="M6 4v8a4 4 0 0 0 4 4h9M15 12l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         {label}
       </span>
       {chips}

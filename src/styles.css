@@ -39,11 +39,14 @@
   --text: #f0f0f0; /* primary text */
   --muted: #8b949e; /* secondary text: the system's #6B7280 lifted a step so 12–13px labels pass 4.5:1 */
   --muted-2: #6b7280; /* decorative muted (icons, dividers, placeholder) */
-  --accent: #00e5cc; /* teal: links, CTAs, active states */
-  --accent-ink: #0d1117; /* text placed on top of the accent */
+  --accent: #00e5cc; /* teal as text and lines: links, active states, outlines */
+  --accent-fill: #00e5cc; /* teal as a solid fill: main buttons, switches, badges */
+  --accent-ink: #0d1117; /* text placed on top of the fill */
   --accent-soft: rgb(0 229 204 / 0.12); /* tinted pill behind active items */
-  --accent-glow: rgb(0 229 204 / 0.3); /* hover ring */
+  --accent-glow: rgb(0 229 204 / 0.3); /* hover ring, selected text */
+  --accent-line: rgb(0 229 204 / 0.45); /* the prescription box's outline */
   --danger: #f85149;
+  --danger-text: #ff8a8a; /* error text, a step lighter so it reads on dark */
   --warning: #d29922;
   --figure-color: #f0f0f0; /* stick figure */
   --figure-far: #8b949e; /* limbs on the far side of the figure */
@@ -66,7 +69,120 @@
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-label: var(--font-display); /* small uppercase labels */
+  --display-stretch: 100%; /* width of the titles' letters (INCA: expanded) */
   color-scheme: dark;
+}
+
+/*
+ * The other themes (src/store/theme.js puts data-theme on <html>): the same
+ * variables with other values. Everything above reads them, the animations
+ * too (figures.css), so a theme is only this list.
+ */
+
+/* Claro: Respawn in light, white cards with thin outlines */
+:root[data-theme="claro"] {
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --muted: #57606a;
+  --muted-2: #8c959f;
+  --accent: #00796b; /* a deeper teal, so text and links read on white */
+  --accent-fill: #00b3a1;
+  --accent-ink: #0d1117;
+  --accent-soft: rgb(0 150 136 / 0.1);
+  --accent-glow: rgb(0 150 136 / 0.25);
+  --accent-line: rgb(0 121 107 / 0.4);
+  --danger: #cf222e;
+  --danger-text: #cf222e;
+  --warning: #9a6700;
+  --figure-color: #1f2328;
+  --figure-far: #8c959f;
+  --gear-color: #57606a;
+  --band-color: #bc4c00;
+  --shadow: 0 1px 2px rgb(31 35 40 / 0.06);
+  --shadow-md: 0 4px 12px rgb(31 35 40 / 0.08);
+  color-scheme: light;
+}
+
+/*
+ * INCA MMA, from its brand manual: Hueso (bone) background, Noche text, Gris
+ * Inca for secondary text, Oro Inti as the fill (always with Noche text on
+ * it, never white) and Oro Viejo for gold text. Archivo (titles expanded),
+ * IBM Plex Mono for labels.
+ */
+:root[data-theme="inca"] {
+  --bg: #f4f1ea; /* Hueso */
+  --surface: #ffffff;
+  --surface-2: #ece7dc;
+  --border: #ddd7ca;
+  --text: #161617; /* Noche */
+  --muted: #4f4e50; /* Gris Inca */
+  --muted-2: #8e8b85; /* Piedra: decorative only */
+  --accent: #7a5c16; /* Oro Viejo: gold text, 5.4:1 on Hueso */
+  --accent-fill: #c8a040; /* Oro Inti */
+  --accent-ink: #161617; /* Noche on Oro Inti: 7.4:1 */
+  --accent-soft: rgb(200 160 64 / 0.16);
+  --accent-glow: rgb(200 160 64 / 0.35);
+  --accent-line: rgb(200 160 64 / 0.7);
+  --danger: #b42318;
+  --danger-text: #b42318;
+  --warning: #8a5a00;
+  --figure-color: #161617;
+  --figure-far: #8e8b85;
+  --gear-color: #4f4e50;
+  --band-color: #c8a040;
+  --shadow: 0 1px 2px rgb(22 22 23 / 0.06);
+  --shadow-md: 0 4px 12px rgb(22 22 23 / 0.08);
+  --font-display: "Archivo Variable", "Archivo", system-ui, sans-serif;
+  --font-body: "Archivo Variable", "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-label: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --display-stretch: 125%;
+  color-scheme: light;
+}
+
+/* INCA's navigation (tab bar, side nav, menu) in Noche, with gold for the
+   active item: the manual's "oro sobre Noche" pairing (7.4:1) */
+:root[data-theme="inca"] :is(.tab-bar, .sidenav, .drawer) {
+  --bg: #161617;
+  --surface: #161617;
+  --surface-2: #232325;
+  --border: #2e2e30;
+  --text: #f4f1ea;
+  --muted: #c9c5bc;
+  --muted-2: #8e8b85;
+  --accent: #c8a040;
+  --accent-soft: rgb(200 160 64 / 0.16);
+  color: var(--text);
+}
+
+/* The theme switch in the menu: three options side by side */
+.theme-switch {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 0 14px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+}
+
+.theme-option {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-button);
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-option.active {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 /* ---------- 2. Base ---------- */
@@ -109,7 +225,7 @@ ol {
 }
 
 ::selection {
-  background: rgb(0 229 204 / 0.2);
+  background: var(--accent-glow);
   color: var(--text);
 }
 
@@ -127,7 +243,7 @@ ol {
 .prescription-label,
 .drawer-section,
 .sidenav-section {
-  font-family: var(--font-display);
+  font-family: var(--font-label);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -207,6 +323,7 @@ ol {
   align-items: baseline;
   gap: 6px;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   line-height: 1;
 }
 
@@ -230,6 +347,38 @@ ol {
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.12em;
+}
+
+/* INCA: the isotipo, "INCA" expanded black, "MMA" bold, wide-spaced gold */
+.brand-inca {
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-isotipo {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+.brand-inca .brand-name {
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.brand-inca .brand-accent {
+  opacity: 1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+}
+
+/* INCA's whole seal on the sign-in screens, centered above the form */
+.brand-seal {
+  display: block;
+  width: 112px;
+  height: auto;
+  margin: 0 auto 8px;
 }
 
 /* Looks like a search box; tapping it opens the search page */
@@ -262,6 +411,7 @@ ol {
 
 .page-title {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 28px;
   font-weight: 700;
   line-height: 1;
@@ -270,6 +420,32 @@ ol {
 
 .page-count {
   color: var(--muted);
+}
+
+/* "Ejercicios de Animal Flow" is long: a step smaller on phones, and it may
+   take two lines (wide screens get the usual 36px, section 9) */
+.exercises-title {
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+/* The count next to a page title ("Ejercicios de yoga 30"), like the tabs' counts */
+.title-count {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-stretch: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  vertical-align: middle;
 }
 
 .back-button {
@@ -436,8 +612,8 @@ html:has(.drawer[open]) {
 
 /* Reuses the Modo gym switch drawing from section 6 */
 .drawer-switch.on .gym-toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 
 .drawer-switch.on .gym-toggle-thumb {
@@ -502,22 +678,28 @@ html:has(.drawer[open]) {
 }
 
 /*
- * Filters, three levels with a clear hierarchy:
+ * Filters, two levels with a clear hierarchy:
  *   1. .disc-tabs   discipline (Todo, Gimnasio, Yoga...): tabs on a rule,
- *                   teal underline + count on the active one. These are the
+ *                   accent underline + count on the active one. These are the
  *                   SECTIONS of the catalogue, so they look like tabs.
  *   2. .filter-row  muscle group: a small label ("Grupo") + outline chips;
- *                   the active chip gets a teal outline, never a solid fill,
+ *                   the active chip gets an accent outline, never a solid fill,
  *                   so it does not compete with buttons.
- *   3. .filter-row.sub  sequence ("Secuencia"): the same row, quieter chips.
  * On a phone each row scrolls sideways on its own; the page never does.
+ * The rows only move sideways (overflow-y: hidden: a pixel poking out used
+ * to let them wiggle up and down) and always stop with a whole tab or chip
+ * at the edge (scroll snap), never halfway through one.
  */
 .disc-tabs {
   display: flex;
   gap: 20px;
   margin: 14px 20px 0;
-  border-bottom: 1px solid var(--border);
+  /* The rule under the tabs, drawn inside the row so nothing sticks out */
+  box-shadow: inset 0 -1px 0 var(--border);
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -537,6 +719,7 @@ html:has(.drawer[open]) {
   border: 0;
   background: none;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -544,6 +727,7 @@ html:has(.drawer[open]) {
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.2s;
+  scroll-snap-align: start;
 }
 
 /* The underline: invisible until the tab is active */
@@ -552,7 +736,7 @@ html:has(.drawer[open]) {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   height: 2px;
   border-radius: 2px 2px 0 0;
   background: transparent;
@@ -568,7 +752,7 @@ html:has(.drawer[open]) {
 }
 
 .disc-tab.active::after {
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 
 /* How many exercises the discipline has */
@@ -595,23 +779,28 @@ html:has(.drawer[open]) {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
+  margin-top: 10px;
   padding: 0 20px;
 }
 
-.filter-row.sub {
-  margin-top: 8px;
-}
-
+/* "↳ GRUPO": a sub-level of the discipline tabs, so it reads as part of them */
 .filter-label {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   width: 74px;
-  font-family: var(--font-display);
+  font-family: var(--font-label);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted-2);
+  color: var(--text);
+}
+
+.filter-label svg {
+  flex: none;
+  color: var(--accent);
 }
 
 .chips {
@@ -619,7 +808,12 @@ html:has(.drawer[open]) {
   flex: 1;
   min-width: 0;
   gap: 6px;
+  /* Room for the focus ring, which overflow would otherwise cut */
+  padding-block: 2px;
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -631,7 +825,8 @@ html:has(.drawer[open]) {
 /* Chips without a label row (the exercise picker, the search page) */
 .chips.standalone {
   margin-top: 10px;
-  padding: 0 20px;
+  padding: 2px 20px;
+  scroll-padding-inline: 20px; /* snap to the row's margin, not the screen edge */
 }
 
 .chip {
@@ -647,6 +842,7 @@ html:has(.drawer[open]) {
   white-space: nowrap;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s, background 0.2s;
+  scroll-snap-align: start;
 }
 
 .chip:hover {
@@ -659,22 +855,6 @@ html:has(.drawer[open]) {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
-}
-
-/* Third level: no border at rest, so the row reads as lighter */
-.sub .chip {
-  min-height: 28px;
-  padding: 0 10px;
-  border-color: transparent;
-  font-size: 12px;
-}
-
-.sub .chip:hover {
-  border-color: var(--border);
-}
-
-.sub .chip.active {
-  border-color: transparent;
 }
 
 .list-section {
@@ -724,6 +904,7 @@ html:has(.drawer[open]) {
 
 .card-title {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -777,7 +958,7 @@ html:has(.drawer[open]) {
 .tag-step {
   padding: 0 6px;
   border-radius: 6px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-size: 11px;
   font-weight: 700;
@@ -889,6 +1070,7 @@ mark {
 .detail-title {
   margin-top: 16px;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -912,6 +1094,7 @@ mark {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -949,8 +1132,8 @@ mark {
 }
 
 .tag-main {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--accent-ink);
   font-weight: 600;
 }
@@ -975,6 +1158,7 @@ mark {
 .block-title {
   margin: 24px 0 10px;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -1028,7 +1212,7 @@ mark {
   gap: 4px;
   margin-top: 20px;
   padding: 14px 16px;
-  border: 1px solid rgb(0 229 204 / 0.45);
+  border: 1px solid var(--accent-line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -1040,6 +1224,7 @@ mark {
 
 .prescription-text {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -1154,9 +1339,10 @@ mark {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-weight: 700;
   font-size: 13px;
 }
@@ -1172,6 +1358,7 @@ mark {
 .step-prescription {
   margin-bottom: 6px;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1208,6 +1395,7 @@ mark {
 
 .step-name {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1286,8 +1474,8 @@ mark {
 }
 
 .gym-toggle.on .gym-toggle-track {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 
 .gym-toggle.on .gym-toggle-thumb {
@@ -1372,6 +1560,7 @@ mark {
 
 .auth-code {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 22px;
   letter-spacing: 0.3em;
 }
@@ -1412,6 +1601,7 @@ mark {
 .top-bar-title {
   margin-right: auto;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 16px;
   font-weight: 600;
 }
@@ -1484,7 +1674,7 @@ mark {
 
 .primary-button {
   border: 0;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
 }
 
@@ -1620,7 +1810,7 @@ mark {
 
 .day-tools .day-remove {
   margin-left: auto;
-  color: #ff8a8a;
+  color: var(--danger-text);
 }
 
 /* Routine page (#/programa/<id>): one lane per day ------------------- */
@@ -1718,7 +1908,7 @@ mark {
   bottom: 4px;
   padding: 2px 7px;
   border-radius: var(--radius-pill);
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-size: 12px;
   font-weight: 800;
@@ -1733,7 +1923,7 @@ mark {
   min-height: 36px;
   padding: 0 14px;
   border-radius: var(--radius-button);
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--accent-ink);
   font-size: 14px;
   font-weight: 700;
@@ -1840,6 +2030,7 @@ mark {
 
 .picker-title {
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -1903,6 +2094,7 @@ mark {
   width: 22px;
   text-align: center;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-weight: 700;
   color: var(--muted);
 }
@@ -1916,6 +2108,7 @@ mark {
 .set-input {
   padding-right: 44px;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1976,6 +2169,7 @@ mark {
 .history-date {
   grid-row: span 2;
   font-family: var(--font-display);
+  font-stretch: var(--display-stretch);
   font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -2438,8 +2632,8 @@ body:has(.action-bar) .notices {
   }
 
   .sidenav-switch.on .gym-toggle-track {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
   }
 
   .sidenav-switch.on .gym-toggle-thumb {
@@ -2519,10 +2713,6 @@ body:has(.action-bar) .notices {
   .filter-label {
     width: 84px;
     padding-top: 9px;
-  }
-
-  .filter-row.sub .filter-label {
-    padding-top: 7px;
   }
 
   .chips {

@@ -17,6 +17,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Respawn Fitness</title>
+    <!-- The theme chosen in the menu (src/store/theme.js), applied before the
+         first paint so a light theme never flashes dark while the app loads -->
+    <script>
+      try {
+        var theme = localStorage.getItem("theme");
+        var bars = { claro: "#f6f8fa", inca: "#f4f1ea" };
+        if (bars[theme]) {
+          document.documentElement.setAttribute("data-theme", theme);
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", bars[theme]);
+          document.querySelector('meta[name="color-scheme"]').setAttribute("content", "light");
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

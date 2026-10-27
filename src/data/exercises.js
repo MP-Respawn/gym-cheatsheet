@@ -54,11 +54,12 @@
 /* ------------------------------------------------------------------ */
 
 // The disciplines, in the order of the selector on the home screen.
+// `title` heads the exercise list while that discipline is chosen.
 export const DISCIPLINES = [
-  { key: "gym", label: "Gimnasio" },
-  { key: "yoga", label: "Yoga" },
-  { key: "animal-flow", label: "Animal Flow" },
-  { key: "jiu-jitsu", label: "Jiu Jitsu" },
+  { key: "gym", label: "Gimnasio", title: "Ejercicios de gimnasio" },
+  { key: "yoga", label: "Yoga", title: "Ejercicios de yoga" },
+  { key: "animal-flow", label: "Animal Flow", title: "Ejercicios de Animal Flow" },
+  { key: "jiu-jitsu", label: "Jiu Jitsu", title: "Ejercicios de Jiu Jitsu" },
 ];
 
 // The order of this array is the order of the chips on the home screen.

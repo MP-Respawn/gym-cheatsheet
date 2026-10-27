@@ -61,7 +61,7 @@ export default function SignIn({ newAccount = false, title = "Entrar", intro }) 
   return (
     <div className="screen auth-screen">
       <div className="auth-card">
-        <Brand />
+        <Brand seal />
         <h1 className="page-title auth-title">{title}</h1>
         {intro && <p className="auth-intro">{intro}</p>}
 

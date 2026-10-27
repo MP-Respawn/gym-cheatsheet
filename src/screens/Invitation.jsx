@@ -46,7 +46,7 @@ export default function Invitation({ token, coach = false }) {
   return (
     <div className="screen auth-screen">
       <div className="auth-card">
-        <Brand />
+        <Brand seal />
         {error ? (
           <>
             <h1 className="page-title auth-title">No pudimos usar el link</h1>

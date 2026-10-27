@@ -84,8 +84,6 @@ export default function App() {
   // exercise and coming back.
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("todos");
-  // Sequence chip (core vueltas, Flow básico): "todas", a VUELTAS key, or "otros".
-  const [vuelta, setVuelta] = useState("todas");
 
   // Discipline filter of the home list, read from the URL ("todo" = all).
   // The last one used is remembered, so the Ejercicios tab and menu links
@@ -181,8 +179,6 @@ export default function App() {
         onDisciplineChange={changeDiscipline}
         group={group}
         onGroupChange={setGroup}
-        vuelta={vuelta}
-        onVueltaChange={setVuelta}
         onMenuClick={openMenu}
       />
     );

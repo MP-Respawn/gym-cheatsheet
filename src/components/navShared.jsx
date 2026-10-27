@@ -7,13 +7,15 @@
  *
  *   Icon             a line icon drawn from one SVG path (RPWN style: 1.8 stroke)
  *   GymSwitch        the Modo gym on/off switch
+ *   ThemeSwitch      Oscuro · Claro · INCA (theme.js)
  *   AccountControls  who is signed in, "Instalar la app" (when the browser
  *                    offers it) + "Cerrar sesión"
  *   SyncNote         where your data lives, and what is still waiting to upload
  */
 import { signOut } from "../store/auth.js";
 import { install } from "../store/install.js";
-import { useAuth, useInstall, useIsPersistent, usePendingCount, useRemoteStatus } from "../store/useStore.js";
+import { THEMES, setTheme } from "../store/theme.js";
+import { useAuth, useInstall, useIsPersistent, usePendingCount, useRemoteStatus, useTheme } from "../store/useStore.js";
 
 export function Icon({ d, size = 18 }) {
   return (
@@ -46,6 +48,27 @@ export function GymSwitch({ on, onChange, className, hint = false }) {
         <span className="gym-toggle-thumb" />
       </span>
     </button>
+  );
+}
+
+// The three themes side by side; the chosen one is highlighted. Saved on this phone.
+export function ThemeSwitch() {
+  const theme = useTheme();
+  return (
+    <div className="theme-switch" role="radiogroup" aria-label="Tema">
+      {THEMES.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          role="radio"
+          aria-checked={t.key === theme}
+          className={t.key === theme ? "theme-option active" : "theme-option"}
+          onClick={() => setTheme(t.key)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

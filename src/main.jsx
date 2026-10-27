@@ -18,6 +18,12 @@ import "@fontsource/dm-sans/latin-400.css";
 import "@fontsource/dm-sans/latin-500.css";
 import "@fontsource/dm-sans/latin-600.css";
 import "@fontsource/dm-sans/latin-700.css";
+// The INCA theme's fonts: Archivo with its width axis (titles go expanded)
+// and IBM Plex Mono for labels. The browser only downloads them once that
+// theme is in use.
+import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource/ibm-plex-mono/latin-400.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
 import "./styles.css";
 import App from "./App.jsx";
 import Notices from "./components/Notices.jsx";

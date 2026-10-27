@@ -8,13 +8,32 @@
  *
  * `onMenuClick` comes from App.jsx, which owns the menu.
  */
+import { useTheme } from "../store/useStore.js";
 
 /*
  * The wordmark, built from text only (the RPWN Studio logo rules): a teal
  * "> " prompt, "Respawn" in bold Space Grotesk, and "fitness" small, spaced
  * and teal. Never an image, so it stays crisp at any size.
+ * In the INCA theme: the isotipo (the crown in its circle), "INCA" in
+ * Archivo expanded black and "MMA" small, spaced and gold. With `seal`
+ * (the sign-in screens, where there is room) it is INCA's whole seal
+ * instead, above the manual's 96px minimum. Both images are cut from INCA's
+ * brand manual v1.0 (public/brand/); swap them when there is an SVG.
  */
-export function Brand() {
+export function Brand({ seal = false }) {
+  const theme = useTheme();
+  if (theme === "inca" && seal) {
+    return <img className="brand-seal" src="/brand/inca-sello.png" alt="INCA MMA" width="112" height="120" />;
+  }
+  if (theme === "inca") {
+    return (
+      <span className="brand brand-inca">
+        <img className="brand-isotipo" src="/brand/inca-isotipo.png" alt="" width="32" height="32" />
+        <span className="brand-name">INCA</span>
+        <span className="brand-accent">MMA</span>
+      </span>
+    );
+  }
   return (
     <span className="brand">
       <span className="brand-prompt" aria-hidden="true">

@@ -42,6 +42,16 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // The INCA theme's fonts are not kept up front (most people never use
+        // that theme): they are kept the first time they are downloaded.
+        globIgnores: ['**/archivo-*.woff2', '**/ibm-plex-mono-*.woff2'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/(archivo|ibm-plex-mono)-.*\.woff2$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'theme-fonts', expiration: { maxEntries: 20 } },
+          },
+        ],
         // Any page opened without signal is the app itself (the router lives after the #).
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,

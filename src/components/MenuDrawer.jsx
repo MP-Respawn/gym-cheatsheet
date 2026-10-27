@@ -3,7 +3,8 @@
  *
  * The side menu the hamburger button opens on phones. It slides in from the
  * left over the page and holds:
- *   - links to the main pages (Ejercicios, Rutinas; Clientes for
+ *   - links to the main pages (Ejercicios, Rutinas; 
+
  *     trainers)
  *   - the Modo gym switch
  *   - "Tu cuenta": who is signed in, and "Cerrar sesión"
@@ -17,14 +18,14 @@
  * and account pieces are shared through navShared.jsx.
  */
 import { useEffect, useRef } from "react";
-import { useIsTrainer } from "../store/useStore.js";
+import { useRoles } from "../store/useStore.js";
 import { Brand } from "./AppHeader.jsx";
 import { linksFor } from "./navLinks.js";
 import { AccountControls, GymSwitch, Icon, SyncNote } from "./navShared.jsx";
 
 export default function MenuDrawer({ exercisesHref = "#/", open, onClose, activeTab, gymMode, onGymModeChange }) {
   const dialog = useRef(null);
-  const isTrainer = useIsTrainer();
+  const roles = useRoles();
 
   // Open or close the native dialog to match `open`.
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function MenuDrawer({ exercisesHref = "#/", open, onClose, active
         </div>
 
         <nav className="drawer-body" aria-label="Menú principal">
-          {linksFor(isTrainer).map((link) => {
+          {linksFor(roles).map((link) => {
             const current = link.tab !== null && link.tab === activeTab;
             return (
               <a

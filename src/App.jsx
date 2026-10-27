@@ -35,13 +35,16 @@ import TrainerClients from "./screens/TrainerClients.jsx";
 import TrainerClient from "./screens/TrainerClient.jsx";
 import ProgramEditor from "./screens/ProgramEditor.jsx";
 import AssignProgram from "./screens/AssignProgram.jsx";
-import { useAnyRoutine, useAuth, useIsTrainer, usePersonalData } from "./store/useStore.js";
+import ExerciseRequests from "./screens/ExerciseRequests.jsx";
+import AdminCoaches from "./screens/AdminCoaches.jsx";
+import { useAnyRoutine, useAuth, useIsSuperadmin, useIsTrainer, usePersonalData } from "./store/useStore.js";
 
-// The trainer's pages (Clientes, and building and assigning routines).
-const TRAINER_PAGES = ["clients", "client", "routine-new", "routine-edit", "assign"];
+// The trainer's pages (Clientes, building and assigning routines, Pedidos).
+const TRAINER_PAGES = ["clients", "client", "routine-new", "routine-edit", "assign", "requests"];
 
 function trainerScreen(route, openMenu) {
   if (route.name === "clients") return <TrainerClients onMenuClick={openMenu} />;
+  if (route.name === "requests") return <ExerciseRequests onMenuClick={openMenu} startName={route.query.nombre ?? ""} />;
   if (route.name === "client") return <TrainerClient key={route.id} id={route.id} />;
   if (route.name === "routine-new") {
     const { cliente = null, desde = null } = route.query;
@@ -125,7 +128,7 @@ export default function App() {
   // detail pages start at the top.
   useLayoutEffect(() => {
     const hash = window.location.hash || "#/";
-    const isList = ["home", "routines", "search", "clients"].includes(route.name);
+    const isList = ["home", "routines", "search", "clients", "requests", "coaches"].includes(route.name);
     window.scrollTo(0, isList ? (savedScroll[hash] ?? 0) : 0);
   }, [route]);
 
@@ -135,8 +138,11 @@ export default function App() {
 
   const auth = useAuth();
   const isTrainer = useIsTrainer();
+  const isSuperadmin = useIsSuperadmin();
   const profileKnown = usePersonalData().profile != null;
-  if (route.name === "invite") return <Invitation key={route.id} token={route.id} />;
+  if (route.name === "invite") {
+    return <Invitation key={route.id} token={route.id} coach={route.query.rol === "entrenador"} />;
+  }
   // Checking the login saved on the phone: a blank page for a moment.
   if (auth.status === "loading") return <div className="app" />;
   if (auth.status === "signed-out") return <SignIn />;
@@ -144,11 +150,13 @@ export default function App() {
   // Pick the screen for the current route. The trainer's pages only for
   // trainers (the database refuses the rest anyway); while the role is not
   // known yet (first sign-in), a short wait instead of the wrong page.
-  const trainerPage = TRAINER_PAGES.includes(route.name);
+  const trainerPage = TRAINER_PAGES.includes(route.name) || route.name === "coaches";
   let screen;
   if (trainerPage && !isTrainer && !profileKnown) {
     screen = <p className="empty">Cargando...</p>;
-  } else if (trainerPage && isTrainer) {
+  } else if (route.name === "coaches" && isSuperadmin) {
+    screen = <AdminCoaches onMenuClick={openMenu} />;
+  } else if (trainerPage && isTrainer && route.name !== "coaches") {
     screen = trainerScreen(route, openMenu);
   } else if (route.name === "exercise") {
     screen = <ExerciseDetail id={route.id} />;
@@ -182,6 +190,8 @@ export default function App() {
   // was opened from a client's page too; the search page to none.
   let activeTab = route.name.startsWith("routine") || ["program", "assign"].includes(route.name) ? "routines" : "exercises";
   if (route.name === "search") activeTab = null;
+  if (route.name === "requests") activeTab = "requests";
+  if (route.name === "coaches") activeTab = "coaches";
   if (route.name === "clients" || route.name === "client" || (TRAINER_PAGES.includes(route.name) && route.query.cliente)) {
     activeTab = "clients";
   }

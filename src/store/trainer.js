@@ -95,7 +95,7 @@ export function errorText(error) {
 }
 
 // A Supabase answer: its data, or throws its error.
-function must({ data, error }) {
+export function must({ data, error }) {
   if (error) throw error;
   return data;
 }
@@ -191,8 +191,9 @@ export const fetchClientSessions = (id) => async () =>
 /* ------------------------------------------------------------------ */
 
 // The link a client opens to join: this app's address + #/invitacion/<token>.
-export function inviteUrl(token) {
-  return `${window.location.origin}${window.location.pathname}#/invitacion/${token}`;
+// `query` ("?rol=entrenador") only changes the wording of the sign-in page.
+export function inviteUrl(token, query = "") {
+  return `${window.location.origin}${window.location.pathname}#/invitacion/${token}${query}`;
 }
 
 /*

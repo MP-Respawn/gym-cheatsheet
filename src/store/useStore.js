@@ -54,6 +54,22 @@ export function useIsTrainer() {
   return role === "trainer" || role === "superadmin";
 }
 
+// The superadmin: also sees Entrenadores.
+export function useIsSuperadmin() {
+  return usePersonalData().profile?.role === "superadmin";
+}
+
+// Both at once, for the navigation (navLinks.js linksFor).
+export function useRoles() {
+  return { isTrainer: useIsTrainer(), isSuperadmin: useIsSuperadmin() };
+}
+
+// Answers exercise requests: the superadmin, or the coach who curates the catalog.
+export function useIsCurator() {
+  const profile = usePersonalData().profile;
+  return profile?.role === "superadmin" || Boolean(profile?.can_curate_catalog);
+}
+
 // The routines assigned to you, oldest first: [{ id, name, focus, days, ... }].
 export function useAssignedPrograms() {
   const data = usePersonalData();

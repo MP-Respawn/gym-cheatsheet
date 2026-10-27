@@ -97,7 +97,7 @@ function withOwnNumbers(assignment) {
 export async function refreshAssigned(userId) {
   // Who this person is (role, name), so the app knows whether to show the trainer's tabs.
   const profile = await withTimeout(
-    supabase.from("profiles").select("role, full_name, email").eq("id", userId).single(),
+    supabase.from("profiles").select("role, full_name, email, can_curate_catalog").eq("id", userId).single(),
     "La descarga del perfil",
   );
   if (profile.error) throw profile.error;

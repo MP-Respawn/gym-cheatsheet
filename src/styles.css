@@ -24,6 +24,7 @@
  *   7. Modo gym
  *   7b. Your routines: forms, buttons, editor, picker, workout log, history
  *   7c. Trainer panel: clients, routines, builder, assign
+ *   7d. Superadmin and exercise requests
  *   8. Bottom tab bar
  *   9. Responsive: tablet and desktop
  */
@@ -2186,6 +2187,58 @@ mark {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* ---------- 7d. Superadmin and exercise requests ---------- */
+
+/* A coach's switches: "Responde pedidos" and Desactivar/Activar */
+.coach-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* A turned-off coach: dimmed */
+.coach-off .card-text {
+  opacity: 0.6;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}
+
+/* The coach's own words, kept as typed (line breaks too) */
+.request-text {
+  white-space: pre-line;
+}
+
+.request-rejected {
+  color: var(--danger);
+}
+
+/* Answering a request: exercise, note, buttons */
+.request-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* ---------- 8. Bottom tab bar ---------- */

@@ -5,7 +5,7 @@
  * for the signed-in person is one JSON object:
  *
  *   { version: 2, sessions: [...], assigned: { clients, programs, fetchedAt } | null,
- *     profile: { role, full_name, email } | null }
+ *     profile: { role, full_name, email, can_curate_catalog } | null }
  *
  *   sessions  the workout log (see workouts.js). Kept here first, so a
  *             workout survives a dropped connection; remote.js uploads it.

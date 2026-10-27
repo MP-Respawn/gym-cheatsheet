@@ -24,7 +24,16 @@
  *   #/editar-rutina/<id> -> edit one of your routines
  *   #/asignar/<id>      -> give a routine to clients, or change their numbers
  *                          (?cliente=<id> ticks one)
+ *   #/pedidos           -> ask for a new exercise, see the answers
+ *                          (?nombre=<text> fills the name); the inbox for
+ *                          whoever answers them
  * The old #/plantillas pages lead to #/rutinas.
+ *
+ * Superadmin page:
+ *   #/entrenadores      -> the coaches: invite, turn off, who curates
+ *
+ * #/invitacion/<token>?rol=entrenador is a coach's invitation (the wording
+ * changes; the database knows what the link is for).
  *
  * The hook returns { name, id, query } for the current page and re-renders
  * the component whenever the hash changes (a tapped link, the back button...).
@@ -57,6 +66,8 @@ function parsePath(path) {
   if (first === "nueva-rutina") return { name: "routine-new" };
   if (first === "editar-rutina" && second) return { name: "routine-edit", id: second };
   if (first === "plantillas" || first === "plantilla") return { name: "routines" };
+  if (first === "pedidos") return { name: "requests" };
+  if (first === "entrenadores") return { name: "coaches" };
   if (first === "asignar" && second) return { name: "assign", id: second };
   if (first === "buscar") return { name: "search" };
   return { name: "home" };

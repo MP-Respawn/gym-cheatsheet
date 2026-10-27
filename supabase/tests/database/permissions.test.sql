@@ -22,7 +22,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(63);
+select plan(70);
 
 /* ---- Test helpers (rolled back with everything else) ---- */
 
@@ -284,18 +284,47 @@ select lives_ok(
   $$ insert into public.exercise_requests (name, description) values ('Sentadilla búlgara', 'Con mancuernas') $$,
   'trainer 1 requests a new exercise'
 );
-update public.exercise_requests set status = 'accepted';
+update public.exercise_requests set status = 'rejected';
 select "is"(
   (select status from public.exercise_requests), 'pending', 'trainer 1 cannot resolve their own request'
+);
+select throws_ok(
+  $$ update public.exercise_requests set admin_notified_at = now() $$,
+  '42501', null, 'trainer 1 cannot mark emails as sent'
 );
 
 select tests.login('b2000000-0000-0000-0000-000000000000');
 select "is"((select count(*)::int from public.exercise_requests), 0, 'trainer 2 does not see trainer 1''s request');
 
 select tests.login('a0000000-0000-0000-0000-000000000000');
+select throws_ok(
+  $$ update public.exercise_requests set status = 'accepted' $$,
+  '23514', null, 'accepting needs the id of the exercise that was added'
+);
 select lives_ok(
-  $$ update public.exercise_requests set status = 'accepted', resolved_exercise_id = 'sentadilla-bulgara' $$,
+  $$ update public.exercise_requests
+       set status = 'accepted', resolved_exercise_id = 'sentadilla-bulgara', resolution_note = 'Ya está' $$,
   'the superadmin resolves the request'
+);
+select "is"(
+  (select resolved_by::text from public.exercise_requests),
+  'a0000000-0000-0000-0000-000000000000', 'the database records who resolved it'
+);
+select public.admin_update_profile('b2000000-0000-0000-0000-000000000000', p_can_curate_catalog => true);
+
+select tests.login('b2000000-0000-0000-0000-000000000000');
+select "is"((select count(*)::int from public.exercise_requests), 1, 'trainer 2, now a curator, sees the request');
+select "is"(
+  (select email from public.profiles where id = 'b1000000-0000-0000-0000-000000000000'),
+  'trainer1@test', 'the curator sees who asked'
+);
+select lives_ok(
+  $$ update public.exercise_requests set status = 'rejected', resolution_note = 'Mejor no' $$,
+  'the curator can change the answer'
+);
+select "is"(
+  (select resolved_by::text from public.exercise_requests),
+  'b2000000-0000-0000-0000-000000000000', 'the new answer records the curator'
 );
 
 /* ---- The routine builder (save_program) ---- */

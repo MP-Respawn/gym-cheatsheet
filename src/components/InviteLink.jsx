@@ -1,16 +1,19 @@
 /*
  * InviteLink.jsx
  *
- * A client's invitation link, ready to send: the link itself, "Copiar"
- * (to paste anywhere) and "Mandar por WhatsApp" (opens WhatsApp with a
- * ready-made message; the trainer picks the chat). `name` is the client's,
- * for the message.
+ * An invitation link, ready to send: the link itself, "Copiar" (to paste
+ * anywhere) and "Mandar por WhatsApp" (opens WhatsApp with a ready-made
+ * message; you pick the chat). `name` is the client's, for the message.
+ * A coach's invitation passes its own `message` (the link is added at the
+ * end) and `hint`.
  */
 import { useState } from "react";
 
-export default function InviteLink({ link, name }) {
+const CLIENT_HINT = "Sirve una sola vez y vence en 7 días. Si se pierde, generá uno nuevo desde la ficha del cliente.";
+
+export default function InviteLink({ link, name, message: intro, hint = CLIENT_HINT }) {
   const [copied, setCopied] = useState(false);
-  const message = `Hola${name ? ` ${name}` : ""}! Te armé las rutinas en Respawn Fitness. Entrá desde este link con tu email: ${link}`;
+  const message = `${intro ?? `Hola${name ? ` ${name}` : ""}! Te armé las rutinas en Respawn Fitness. Entrá desde este link con tu email:`} ${link}`;
 
   async function copy() {
     try {
@@ -33,7 +36,7 @@ export default function InviteLink({ link, name }) {
           Mandar por WhatsApp
         </a>
       </div>
-      <p className="hint">Sirve una sola vez y vence en 7 días. Si se pierde, generá uno nuevo desde la ficha del cliente.</p>
+      <p className="hint">{hint}</p>
     </div>
   );
 }

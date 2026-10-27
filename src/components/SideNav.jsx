@@ -6,20 +6,20 @@
  * it on phones. Same content as MenuDrawer: the wordmark, the main links,
  * the Modo gym switch and your account.
  */
-import { useIsTrainer } from "../store/useStore.js";
+import { useRoles } from "../store/useStore.js";
 import { Brand } from "./AppHeader.jsx";
 import { linksFor } from "./navLinks.js";
 import { AccountControls, GymSwitch, Icon, SyncNote } from "./navShared.jsx";
 
 export default function SideNav({ activeTab, exercisesHref = "#/", gymMode, onGymModeChange }) {
-  const isTrainer = useIsTrainer();
+  const roles = useRoles();
   return (
     <nav className="sidenav" aria-label="Menú principal">
       <a className="sidenav-brand" href="#/" aria-label="Respawn Fitness, inicio">
         <Brand />
       </a>
 
-      {linksFor(isTrainer).map((link) => {
+      {linksFor(roles).map((link) => {
         const current = link.tab !== null && link.tab === activeTab;
         return (
           <a

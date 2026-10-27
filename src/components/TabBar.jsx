@@ -2,17 +2,17 @@
  * TabBar.jsx
  *
  * The bar fixed to the bottom of the screen with the sections of the app:
- * Ejercicios and Rutinas, plus Clientes for trainers (the
+ * Ejercicios and Rutinas, plus Clientes and Pedidos for coaches and Coaches for you (the
  * same links as the menus, from navLinks.js). The active tab is
  * highlighted. `active` is a tab key ("exercises", "routines"...) and
  * comes from App.jsx, like `exercisesHref` (the home list with the last
  * discipline you picked).
  */
-import { useIsTrainer } from "../store/useStore.js";
+import { useRoles } from "../store/useStore.js";
 import { linksFor } from "./navLinks.js";
 
 export default function TabBar({ active, exercisesHref = "#/" }) {
-  const tabs = linksFor(useIsTrainer());
+  const tabs = linksFor(useRoles());
   return (
     <nav className="tab-bar" aria-label="Secciones">
       {tabs.map((tab) => (

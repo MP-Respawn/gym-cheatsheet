@@ -12,7 +12,7 @@
  */
 import { useState } from "react";
 import { EXERCISES, groupLabel } from "../data/exercises.js";
-import { CATALOG_ROUTINES, useAssignedPrograms } from "../store/useStore.js";
+import { CATALOG_ROUTINES, useAssignedPrograms, useIsTrainer } from "../store/useStore.js";
 import { highlightParts, matchesSearch, normalize, searchRoutines } from "../utils/search.js";
 import BackButton from "../components/BackButton.jsx";
 import ExerciseAnimation from "../components/ExerciseAnimation.jsx";
@@ -45,6 +45,7 @@ function Highlighted({ text, query }) {
 
 export default function Search({ query, onQueryChange }) {
   const assigned = useAssignedPrograms().flatMap((p) => p.days);
+  const isTrainer = useIsTrainer();
   const [recent, setRecent] = useState(loadRecent);
   const typed = query.trim();
 
@@ -126,6 +127,12 @@ export default function Search({ query, onQueryChange }) {
 
         {typed && exercises.length === 0 && routines.length === 0 && (
           <p className="empty">No encontramos ejercicios ni rutinas con esa búsqueda.</p>
+        )}
+        {/* A coach missing an exercise can ask for it, with the name already typed */}
+        {typed && exercises.length === 0 && isTrainer && (
+          <a className="add-button" href={`#/pedidos?nombre=${encodeURIComponent(typed)}`}>
+            ¿No está? Pedí &ldquo;{typed}&rdquo;
+          </a>
         )}
 
         {exercises.length > 0 && (

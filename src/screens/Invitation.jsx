@@ -1,7 +1,8 @@
 /*
  * Invitation.jsx: a trainer's link (#/invitacion/<token>)
  *
- * The trainer sends this link (by WhatsApp, say). Opening it:
+ * The trainer sends this link (by WhatsApp, say), or you send a coach's
+ * (?rol=entrenador, only changes the wording). Opening it:
  *   - signed out: the sign-in screen, allowed to create the account
  *   - signed in (right after that, or already before): accepts the
  *     invitation, which links this account to the trainer, and opens
@@ -13,7 +14,7 @@ import { acceptInvitation } from "../store/auth.js";
 import { useAuth } from "../store/useStore.js";
 import SignIn from "./SignIn.jsx";
 
-export default function Invitation({ token }) {
+export default function Invitation({ token, coach = false }) {
   const auth = useAuth();
   const [error, setError] = useState("");
   const started = useRef(false);
@@ -32,8 +33,12 @@ export default function Invitation({ token }) {
     return (
       <SignIn
         newAccount
-        title="Te invitaron a entrenar"
-        intro="Tu entrenador te armó las rutinas en Respawn Fitness. Entrá con tu email para verlas."
+        title={coach ? "Te sumaron como coach" : "Te invitaron a entrenar"}
+        intro={
+          coach
+            ? "Armá rutinas y asignáselas a tus clientes en Respawn Fitness. Entrá con tu email para empezar."
+            : "Tu entrenador te armó las rutinas en Respawn Fitness. Entrá con tu email para verlas."
+        }
       />
     );
   }

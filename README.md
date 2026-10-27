@@ -23,9 +23,10 @@ npm run test:db  # database permission tests, in PGlite (no Docker needed)
 - `src/store/`: the signed-in person's data. `auth.js` signs in with an email code; `remote.js` downloads the assigned routines and the workout history and uploads finished workouts; `storage.js` keeps a copy on the phone (one per account) so it works without signal; `assigned.js` turns database rows into the routine shape the screens use; `useStore.js` holds the React hooks.
 - `src/screens/`: the screens (sign-in, invitation, exercise list and detail, routine list and detail, workout log), and for trainers `TrainerClients`, `TrainerClient`, `ProgramEditor` (the routine builder) and `AssignProgram` (the per-client sets/kg grid); their routine list is `src/components/TrainerRoutines.jsx`, shown at the top of the routine list. `src/App.jsx` picks one based on the URL hash.
 - `src/store/trainer.js`: the trainer's reads (clients, routines and who has them, a client's routines and workouts, through a small shared cache) and actions (new client and invitation link, save, assign, take away, archive).
+- `src/store/admin.js`, `src/screens/AdminCoaches.jsx` and `src/screens/ExerciseRequests.jsx`: the superadmin's Coaches page (invite, turn off, who answers requests) and Pedidos (coaches ask for exercises; you answer).
 - `src/styles.css`: all app styles; colors are the custom properties at the top.
 - `.env`: the Supabase address and publishable key. Both are public by design; never put the secret key there.
-- `supabase/`: the database. `migrations/` holds the tables, the permissions (who can read or write what) and the functions the app calls; `tests/` checks every role against them.
+- `supabase/`: the database. `migrations/` holds the tables, the permissions (who can read or write what) and the functions the app calls; `tests/` checks every role against them; `functions/exercise-request-email/` sends the emails about exercise requests through Resend.
 - `scripts/pglite/`: the small stand-ins (Supabase's auth, pgTAP) that let `npm run test:db` run the migrations and tests in memory.
 
 ## Database setup (once per Supabase project)
@@ -36,11 +37,21 @@ npm run test:db  # database permission tests, in PGlite (no Docker needed)
    `update public.profiles set role = 'superadmin' where email = '<your email>';`
 4. Authentication → Emails → Templates: put `{{ .Token }}` in "Magic Link" and "Confirm signup", so people get a code.
 5. Before inviting people outside your Supabase team, connect a custom SMTP sender (Resend): the built-in one only emails team members.
+6. The exercise-request emails: create a Resend API key (sending access), save it, and deploy the function:
+
+```bash
+npx supabase secrets set RESEND_API_KEY=<your key>
+```
+
+```bash
+npx supabase functions deploy exercise-request-email --use-api
+```
 
 ## A trainer and their first client
 
-A trainer signs in and gets **Clientes** (create a client, send their invitation link, see and adjust their routines, see their workouts) and their own routines at the top of **Rutinas** (build, edit, duplicate, assign with each client's sets and kilos). A routine is built once and assigned to many: editing it reaches everyone who has it, and each keeps their own numbers. To make someone a trainer, add their login in the dashboard and run in the SQL editor:
-`update public.profiles set role = 'trainer' where email = '<email>';`
+A trainer signs in and gets **Clientes** (create a client, send their invitation link, see and adjust their routines, see their workouts), **Pedidos** (ask for a missing exercise) and their own routines at the top of **Rutinas** (build, edit, duplicate, assign with each client's sets and kilos). A routine is built once and assigned to many: editing it reaches everyone who has it, and each keeps their own numbers.
+
+To make someone a coach, the superadmin opens **Coaches** → "+ Invitar un coach" and sends them the link: they sign in from it and are a coach. (Or, for a login that already exists, in the SQL editor: `update public.profiles set role = 'trainer' where email = '<email>';`)
 
 To also import Bloque A and B from the code as that trainer's routines, with a first client:
 

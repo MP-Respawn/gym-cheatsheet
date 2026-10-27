@@ -65,7 +65,7 @@ Funciones que llama la app (`supabase.rpc`): `create_client_invitation`, `create
 - **Alta de cliente**: el entrenador crea el cliente, (opcional) le asigna rutina, genera link y lo manda por WhatsApp → el cliente entra con su email y queda vinculado.
 - **Asignar**: rutina → elegir clientes → ajustar series/reps/kg por cliente → `assign_program`. Después se ajustan los números de un cliente con la misma pantalla.
 - **Entrenar**: el cliente abre el día, registra series (pantalla actual de `WorkoutLog.jsx`), se guarda local y se sincroniza. El entrenador ve progreso.
-- **Solicitar ejercicio**: el entrenador pide → email a vos (Edge Function + Resend) → lo agregan en código → lo marcan `accepted` con el id nuevo.
+- **Solicitar ejercicio**: el coach pide en Pedidos → email a vos (función + Resend) → lo agregan en código y se publica → en Pedidos, "Ya está" con el ejercicio → email al coach.
 
 ## Frontend
 
@@ -83,6 +83,12 @@ Hecho en la etapa 3 (panel del entrenador, en la misma app):
 - Asignar: elegir clientes y una grilla con series/reps/kg de cada uno, empezando por los que tiene cada uno; viaja solo lo que difiere de la rutina (`assign_program` con overrides, que reemplazan los anteriores).
 - `src/store/trainer.js` lee en vivo (el entrenador tiene señal) con una caché compartida entre pantallas.
 
+Hecho en la etapa 4 (SuperAdmin y pedidos de ejercicios):
+- Vos ves una pestaña **Coaches**: invitar un coach con un link de un solo uso (copiar o WhatsApp; quien lo abre y entra con su email queda como coach), anular links sin usar, ver cuántos clientes tiene cada uno, desactivarlo (conserva sus datos; sus clientes siguen viendo sus rutinas) y elegir quién responde pedidos con vos (`can_curate_catalog`).
+- Todo coach ve **Pedidos**: pide un ejercicio que falta (nombre, cómo se hace, link a un video; desde la búsqueda sin resultados llega con el nombre escrito) y ve la respuesta. Vos y el coach que cura el catálogo ven además "Por responder": cuando el ejercicio ya está en el código, "Ya está" lo elige del catálogo; si no, "No lo agregamos". Las dos con una nota.
+- Emails con Resend desde la función `supabase/functions/exercise-request-email`: un pedido nuevo te llega a vos (responder el email le contesta al coach) y la respuesta le llega al coach. La app la llama después de pedir y de responder, pero la función no recibe datos: manda lo que todavía no se mandó (`admin_notified_at`, `requester_notified_at`) y lo marca, así que nunca manda dos veces ni sirve para mandar otra cosa.
+- La base completa quién respondió y cuándo; un "aceptado" exige el id del ejercicio.
+
 Pendiente:
 - PWA instalable con catálogo y rutina asignada offline.
 - Gráficos de progreso por ejercicio.
@@ -99,5 +105,5 @@ Pendiente:
 1. **Base** ✅ esquema, permisos, invitaciones y asignación, con tests.
 2. **Cliente** ✅ login por invitación, rutina asignada desde la base, catálogo de solo lectura, registro sincronizado.
 3. **Panel entrenador** ✅ clientes, constructor de rutinas, asignación con números por cliente, historial.
-4. **Panel SuperAdmin**: entrenadores y solicitudes de ejercicios con emails.
+4. **Panel SuperAdmin** ✅ coaches (invitar, desactivar, quién cura el catálogo) y pedidos de ejercicios con emails.
 5. **PWA offline + pulido**; después, textos y definiciones del catálogo.

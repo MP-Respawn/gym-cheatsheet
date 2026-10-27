@@ -25,6 +25,7 @@
  *   7b. Your routines: forms, buttons, editor, picker, workout log, history
  *   7c. Trainer panel: clients, routines, builder, assign
  *   7d. Superadmin and exercise requests
+ *   7e. App notices and install hint
  *   8. Bottom tab bar
  *   9. Responsive: tablet and desktop
  */
@@ -1343,7 +1344,7 @@ mark {
   display: grid;
   place-items: center;
   min-height: 100dvh;
-  padding: 24px 16px;
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
 }
 
 .auth-card {
@@ -1825,7 +1826,8 @@ mark {
 }
 
 .picker-head {
-  padding: 8px 0 10px;
+  /* Below the phone's status bar when the app is installed (full screen) */
+  padding: calc(8px + env(safe-area-inset-top)) 0 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -2241,6 +2243,58 @@ textarea.input {
   gap: 10px;
 }
 
+/* ---------- 7e. App notices and install hint ---------- */
+
+/* Pills above the tab bar (Notices.jsx), higher on screens with an action bar */
+.notices {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom) + 12px);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+body:has(.action-bar) .notices {
+  bottom: calc(var(--tab-height) + env(safe-area-inset-bottom) + 84px);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
+  font-size: 13px;
+  pointer-events: auto;
+}
+
+.notice-action {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* "Instalá la app" card at the top of Rutinas (InstallHint.jsx) */
+.install-hint {
+  position: relative;
+  padding-right: 44px;
+}
+
+.install-hint .icon-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
 /* ---------- 8. Bottom tab bar ---------- */
 .tab-bar {
   position: fixed;
@@ -2359,6 +2413,16 @@ textarea.input {
   .sidenav-brand {
     display: block;
     padding: 8px 14px 22px;
+  }
+
+  /* No tab bar here: the notices sit at the bottom of the content column */
+  .notices {
+    left: var(--sidenav-width);
+    bottom: 16px;
+  }
+
+  body:has(.action-bar) .notices {
+    bottom: 88px;
   }
 
   .sidenav-switch .gym-toggle-track {

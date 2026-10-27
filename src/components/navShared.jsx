@@ -7,11 +7,13 @@
  *
  *   Icon             a line icon drawn from one SVG path (RPWN style: 1.8 stroke)
  *   GymSwitch        the Modo gym on/off switch
- *   AccountControls  who is signed in + "Cerrar sesión"
+ *   AccountControls  who is signed in, "Instalar la app" (when the browser
+ *                    offers it) + "Cerrar sesión"
  *   SyncNote         where your data lives, and what is still waiting to upload
  */
 import { signOut } from "../store/auth.js";
-import { useAuth, useIsPersistent, usePendingCount, useRemoteStatus } from "../store/useStore.js";
+import { install } from "../store/install.js";
+import { useAuth, useInstall, useIsPersistent, usePendingCount, useRemoteStatus } from "../store/useStore.js";
 
 export function Icon({ d, size = 18 }) {
   return (
@@ -53,9 +55,17 @@ export function GymSwitch({ on, onChange, className, hint = false }) {
  */
 export function AccountControls({ linkClass, noteClass }) {
   const { user } = useAuth();
+  const installable = useInstall() === "prompt";
   return (
     <>
       <p className={noteClass}>{user?.email}</p>
+      {installable && (
+        <button type="button" className={linkClass} onClick={() => install()}>
+          {/* A phone with an arrow coming down into it */}
+          <Icon d="M7 3h10v18H7zM12 7v7M9 11l3 3 3-3M11 18h2" />
+          Instalar la app
+        </button>
+      )}
       <button type="button" className={linkClass} onClick={() => signOut()}>
         <Icon d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" />
         Cerrar sesión

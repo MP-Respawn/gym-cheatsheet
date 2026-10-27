@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- The app icon: the brand's prompt ">_" in teal on the app's dark background.
+       The PNGs next to it are generated from this file (npm run icons). -->
+  <rect width="512" height="512" fill="#0D1117"/>
+  <path d="M146 166 L258 256 L146 346" fill="none" stroke="#00E5CC" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M294 346 H374" fill="none" stroke="#00E5CC" stroke-opacity="0.6" stroke-width="48" stroke-linecap="round"/>
+</svg>

@@ -17,6 +17,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { ROUTINES } from "../data/routines.js";
 import { assignedDays, assignedPrograms } from "./assigned.js";
 import { getAuth, subscribeAuth } from "./auth.js";
+import { installState, subscribeInstall } from "./install.js";
 import { getStatus, pendingSessions, subscribeStatus } from "./remote.js";
 import { isPersistent, readData, subscribe } from "./storage.js";
 import { historyForNow } from "./workouts.js";
@@ -141,6 +142,11 @@ export function useExerciseHistory(exerciseId) {
 export function usePendingCount() {
   const data = usePersonalData();
   return useMemo(() => pendingSessions(data.sessions).length, [data]);
+}
+
+// "installed" | "prompt" | "ios" | "none": see install.js.
+export function useInstall() {
+  return useSyncExternalStore(subscribeInstall, installState);
 }
 
 // False when the browser refuses to save (private window): the UI warns.

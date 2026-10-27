@@ -89,8 +89,15 @@ Hecho en la etapa 4 (SuperAdmin y pedidos de ejercicios):
 - Emails con Resend desde la función `supabase/functions/exercise-request-email`: un pedido nuevo te llega a vos (responder el email le contesta al coach) y la respuesta le llega al coach. La app la llama después de pedir y de responder, pero la función no recibe datos: manda lo que todavía no se mandó (`admin_notified_at`, `requester_notified_at`) y lo marca, así que nunca manda dos veces ni sirve para mandar otra cosa.
 - La base completa quién respondió y cuándo; un "aceptado" exige el id del ejercicio.
 
+Hecho en la etapa 5 (app instalable, sin tiendas):
+- Es una PWA: se agrega a la pantalla de inicio desde el navegador (Android: "Instalar la app"; iPhone: Safari → Compartir → Agregar a inicio, la app lo explica) y abre a pantalla completa. No pasa por Play Store ni App Store; si algún día hace falta, el mismo código se puede publicar ahí.
+- `vite-plugin-pwa` genera el manifest y el service worker, que guarda la app entera en el teléfono (código, estilos, fuentes, íconos): abre sin señal. Los datos no pasan por ahí: la rutina y el registro los guarda `storage.js`, y los pedidos a Supabase van siempre a la red.
+- Las fuentes vienen con la app (`@fontsource`), no de Google. Los íconos salen de `public/icon.svg` (`npm run icons`).
+- Abrir sin señal con el token vencido ya no te saca de la cuenta (`auth.js`), y la app le pide al navegador que no borre lo guardado.
+- Una versión nueva se baja sola y espera: "Hay una versión nueva · Actualizar", o entra la próxima vez que se abre. Nunca recarga en medio de un entrenamiento.
+- Las pantallas del coach y del superadmin se cargan aparte: un cliente baja menos código.
+
 Pendiente:
-- PWA instalable con catálogo y rutina asignada offline.
 - Gráficos de progreso por ejercicio.
 
 ## Operación
@@ -106,4 +113,4 @@ Pendiente:
 2. **Cliente** ✅ login por invitación, rutina asignada desde la base, catálogo de solo lectura, registro sincronizado.
 3. **Panel entrenador** ✅ clientes, constructor de rutinas, asignación con números por cliente, historial.
 4. **Panel SuperAdmin** ✅ coaches (invitar, desactivar, quién cura el catálogo) y pedidos de ejercicios con emails.
-5. **PWA offline + pulido**; después, textos y definiciones del catálogo.
+5. **PWA offline + pulido** ✅ instalable desde el navegador, abre sin señal, avisa versiones nuevas. Después: textos y definiciones del catálogo.

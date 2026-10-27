@@ -13,6 +13,7 @@
  * (one lane per day); with one day it opens that day directly.
  */
 import AppHeader from "../components/AppHeader.jsx";
+import InstallHint from "../components/InstallHint.jsx";
 import TrainerRoutines from "../components/TrainerRoutines.jsx";
 import { DISCIPLINES } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
@@ -87,6 +88,9 @@ export default function RoutineList({ onMenuClick }) {
       </div>
 
       <div className="content">
+        {/* "Add it to your home screen", until it is installed */}
+        <InstallHint />
+
         {/* A coach's own routines, to edit and assign */}
         {isTrainer && <TrainerRoutines />}
 
@@ -102,9 +106,6 @@ export default function RoutineList({ onMenuClick }) {
               </div>
             ) : (
               <p className="empty list-empty">{emptyText}</p>
-            )}
-            {downloaded && offline && (
-              <p className="hint warning">Sin conexión: estás viendo lo último que se bajó.</p>
             )}
           </section>
         )}

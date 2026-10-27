@@ -12,7 +12,11 @@ npm run lint     # oxlint, catches unused imports and variables
 node scripts/check-data.mjs              # checks ids, groups, routines and every animation
 node scripts/figure-points.mjs <id>      # prints where each joint lands in each pose
 npm run test:db  # database permission tests, in PGlite (no Docker needed)
+npm run icons    # remakes the app icons in public/ from public/icon.svg
+npm run preview  # serves the production build: the offline service worker only runs here, not in dev
 ```
+
+It is an installable web app (PWA): on Android Chrome offers "Instalar la app", on iPhone it's Safari → Compartir → Agregar a inicio. Installed, it opens full screen and without signal. No app store involved.
 
 ## Where things live
 
@@ -25,6 +29,7 @@ npm run test:db  # database permission tests, in PGlite (no Docker needed)
 - `src/store/trainer.js`: the trainer's reads (clients, routines and who has them, a client's routines and workouts, through a small shared cache) and actions (new client and invitation link, save, assign, take away, archive).
 - `src/store/admin.js`, `src/screens/AdminCoaches.jsx` and `src/screens/ExerciseRequests.jsx`: the superadmin's Coaches page (invite, turn off, who answers requests) and Pedidos (coaches ask for exercises; you answer).
 - `src/styles.css`: all app styles; colors are the custom properties at the top.
+- `vite.config.js`: the installable app (manifest, and the service worker that keeps the app on the phone). `src/components/Notices.jsx` registers it and shows "Sin conexión" and "Hay una versión nueva"; `src/store/install.js` and `src/components/InstallHint.jsx` invite to install it.
 - `.env`: the Supabase address and publishable key. Both are public by design; never put the secret key there.
 - `supabase/`: the database. `migrations/` holds the tables, the permissions (who can read or write what) and the functions the app calls; `tests/` checks every role against them; `functions/exercise-request-email/` sends the emails about exercise requests through Resend.
 - `scripts/pglite/`: the small stand-ins (Supabase's auth, pgTAP) that let `npm run test:db` run the migrations and tests in memory.

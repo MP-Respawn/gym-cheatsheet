@@ -16,7 +16,7 @@
  *      wide screens (both are always rendered; styles.css shows one or the
  *      other depending on the screen width).
  */
-import { useEffect, useLayoutEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useLayoutEffect, useState } from "react";
 import { homeHref, savedScroll, useHashRoute } from "./hooks/useHashRoute.js";
 import { DISCIPLINES } from "./data/exercises.js";
 import MenuDrawer from "./components/MenuDrawer.jsx";
@@ -31,13 +31,16 @@ import WorkoutLog from "./screens/WorkoutLog.jsx";
 import Search from "./screens/Search.jsx";
 import SignIn from "./screens/SignIn.jsx";
 import Invitation from "./screens/Invitation.jsx";
-import TrainerClients from "./screens/TrainerClients.jsx";
-import TrainerClient from "./screens/TrainerClient.jsx";
-import ProgramEditor from "./screens/ProgramEditor.jsx";
-import AssignProgram from "./screens/AssignProgram.jsx";
-import ExerciseRequests from "./screens/ExerciseRequests.jsx";
-import AdminCoaches from "./screens/AdminCoaches.jsx";
 import { useAnyRoutine, useAuth, useIsSuperadmin, useIsTrainer, usePersonalData } from "./store/useStore.js";
+
+// The coach's and superadmin's screens load apart, the first time one opens:
+// a client's phone never needs them. (Installed, they are kept offline too.)
+const TrainerClients = lazy(() => import("./screens/TrainerClients.jsx"));
+const TrainerClient = lazy(() => import("./screens/TrainerClient.jsx"));
+const ProgramEditor = lazy(() => import("./screens/ProgramEditor.jsx"));
+const AssignProgram = lazy(() => import("./screens/AssignProgram.jsx"));
+const ExerciseRequests = lazy(() => import("./screens/ExerciseRequests.jsx"));
+const AdminCoaches = lazy(() => import("./screens/AdminCoaches.jsx"));
 
 // The trainer's pages (Clientes, building and assigning routines, Pedidos).
 const TRAINER_PAGES = ["clients", "client", "routine-new", "routine-edit", "assign", "requests"];
@@ -199,7 +202,9 @@ export default function App() {
   return (
     <div className="app">
       <SideNav activeTab={activeTab} exercisesHref={exercisesHref} gymMode={gymMode} onGymModeChange={changeGymMode} />
-      <main>{screen}</main>
+      <main>
+        <Suspense fallback={<p className="empty">Cargando...</p>}>{screen}</Suspense>
+      </main>
       <TabBar active={activeTab} exercisesHref={exercisesHref} />
       <MenuDrawer
         exercisesHref={exercisesHref}

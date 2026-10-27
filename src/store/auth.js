@@ -28,8 +28,24 @@ export function subscribeAuth(listener) {
 
 export const getAuth = () => state;
 
+/*
+ * The login saved on this phone, read directly. Opening the app without
+ * signal after the token expired (it lasts an hour), Supabase cannot renew
+ * it and reports "nobody" at start, but it keeps the login saved (it only
+ * deletes it when the server rejects it). So the person stays signed in with
+ * the phone's copy, and Supabase renews the token when the signal returns.
+ */
+function savedUser() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(supabase.auth.storageKey) ?? "null");
+    return saved?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 supabase.auth.onAuthStateChange((event, session) => {
-  const user = session?.user ?? null;
+  const user = session?.user ?? (event === "INITIAL_SESSION" ? savedUser() : null);
   const changed = user?.id !== state.user?.id;
   // A token refresh brings the same person back: nothing to redo.
   if (!changed && state.status !== "loading") return;
@@ -38,7 +54,20 @@ supabase.auth.onAuthStateChange((event, session) => {
   listeners.forEach((listener) => listener());
   // Supabase asks not to call it again from inside this callback.
   if (user) setTimeout(() => refreshAll(user.id), 0);
+  if (user) keepStorage();
 });
+
+/*
+ * Asks the browser not to clear this site's storage to make room (the
+ * phone's copy of the routines and of workouts not uploaded yet). Installed
+ * apps usually get it; elsewhere the browser may say no, and nothing changes.
+ */
+let askedToKeep = false;
+function keepStorage() {
+  if (askedToKeep || !navigator.storage?.persist) return;
+  askedToKeep = true;
+  navigator.storage.persist().catch(() => {});
+}
 
 // Keep the phone's copy fresh: when the signal comes back, and when the app
 // comes back to the screen (at most once a minute).

@@ -72,9 +72,9 @@ Funciones que llama la app (`supabase.rpc`): `create_client_invitation`, `create
 Hecho en la etapa 2:
 - Todo pide cuenta. Login con código por email (sin contraseña); solo un link de invitación puede crear una cuenta nueva.
 - `src/store/` habla con Supabase (`auth.js`, `remote.js`) y guarda una copia por cuenta en el teléfono (`storage.js`): la rutina abre sin señal y un entrenamiento se registra offline y se sube después con `save_workout_session` (todo o nada, reintentar no duplica).
-- `RoutineList`, `RoutineDetail`, `ProgramDetail` y `WorkoutLog` muestran las rutinas asignadas, convertidas a la forma de siempre por `assigned.js`. Las secuencias del catálogo (vueltas, Flow básico, yoga, Jiu Jitsu) siguen en el código.
+- `RoutineList`, `RoutineDetail`, `ProgramDetail` y `WorkoutLog` muestran las rutinas asignadas, convertidas a la forma de siempre por `assigned.js`. Las secuencias del catálogo siguen en el código (desde el arranque limpio, solo las vueltas de abdomen).
 - Se quitaron las rutinas propias, el editor y la copia de seguridad local. El editor (`src/screens/RoutineEditor.jsx` y `src/components/ExercisePicker.jsx`) está en el historial de git para reusarlo como constructor del entrenador en la etapa 3.
-- `scripts/seed-trainer.mjs` importa Bloque A y B como plantillas de un entrenador, se las asigna a un cliente e imprime su link.
+- Un script importaba Bloque A y B como rutinas de prueba; se borró en el arranque limpio (ver abajo).
 
 Hecho en la etapa 3 (panel del entrenador, en la misma app):
 - Un coach ve una pestaña más, **Clientes**, y en **Rutinas** arriba de todo sus rutinas (con quién las tiene, Editar, Duplicar, Asignar). No hay plantillas aparte: una rutina se arma una vez y se asigna. El hash router alcanzó; las páginas del coach solo se muestran a ese rol (la base igual rechaza lo demás).
@@ -103,6 +103,10 @@ Temas (después de la etapa 5):
 - Las fuentes de INCA no se guardan de entrada para usar sin señal: se guardan la primera vez que alguien elige ese tema.
 - La marca en INCA: el isotipo (la corona en su círculo) con "INCA MMA" en la barra y el menú, y el sello completo en el inicio de sesión. Las dos imágenes (`public/brand/inca-isotipo.png`, `inca-sello.png`) están recortadas del manual de marca v1.0; se reemplazan cuando haya un SVG del logo.
 - En Ejercicios, el título sigue a la pestaña ("Ejercicios de yoga", con el número al lado) y "↳ GRUPO" marca los chips como subcategoría de la disciplina.
+
+Arranque limpio (antes de que entre INCA, el primer coach real):
+- Se borraron de la base los datos de prueba: rutinas (Bloque A y B), asignaciones, clientes de prueba y sus links, pedidos de prueba y entrenamientos. Quedan las cuentas y la invitación de coach de INCA.
+- Las únicas rutinas del código son las 4 vueltas de abdomen, en Rutinas como **"Recomendadas por INCA"** para todos. Se sacaron del código Bloque A/B, el cierre de yoga, el Flow básico y el calentamiento de Jiu Jitsu (sus ejercicios siguen en el catálogo). Todo lo demás lo arman los coaches en la app.
 
 Pendiente:
 - Gráficos de progreso por ejercicio.

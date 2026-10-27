@@ -5,9 +5,9 @@
  * routines come first (TrainerRoutines.jsx: edit, duplicate, assign). Then
  * "Tus rutinas", the ones your trainer assigned you (downloaded from the
  * database, kept on the phone for when there is no signal; a coach only sees
- * this section if someone assigned them one). Below: the catalog's sequences (the
- * core vueltas, Flow básico, yoga and Jiu Jitsu routines), under a header
- * per discipline.
+ * this section if someone assigned them one). Below: "Recomendadas por
+ * INCA", the routines that live in the code (INCA's core vueltas, in
+ * routines.js), grouped by block, for everyone.
  *
  * Every routine is one card. With several days it opens the routine page
  * (one lane per day); with one day it opens that day directly.
@@ -15,7 +15,6 @@
 import AppHeader from "../components/AppHeader.jsx";
 import InstallHint from "../components/InstallHint.jsx";
 import TrainerRoutines from "../components/TrainerRoutines.jsx";
-import { DISCIPLINES } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
 import {
   CATALOG_ROUTINES,
@@ -59,13 +58,12 @@ function RoutineCard({ name, focus, days }) {
   );
 }
 
-// The catalog's sequences per discipline, one-day routines grouped by block.
-// A block named like its discipline ("Yoga") gets no sub-header of its own.
-const CATALOG = DISCIPLINES.map((d) => {
-  const singles = CATALOG_ROUTINES.filter((r) => r.discipline === d.key);
-  const blocks = [...new Set(singles.map((r) => r.block ?? ""))];
-  return { ...d, blocks: blocks.map((name) => ({ name, routines: singles.filter((r) => (r.block ?? "") === name) })) };
-}).filter((d) => d.blocks.length > 0);
+// The recommended routines (the ones in the code), grouped by block
+// ("Vueltas de abdomen"), in the order they are written.
+const RECOMMENDED = [...new Set(CATALOG_ROUTINES.map((r) => r.block ?? ""))].map((name) => ({
+  name,
+  routines: CATALOG_ROUTINES.filter((r) => (r.block ?? "") === name),
+}));
 
 export default function RoutineList({ onMenuClick }) {
   const programs = useAssignedPrograms();
@@ -110,22 +108,20 @@ export default function RoutineList({ onMenuClick }) {
           </section>
         )}
 
-        {/* The catalog's sequences, by discipline */}
-        {CATALOG.map((d) => (
-          <section key={d.key} className="discipline-section">
-            <h2 className="discipline-title">{d.label}</h2>
-            {d.blocks.map((block) => (
-              <div key={block.name} className="list-section">
-                {block.name && block.name !== d.label && <h3 className="section-title">{block.name}</h3>}
-                <div className="card-list">
-                  {block.routines.map((routine) => (
-                    <RoutineCard key={routine.id} name={routine.name} focus={routine.focus} days={[routine]} />
-                  ))}
-                </div>
+        {/* INCA's recommendations, for everyone */}
+        <section className="discipline-section">
+          <h2 className="discipline-title">Recomendadas por INCA</h2>
+          {RECOMMENDED.map((block) => (
+            <div key={block.name} className="list-section">
+              {block.name && <h3 className="section-title">{block.name}</h3>}
+              <div className="card-list">
+                {block.routines.map((routine) => (
+                  <RoutineCard key={routine.id} name={routine.name} focus={routine.focus} days={[routine]} />
+                ))}
               </div>
-            ))}
-          </section>
-        ))}
+            </div>
+          ))}
+        </section>
       </div>
     </div>
   );

@@ -39,10 +39,10 @@ export function useRemoteStatus() {
 }
 
 /*
- * The catalog's sequences: the routines in the code that are not days of a
- * trainer program (Bloque A and B moved to the database as the trainer's).
+ * The routines in the code, shown to everyone as "Recomendadas por INCA"
+ * (the core vueltas). Every other routine comes from the database.
  */
-export const CATALOG_ROUTINES = ROUTINES.filter((r) => !r.programId);
+export const CATALOG_ROUTINES = ROUTINES;
 const catalogRoutine = (id) => CATALOG_ROUTINES.find((r) => r.id === id);
 
 /*

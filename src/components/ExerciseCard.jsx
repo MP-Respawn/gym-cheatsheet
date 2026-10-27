@@ -25,12 +25,8 @@ export default function ExerciseCard({ exercise, onSelect, disabled = false, num
         <span className="card-meta">
           {number && <span className="tag-step">Paso {number}</span>}
           {groupLabel(exercise.group)}
-          {/* core vueltas read "Vuelta pelota"; discipline sequences use their own name */}
-          {vuelta && (
-            <span className="tag-mini tag-vuelta">
-              {vuelta.discipline ? vuelta.chip : `Vuelta ${vuelta.chip.toLowerCase()}`}
-            </span>
-          )}
+          {/* core vueltas read "Vuelta pelota" */}
+          {vuelta && <span className="tag-mini tag-vuelta">{`Vuelta ${vuelta.chip.toLowerCase()}`}</span>}
           {/* Small marker so you can tell the coach's exercises from the extras */}
           {exercise.source === "added" && <span className="tag-mini">sugerido</span>}
         </span>

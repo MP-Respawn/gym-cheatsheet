@@ -8,8 +8,8 @@
  * What you will find, top to bottom:
  *   1. DISCIPLINES: gym, yoga, Animal Flow, Jiu Jitsu (the second axis).
  *      GROUPS: the muscle groups, in the order they appear as filter chips.
- *      VUELTAS: fixed sequences (the trainer's four core circuits and the
- *      Animal Flow "Flow básico"); each one is also a routine in routines.js.
+ *      VUELTAS: fixed sequences (INCA's four core circuits); each one is
+ *      also a routine in routines.js.
  *   2. EXERCISES: one object per exercise (shape explained right below).
  *      The list is written as RAW_EXERCISES and passed through
  *      normalizeExercise(), which fills the defaults (discipline "gym").
@@ -81,20 +81,19 @@ export const GROUPS = [
 ];
 
 /*
- * Fixed sequences done in order: the trainer's four core "vueltas" (in his
- * order) and, later, the Animal Flow "Flow básico". `key` is what exercises
- * put in their `vuelta` field, `chip` the short filter label, `routineId`
+ * Fixed sequences done in order: INCA's four core "vueltas" (in his order).
+ * `key` is what exercises put in their `vuelta` field (and what a coach's
+ * routine uses for a whole-vuelta step), `chip` a short label, `routineId`
  * the routine in routines.js that holds the full ordered sequence (so it
  * can be opened, trained and used in Modo gym), `partOf` the phrase on an
- * exercise page ("Parte del Flow básico"), and `group` / `discipline`
- * where its filter chip shows up (inside that group or that discipline).
+ * exercise page ("Parte de la Vuelta: abdomen clásico"), and `group` the
+ * muscle group they belong to.
  */
 export const VUELTAS = [
   { key: "pelota", label: "Vuelta: abdomen en pelota", chip: "Pelota", routineId: "vuelta-abdomen-en-pelota", partOf: "Parte de la Vuelta: abdomen en pelota", group: "core" },
   { key: "clasico", label: "Vuelta: abdomen clásico", chip: "Clásico", routineId: "vuelta-abdomen-clasico", partOf: "Parte de la Vuelta: abdomen clásico", group: "core" },
   { key: "estirado", label: "Vuelta: abdomen estirado", chip: "Estirado", routineId: "vuelta-abdomen-estirado", partOf: "Parte de la Vuelta: abdomen estirado", group: "core" },
   { key: "isometrico", label: "Vuelta: abdomen isométrico", chip: "Isométrico", routineId: "vuelta-abdomen-isometrico", partOf: "Parte de la Vuelta: abdomen isométrico", group: "core" },
-  { key: "flow-basico", label: "Flow básico", chip: "Flow básico", routineId: "flow-basico", partOf: "Parte del Flow básico", discipline: "animal-flow" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -1904,11 +1903,9 @@ const RAW_EXERCISES = [
     id: "flexibilidad-cierre",
     name: "Flexibilidad de cierre",
     group: "flexibilidad",
-    routineLink: "yoga-cierre-gym",
     pattern: "stretch",
     equipment: ["colchoneta"],
-    description:
-      "Estiramientos al final de la sesión, sobre todo de la cadena posterior. Para hacerlo completo, seguí la rutina de yoga de cierre (10 minutos).",
+    description: "Estiramientos al final de la sesión, sobre todo de la cadena posterior.",
     cues: [
       "Sobre todo cadena posterior.",
       "Sostené cada estiramiento sin rebotar, respirando lento.",
@@ -2549,8 +2546,7 @@ const RAW_EXERCISES = [
   /* Animal Flow is a trademarked system created by Mike Fitch. These    */
   /* entries are personal reference material written from public         */
   /* sources, not official Animal Flow content. Names in Spanish, the     */
-  /* original English term in originalName. The exercises tagged          */
-  /* vuelta: "flow-basico" make up the "Flow básico" sequence.            */
+  /* original English term in originalName.                              */
   /* ================================================================== */
   {
     id: "af-movilidad-muneca",
@@ -2558,7 +2554,6 @@ const RAW_EXERCISES = [
     originalName: "Wrist Mobilizations",
     discipline: "animal-flow",
     group: "movilidad",
-    vuelta: "flow-basico",
     measure: "secs",
     pattern: "mobility",
     equipment: ["colchoneta"],
@@ -2579,7 +2574,6 @@ const RAW_EXERCISES = [
     originalName: "Beast",
     discipline: "animal-flow",
     group: "core",
-    vuelta: "flow-basico",
     measure: "secs",
     pattern: "beast",
     equipment: ["colchoneta"],
@@ -2620,7 +2614,6 @@ const RAW_EXERCISES = [
     originalName: "Crab",
     discipline: "animal-flow",
     group: "gluteos",
-    vuelta: "flow-basico",
     measure: "secs",
     pattern: "crab",
     equipment: ["colchoneta"],
@@ -2641,7 +2634,6 @@ const RAW_EXERCISES = [
     originalName: "Ape",
     discipline: "animal-flow",
     group: "cadera",
-    vuelta: "flow-basico",
     measure: "secs",
     pattern: "ape",
     equipment: ["colchoneta"],
@@ -2663,7 +2655,6 @@ const RAW_EXERCISES = [
     discipline: "animal-flow",
     group: "isquios",
     secondary: ["hombros"],
-    vuelta: "flow-basico",
     measure: "reps",
     pattern: "beast",
     equipment: ["colchoneta"],
@@ -2685,7 +2676,6 @@ const RAW_EXERCISES = [
     discipline: "animal-flow",
     group: "columna",
     secondary: ["gluteos", "hombros"],
-    vuelta: "flow-basico",
     measure: "reps",
     pattern: "crab",
     equipment: ["colchoneta"],
@@ -2727,7 +2717,6 @@ const RAW_EXERCISES = [
     discipline: "animal-flow",
     group: "columna",
     secondary: ["cadera"],
-    vuelta: "flow-basico",
     measure: "reps",
     pattern: "scorpion",
     equipment: ["colchoneta"],
@@ -2809,7 +2798,6 @@ const RAW_EXERCISES = [
     originalName: "Underswitch",
     discipline: "animal-flow",
     group: "core",
-    vuelta: "flow-basico",
     measure: "reps",
     pattern: "underswitch",
     equipment: ["colchoneta"],
@@ -2830,7 +2818,6 @@ const RAW_EXERCISES = [
     originalName: "Side Kickthrough",
     discipline: "animal-flow",
     group: "core",
-    vuelta: "flow-basico",
     measure: "reps",
     pattern: "kickthrough",
     equipment: ["colchoneta"],

@@ -14,8 +14,7 @@
  *   - every group and secondary group exists in GROUPS
  *   - every id inside an "alternatives" array exists
  *   - every trainer exercise has at least 2 alternatives
- *   - every id used in routines.js exists, and every day of a routine with
- *     days (PROGRAMS) is a real routine that belongs to only one of them
+ *   - every id used in routines.js exists
  *   - core vueltas: every `vuelta` and `measure` value is valid, each step is
  *     either exercises or a vuelta, and each vuelta routine lists exactly the
  *     exercises tagged with that vuelta
@@ -34,7 +33,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { DISCIPLINES, EXERCISES, GROUPS, VUELTAS } from "../src/data/exercises.js";
 import { RENAMED_IDS } from "../src/data/renamedIds.js";
-import { PROGRAMS, ROUTINES } from "../src/data/routines.js";
+import { ROUTINES } from "../src/data/routines.js";
 import { holdSpec, validate } from "../src/animations/engine/kinematics.js";
 
 // Absolute path of the project root (one folder up from /scripts).
@@ -125,18 +124,6 @@ for (const routine of ROUTINES) {
       else if (!exerciseIds.has(id)) errors.push(`${where}: ejercicio inexistente "${id}"`);
     }
   });
-}
-
-/* ---- Routines with days: every day exists, and belongs to one routine only ---- */
-const dayOwner = new Map();
-for (const program of PROGRAMS) {
-  if (routineIds.has(program.id)) errors.push(`programa ${program.id}: usa el mismo id que una rutina`);
-  if (program.dayIds.length < 2) errors.push(`programa ${program.id}: necesita al menos 2 días`);
-  for (const dayId of program.dayIds) {
-    if (!routineIds.has(dayId)) errors.push(`programa ${program.id}: día inexistente "${dayId}"`);
-    if (dayOwner.has(dayId)) errors.push(`programa ${program.id}: "${dayId}" ya es un día de ${dayOwner.get(dayId)}`);
-    dayOwner.set(dayId, program.id);
-  }
 }
 
 /* ---- Vueltas: each routine holds exactly the exercises tagged with it ---- */

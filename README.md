@@ -21,7 +21,7 @@ It is an installable web app (PWA): on Android Chrome offers "Instalar la app", 
 ## Where things live
 
 - `src/data/exercises.js`: muscle groups and every exercise (cues, prescription, alternatives).
-- `src/data/routines.js`: routines written in code. The catalog's sequences (core vueltas, Flow básico, yoga, Jiu Jitsu) are shown to everyone; Bloque A and B are only the source for `scripts/seed-trainer.mjs`.
+- `src/data/routines.js`: the routines written in code: INCA's four core vueltas, shown to everyone under Rutinas as "Recomendadas por INCA". Every other routine is built by a coach in the app.
 - `src/animations/exercises/<id>.js`: one animation per exercise, named like its id. Each file lists poses (an angle per body segment), a timeline with the trainer's tempo, phase names, and equipment.
 - `src/animations/engine/`: turns those files into SVG and CSS keyframes (`kinematics.js`), with helpers for writing poses (`helpers.js`) and the renderer (`Figure.jsx`).
 - `src/store/`: the signed-in person's data. `auth.js` signs in with an email code; `remote.js` downloads the assigned routines and the workout history and uploads finished workouts; `storage.js` keeps a copy on the phone (one per account) so it works without signal; `assigned.js` turns database rows into the routine shape the screens use; `useStore.js` holds the React hooks.
@@ -57,17 +57,5 @@ npx supabase functions deploy exercise-request-email --use-api
 A trainer signs in and gets **Clientes** (create a client, send their invitation link, see and adjust their routines, see their workouts), **Pedidos** (ask for a missing exercise) and their own routines at the top of **Rutinas** (build, edit, duplicate, assign with each client's sets and kilos). A routine is built once and assigned to many: editing it reaches everyone who has it, and each keeps their own numbers.
 
 To make someone a coach, the superadmin opens **Coaches** → "+ Invitar un coach" and sends them the link: they sign in from it and are a coach. (Or, for a login that already exists, in the SQL editor: `update public.profiles set role = 'trainer' where email = '<email>';`)
-
-To also import Bloque A and B from the code as that trainer's routines, with a first client:
-
-```bash
-node scripts/seed-trainer.mjs --trainer-email <email> --trainer-name "<name>" --client-email <email> --client-name "<name>" --app-url <app url>
-```
-
-```bash
-npx supabase db query --linked -f supabase/.temp/seed-trainer.sql
-```
-
-It imports Bloque A and B as the trainer's routines, assigns them to the client and prints the client's invitation link.
 
 To add an exercise, copy a block in `exercises.js`, copy a similar animation file with the new id, and run the check script.

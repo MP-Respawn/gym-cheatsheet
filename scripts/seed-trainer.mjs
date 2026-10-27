@@ -3,7 +3,7 @@
  *
  * Puts the trainer's routines from the code (PROGRAMS in
  * src/data/routines.js: Bloque A, Bloque B) into the database as that
- * trainer's templates, creates one client for them, assigns every template
+ * trainer's routines, creates one client for them, assigns every routine
  * to that client and prints the client's invitation link.
  *
  *   node scripts/seed-trainer.mjs --trainer-email <email> --trainer-name "<name>" \
@@ -53,26 +53,25 @@ const textArray = (items) => `array[${items.map(text).join(", ")}]::text[]`;
 const clientId = stableId("client", trainerEmail, clientEmail);
 const token = randomBytes(24).toString("hex");
 
-// Inserts for one routine: the program row, its days and their steps.
-// `copyOf` set = the copy assigned to the client.
-function routineSql(program, copyOf) {
-  const key = copyOf ? "copy" : "template";
-  const programId = stableId(key, trainerEmail, clientEmail, program.id);
+// Inserts for one routine (the program row, its days and their steps) and
+// its assignment to the client.
+function routineSql(program) {
+  const key = "routine";
+  const programId = stableId(key, trainerEmail, program.id);
   const sql = [
-    `insert into public.programs (id, trainer_id, client_id, source_program_id, name, focus, discipline)
-     values (${text(programId)}, v_trainer, ${copyOf ? "v_client" : "null"}, ${copyOf ? text(copyOf) : "null"},
-             ${text(program.name)}, ${text(program.focus)}, ${text(program.discipline ?? "gym")})
+    `insert into public.programs (id, trainer_id, name, focus, discipline)
+     values (${text(programId)}, v_trainer, ${text(program.name)}, ${text(program.focus)}, ${text(program.discipline ?? "gym")})
      on conflict (id) do nothing;`,
   ];
   program.days.forEach((day, dayIndex) => {
-    const dayId = stableId(key, trainerEmail, clientEmail, program.id, day.id);
+    const dayId = stableId(key, trainerEmail, program.id, day.id);
     sql.push(
       `insert into public.program_days (id, program_id, position, name, focus)
        values (${text(dayId)}, ${text(programId)}, ${dayIndex}, ${text(day.name)}, ${text(day.focus ?? "")})
        on conflict (id) do nothing;`,
     );
     day.steps.forEach((step, stepIndex) => {
-      const stepId = stableId(key, trainerEmail, clientEmail, program.id, day.id, stepIndex);
+      const stepId = stableId(key, trainerEmail, program.id, day.id, stepIndex);
       sql.push(
         `insert into public.program_steps (id, day_id, position, exercise_ids, vuelta, note, prescription_text)
          values (${text(stepId)}, ${text(dayId)}, ${stepIndex},
@@ -82,15 +81,15 @@ function routineSql(program, copyOf) {
       );
     });
   });
-  return { programId, sql: sql.join("\n") };
+  sql.push(
+    `insert into public.program_assignments (program_id, client_id, trainer_id)
+     values (${text(programId)}, v_client, v_trainer)
+     on conflict (program_id, client_id) do nothing;`,
+  );
+  return sql.join("\n");
 }
 
-const parts = [];
-for (const { id } of PROGRAMS) {
-  const program = getTrainerProgram(id);
-  const template = routineSql(program, null);
-  parts.push(template.sql, routineSql(program, template.programId).sql);
-}
+const parts = PROGRAMS.map(({ id }) => routineSql(getTrainerProgram(id)));
 
 const sql = `-- Written by scripts/seed-trainer.mjs. Apply with:
 --   npx supabase db query --linked -f supabase/.temp/seed-trainer.sql
@@ -132,6 +131,6 @@ $$;
 mkdirSync("supabase/.temp", { recursive: true });
 writeFileSync("supabase/.temp/seed-trainer.sql", sql);
 console.log("Wrote supabase/.temp/seed-trainer.sql");
-console.log(`${PROGRAMS.length} templates, assigned to ${args["client-name"]} <${clientEmail}>`);
+console.log(`${PROGRAMS.length} routines, assigned to ${args["client-name"]} <${clientEmail}>`);
 console.log(`Invitation link (valid 7 days, unless the client already accepted one):`);
 console.log(`  ${args["app-url"].replace(/\/$/, "")}/#/invitacion/${token}`);

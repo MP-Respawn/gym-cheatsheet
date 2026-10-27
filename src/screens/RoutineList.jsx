@@ -1,9 +1,11 @@
 /*
  * RoutineList.jsx: routine list (#/rutinas)
  *
- * Top: the app's top nav (menu, name, search bar). Then "Tus rutinas", the
- * ones your trainer assigned you (downloaded from the database, kept on the
- * phone for when there is no signal). Below: the catalog's sequences (the
+ * Top: the app's top nav (menu, name, search bar). For a coach, their own
+ * routines come first (TrainerRoutines.jsx: edit, duplicate, assign). Then
+ * "Tus rutinas", the ones your trainer assigned you (downloaded from the
+ * database, kept on the phone for when there is no signal; a coach only sees
+ * this section if someone assigned them one). Below: the catalog's sequences (the
  * core vueltas, Flow básico, yoga and Jiu Jitsu routines), under a header
  * per discipline.
  *
@@ -11,6 +13,7 @@
  * (one lane per day); with one day it opens that day directly.
  */
 import AppHeader from "../components/AppHeader.jsx";
+import TrainerRoutines from "../components/TrainerRoutines.jsx";
 import { DISCIPLINES } from "../data/exercises.js";
 import { stepExerciseIds } from "../data/routines.js";
 import {
@@ -18,6 +21,7 @@ import {
   routineHref,
   useAssignedPrograms,
   useAssignedState,
+  useIsTrainer,
   useRemoteStatus,
 } from "../store/useStore.js";
 
@@ -66,6 +70,7 @@ export default function RoutineList({ onMenuClick }) {
   const programs = useAssignedPrograms();
   const { downloaded } = useAssignedState();
   const { loading, offline } = useRemoteStatus();
+  const isTrainer = useIsTrainer();
 
   // What to say when there are no routines: still downloading, no signal on
   // the very first time, or the trainer has not assigned anything yet.
@@ -82,22 +87,27 @@ export default function RoutineList({ onMenuClick }) {
       </div>
 
       <div className="content">
-        {/* Assigned by your trainer */}
-        <section className="list-section">
-          <h2 className="section-title">Tus rutinas</h2>
-          {programs.length > 0 ? (
-            <div className="card-list">
-              {programs.map((p) => (
-                <RoutineCard key={p.id} name={p.name} focus={p.focus} days={p.days} />
-              ))}
-            </div>
-          ) : (
-            <p className="empty list-empty">{emptyText}</p>
-          )}
-          {downloaded && offline && (
-            <p className="hint warning">Sin conexión: estás viendo lo último que se bajó.</p>
-          )}
-        </section>
+        {/* A coach's own routines, to edit and assign */}
+        {isTrainer && <TrainerRoutines />}
+
+        {/* Assigned by your trainer (a coach only sees this if they have some) */}
+        {(!isTrainer || programs.length > 0) && (
+          <section className="list-section">
+            <h2 className="section-title">{isTrainer ? "Asignadas a vos" : "Tus rutinas"}</h2>
+            {programs.length > 0 ? (
+              <div className="card-list">
+                {programs.map((p) => (
+                  <RoutineCard key={`${p.clientId}:${p.id}`} name={p.name} focus={p.focus} days={p.days} />
+                ))}
+              </div>
+            ) : (
+              <p className="empty list-empty">{emptyText}</p>
+            )}
+            {downloaded && offline && (
+              <p className="hint warning">Sin conexión: estás viendo lo último que se bajó.</p>
+            )}
+          </section>
+        )}
 
         {/* The catalog's sequences, by discipline */}
         {CATALOG.map((d) => (

@@ -4,12 +4,14 @@
  * The ONLY file that touches the browser's storage. What this phone keeps
  * for the signed-in person is one JSON object:
  *
- *   { version: 2, sessions: [...], assigned: { clients, programs, fetchedAt } | null }
+ *   { version: 2, sessions: [...], assigned: { clients, programs, fetchedAt } | null,
+ *     profile: { role, full_name, email } | null }
  *
  *   sessions  the workout log (see workouts.js). Kept here first, so a
  *             workout survives a dropped connection; remote.js uploads it.
  *   assigned  the last copy downloaded of this person's routines (see
  *             remote.js / assigned.js), so they open without signal.
+ *   profile   their role and name (trainers get extra tabs).
  *
  * Each account gets its own box (the key ends with the user id), so two
  * people sharing a phone never see each other's data. setStorageUser()
@@ -27,7 +29,7 @@ import { RENAMED_IDS } from "../data/renamedIds.js";
 const KEY_PREFIX = "gym-cheatsheet:v2:";
 export const DATA_VERSION = 2;
 
-const empty = () => ({ version: DATA_VERSION, sessions: [], assigned: null });
+const empty = () => ({ version: DATA_VERSION, sessions: [], assigned: null, profile: null });
 
 let key = null; // storage key of the signed-in account; null = nobody
 let data = null; // in-memory copy, loaded on first use
@@ -68,6 +70,7 @@ function migrate(raw) {
     version: DATA_VERSION,
     sessions: renameOldIds(Array.isArray(raw.sessions) ? raw.sessions : []),
     assigned: raw.assigned && typeof raw.assigned === "object" ? raw.assigned : null,
+    profile: raw.profile && typeof raw.profile === "object" ? raw.profile : null,
   };
 }
 

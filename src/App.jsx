@@ -31,7 +31,25 @@ import WorkoutLog from "./screens/WorkoutLog.jsx";
 import Search from "./screens/Search.jsx";
 import SignIn from "./screens/SignIn.jsx";
 import Invitation from "./screens/Invitation.jsx";
-import { useAnyRoutine, useAuth } from "./store/useStore.js";
+import TrainerClients from "./screens/TrainerClients.jsx";
+import TrainerClient from "./screens/TrainerClient.jsx";
+import ProgramEditor from "./screens/ProgramEditor.jsx";
+import AssignProgram from "./screens/AssignProgram.jsx";
+import { useAnyRoutine, useAuth, useIsTrainer, usePersonalData } from "./store/useStore.js";
+
+// The trainer's pages (Clientes, and building and assigning routines).
+const TRAINER_PAGES = ["clients", "client", "routine-new", "routine-edit", "assign"];
+
+function trainerScreen(route, openMenu) {
+  if (route.name === "clients") return <TrainerClients onMenuClick={openMenu} />;
+  if (route.name === "client") return <TrainerClient key={route.id} id={route.id} />;
+  if (route.name === "routine-new") {
+    const { cliente = null, desde = null } = route.query;
+    return <ProgramEditor key={`new:${cliente}:${desde}`} clientId={cliente} copyOf={desde} />;
+  }
+  if (route.name === "routine-edit") return <ProgramEditor key={route.id} id={route.id} />;
+  return <AssignProgram key={`${route.id}:${route.query.cliente}`} id={route.id} preselected={route.query.cliente} />;
+}
 
 const GYM_MODE_KEY = "gym-mode";
 
@@ -107,7 +125,7 @@ export default function App() {
   // detail pages start at the top.
   useLayoutEffect(() => {
     const hash = window.location.hash || "#/";
-    const isList = route.name === "home" || route.name === "routines" || route.name === "search";
+    const isList = ["home", "routines", "search", "clients"].includes(route.name);
     window.scrollTo(0, isList ? (savedScroll[hash] ?? 0) : 0);
   }, [route]);
 
@@ -116,14 +134,23 @@ export default function App() {
   const routine = useAnyRoutine(route.id ?? "");
 
   const auth = useAuth();
+  const isTrainer = useIsTrainer();
+  const profileKnown = usePersonalData().profile != null;
   if (route.name === "invite") return <Invitation key={route.id} token={route.id} />;
   // Checking the login saved on the phone: a blank page for a moment.
   if (auth.status === "loading") return <div className="app" />;
   if (auth.status === "signed-out") return <SignIn />;
 
-  // Pick the screen for the current route.
+  // Pick the screen for the current route. The trainer's pages only for
+  // trainers (the database refuses the rest anyway); while the role is not
+  // known yet (first sign-in), a short wait instead of the wrong page.
+  const trainerPage = TRAINER_PAGES.includes(route.name);
   let screen;
-  if (route.name === "exercise") {
+  if (trainerPage && !isTrainer && !profileKnown) {
+    screen = <p className="empty">Cargando...</p>;
+  } else if (trainerPage && isTrainer) {
+    screen = trainerScreen(route, openMenu);
+  } else if (route.name === "exercise") {
     screen = <ExerciseDetail id={route.id} />;
   } else if (route.name === "routines") {
     screen = <RoutineList onMenuClick={openMenu} />;
@@ -150,10 +177,14 @@ export default function App() {
     );
   }
 
-  // Exercise pages belong to the first tab, routine pages to the second;
-  // the search page to neither.
-  let activeTab = route.name.startsWith("routine") || route.name === "program" ? "routines" : "exercises";
+  // Exercise pages belong to the first tab, routine pages (building and
+  // assigning included) to the second, client pages to Clientes, and what
+  // was opened from a client's page too; the search page to none.
+  let activeTab = route.name.startsWith("routine") || ["program", "assign"].includes(route.name) ? "routines" : "exercises";
   if (route.name === "search") activeTab = null;
+  if (route.name === "clients" || route.name === "client" || (TRAINER_PAGES.includes(route.name) && route.query.cliente)) {
+    activeTab = "clients";
+  }
 
   return (
     <div className="app">

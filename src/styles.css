@@ -23,6 +23,7 @@
  *   6. Routines
  *   7. Modo gym
  *   7b. Your routines: forms, buttons, editor, picker, workout log, history
+ *   7c. Trainer panel: clients, routines, builder, assign
  *   8. Bottom tab bar
  *   9. Responsive: tablet and desktop
  */
@@ -1985,6 +1986,206 @@ mark {
 .history-routine {
   font-size: 12px;
   color: var(--muted);
+}
+
+/* ---------- 7c. Trainer panel: clients, routines, builder, assign ---------- */
+
+/* Hidden but still reachable by keyboard and screen readers (the client
+   checkboxes behind their chips) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A boxed form or result inside a page (new client, its link) */
+.panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.panel .block-title {
+  margin-top: 0;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.panel-actions .primary-button,
+.panel-actions .secondary-button {
+  width: auto;
+}
+
+/* The invitation link with Copiar / WhatsApp */
+.invite-box {
+  margin-top: 12px;
+}
+
+.invite-input {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.invite-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* A routine card with buttons under its text (the coach's routines, a client's routines) */
+.template-card {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+}
+
+/* "· ya la tiene" inside a client chip */
+.chip-note {
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+.template-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+}
+
+.template-actions .primary-button,
+.template-actions .secondary-button {
+  min-height: 40px;
+  font-size: 14px;
+}
+
+/* Series / Reps / Kg / Pausa in one row in the builder */
+.step-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.step-numbers .field {
+  margin-top: 10px;
+}
+
+.step-numbers .input {
+  padding: 0 8px;
+  text-align: center;
+}
+
+.edit-vuelta {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+/* A row of chips to choose from (vueltas, routines, clients) */
+.vuelta-choices,
+.client-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.client-choices .chip,
+.vuelta-choices .chip {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* The assign grid: one row per client under each step */
+.assign-day + .assign-day {
+  margin-top: 20px;
+}
+
+.assign-step .step-name {
+  font-weight: 600;
+}
+
+.assign-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.assign-row {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 56px auto 72px 72px;
+  align-items: center;
+  gap: 6px;
+}
+
+.assign-row .input {
+  min-height: 40px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+.assign-name {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-x {
+  color: var(--muted);
+}
+
+/* A client's page */
+.client-active {
+  color: var(--accent);
+}
+
+.workout-card {
+  align-items: flex-start;
+}
+
+.workout-lines {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.workout-exercise {
+  font-weight: 600;
+}
+
+.workout-plan {
+  color: var(--muted);
+}
+
+.archived {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.archived summary {
+  cursor: pointer;
+}
+
+.archived-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* ---------- 8. Bottom tab bar ---------- */

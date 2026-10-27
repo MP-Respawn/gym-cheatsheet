@@ -2,7 +2,8 @@
  * remote.js
  *
  * Everything that talks to the database for the signed-in person:
- *   refreshAssigned()  downloads their routines (programs -> days -> steps)
+ *   refreshAssigned()  downloads the routines assigned to them (days, steps,
+ *                      and their own sets and kilos)
  *   pushPending()      uploads finished workouts that are not up there yet
  *   pullHistory()      downloads their past workouts (from any device)
  *   refreshAll()       the three, in that order
@@ -64,12 +65,44 @@ function withTimeout(request, what) {
 /* ---- Routines ---- */
 
 /*
- * Downloads the person's client records (one per trainer) and the routines
+ * One assignment (routine + this client's own numbers) as a routine row the
+ * way assigned.js reads it: { id, client_id, name, ..., program_days }, with
+ * the client's sets, reps and kilos already in place of the routine's.
+ */
+function withOwnNumbers(assignment) {
+  const own = new Map(assignment.assignment_steps.map((o) => [o.step_id, o]));
+  const program = assignment.programs;
+  return {
+    ...program,
+    client_id: assignment.client_id,
+    created_at: assignment.created_at,
+    program_days: program.program_days.map((day) => ({
+      ...day,
+      program_steps: day.program_steps.map((step) => {
+        const o = own.get(step.id);
+        return o
+          ? { ...step, sets: o.sets ?? step.sets, reps: o.reps ?? step.reps, load_kg: o.load_kg ?? step.load_kg }
+          : step;
+      }),
+    })),
+  };
+}
+
+/*
+ * Downloads the person's profile, their client records (one per trainer) and the routines
  * assigned to them that are not archived. The client ids are asked for
  * explicitly: a trainer or the superadmin can also read other routines,
  * and those do not belong in their own "Rutinas" list.
  */
 export async function refreshAssigned(userId) {
+  // Who this person is (role, name), so the app knows whether to show the trainer's tabs.
+  const profile = await withTimeout(
+    supabase.from("profiles").select("role, full_name, email").eq("id", userId).single(),
+    "La descarga del perfil",
+  );
+  if (profile.error) throw profile.error;
+  updateData((d) => ({ ...d, profile: profile.data }));
+
   const clients = await withTimeout(
     supabase.from("clients").select("id, trainer_id, full_name").eq("user_id", userId),
     "La descarga de clientes",
@@ -81,15 +114,17 @@ export async function refreshAssigned(userId) {
   if (clientIds.length > 0) {
     const result = await withTimeout(
       supabase
-        .from("programs")
-        .select("id, client_id, name, focus, discipline, created_at, program_days(id, position, name, focus, program_steps(*))")
+        .from("program_assignments")
+        .select(
+          "client_id, created_at, assignment_steps(step_id, sets, reps, load_kg), programs(id, name, focus, discipline, program_days(id, position, name, focus, program_steps(*)))",
+        )
         .in("client_id", clientIds)
         .is("archived_at", null)
         .order("created_at"),
       "La descarga de rutinas",
     );
     if (result.error) throw result.error;
-    programs = result.data;
+    programs = result.data.filter((a) => a.programs).map(withOwnNumbers);
   }
 
   updateData((d) => ({ ...d, assigned: { clients: clients.data, programs, fetchedAt: new Date().toISOString() } }));
@@ -215,7 +250,9 @@ function fromRemote(row) {
 /*
  * Downloads the person's last 300 finished workouts and merges them into
  * the phone's log. A session with changes not uploaded yet keeps the
- * phone's version; everything else takes the database's.
+ * phone's version; everything else takes the database's. When the download
+ * has the whole history (fewer than 300), an uploaded session the database
+ * no longer has was deleted there, so it goes from the phone too.
  */
 export async function pullHistory() {
   const clientIds = (readData().assigned?.clients ?? []).map((c) => c.id);
@@ -239,6 +276,12 @@ export async function pullHistory() {
     const pending = new Set(pendingSessions(d.sessions).map((s) => s.id));
     for (const row of rows) {
       if (!pending.has(row.id)) byId.set(row.id, fromRemote(row));
+    }
+    if (rows.length < 300) {
+      const remote = new Set(rows.map((r) => r.id));
+      for (const s of d.sessions) {
+        if (s.syncedAt && !pending.has(s.id) && !remote.has(s.id)) byId.delete(s.id);
+      }
     }
     return { ...d, sessions: [...byId.values()] };
   });

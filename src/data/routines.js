@@ -8,7 +8,7 @@
  *     everyone, under Rutinas, like the exercise catalog.
  *   - the days of PROGRAMS below (Bloque A, Bloque B). The app does NOT
  *     show these: they were imported into the database as the trainer's
- *     templates (scripts/seed-trainer.mjs) and reach clients by assignment.
+ *     routines (scripts/seed-trainer.mjs) and reach clients by assignment.
  *
  * Shape of one routine:
  *   id      kebab-case key, used in the URL (#/rutina/<id>)
@@ -369,7 +369,7 @@ const RAW_ROUTINES = [
  *   focus   short summary
  *   dayIds  the day routines, in order
  * normalizeRoutine gives each day its programId and dayIndex. These are the
- * source scripts/seed-trainer.mjs imports as the trainer's templates.
+ * source scripts/seed-trainer.mjs imports as the trainer's routines.
  */
 export const PROGRAMS = [
   {

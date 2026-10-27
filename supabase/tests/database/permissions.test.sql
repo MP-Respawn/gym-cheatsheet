@@ -15,13 +15,14 @@
  *   c1…  client login 1      c2… client login 2
  *   d1…  trainer 1's client "Ana"   d2… trainer 1's client "Beto"
  *   d3…  trainer 2's client "Caro"
- *   e1…  trainer 1's template routine, f1… its day, 51…/52… its steps
+ *   e1…  trainer 1's routine "Bloque A", f1… its day, 51…/52…/56… its steps
+ *   e2…  trainer 1's routine "Bloque C" (the builder), f2… its day, 53…–55… its steps
  *   5e…  Ana's workout session, 5e1… one set
  */
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(63);
 
 /* ---- Test helpers (rolled back with everything else) ---- */
 
@@ -125,7 +126,7 @@ select lives_ok(
     insert into public.program_steps (id, day_id, position, vuelta) values
       ('52000000-0000-0000-0000-000000000000', 'f1000000-0000-0000-0000-000000000000', 1, 'pelota');
   $$,
-  'trainer 1 creates a template with one day and two steps'
+  'trainer 1 creates a routine with one day and two steps'
 );
 select throws_ok(
   $$ insert into public.program_steps (day_id, exercise_ids, vuelta)
@@ -138,22 +139,21 @@ select "is"(
     '{d1000000-0000-0000-0000-000000000000,d2000000-0000-0000-0000-000000000000}',
     '{"d1000000-0000-0000-0000-000000000000": {"51000000-0000-0000-0000-000000000000": {"sets": 4, "load_kg": 50}}}'
   )),
-  2, 'trainer 1 assigns the template to Ana and Beto'
+  2, 'trainer 1 assigns the routine to Ana and Beto'
 );
 select "is"(
-  (select array[s.sets::numeric, s.load_kg] from public.program_steps s
-     join public.program_days d on d.id = s.day_id
-     join public.programs p on p.id = d.program_id
-   where p.client_id = 'd1000000-0000-0000-0000-000000000000' and s.position = 0),
-  array[4, 50]::numeric[], 'Ana''s copy has her own sets and kilos'
+  (select array[o.sets::numeric, o.load_kg] from public.assignment_steps o
+     join public.program_assignments a on a.id = o.assignment_id
+   where a.client_id = 'd1000000-0000-0000-0000-000000000000' and o.step_id = '51000000-0000-0000-0000-000000000000'),
+  array[4, 50]::numeric[], 'Ana has her own sets and kilos for the squat'
 );
 select "is"(
-  (select array[s.sets::numeric, s.load_kg] from public.program_steps s
-     join public.program_days d on d.id = s.day_id
-     join public.programs p on p.id = d.program_id
-   where p.client_id = 'd2000000-0000-0000-0000-000000000000' and s.position = 0),
-  array[3, 40]::numeric[], 'Beto''s copy keeps the template values'
+  (select count(*)::int from public.assignment_steps o
+     join public.program_assignments a on a.id = o.assignment_id
+   where a.client_id = 'd2000000-0000-0000-0000-000000000000'),
+  0, 'Beto keeps the routine''s numbers'
 );
+select "is"((select count(*)::int from public.programs), 1, 'assigning copies nothing: still one routine');
 select throws_ok(
   $$ select public.assign_program('e1000000-0000-0000-0000-000000000000', '{d3000000-0000-0000-0000-000000000000}') $$,
   '42501', null, 'trainer 1 cannot assign to trainer 2''s client'
@@ -161,9 +161,10 @@ select throws_ok(
 
 select tests.login('b2000000-0000-0000-0000-000000000000');
 select "is"((select count(*)::int from public.programs), 0, 'trainer 2 sees none of trainer 1''s routines');
+select "is"((select count(*)::int from public.program_assignments), 0, 'trainer 2 sees none of trainer 1''s assignments');
 select throws_ok(
   $$ select public.assign_program('e1000000-0000-0000-0000-000000000000', '{d3000000-0000-0000-0000-000000000000}') $$,
-  'P0002', null, 'trainer 2 cannot copy trainer 1''s template'
+  'P0002', null, 'trainer 2 cannot assign trainer 1''s routine'
 );
 
 /* ---- Ana accepts her link ---- */
@@ -187,13 +188,24 @@ select throws_ok(
 
 select tests.login('c1000000-0000-0000-0000-000000000000');
 select "is"(
-  (select array_agg(client_id::text) from public.programs),
-  array['d1000000-0000-0000-0000-000000000000'], 'Ana sees only her own routine (not the template, not Beto''s)'
+  (select array_agg(id::text) from public.programs),
+  array['e1000000-0000-0000-0000-000000000000'], 'Ana sees the routine assigned to her'
 );
 select "is"((select count(*)::int from public.program_steps), 2, 'Ana sees the steps of her routine');
+select "is"((select count(*)::int from public.program_assignments), 1, 'Ana sees her assignment, not Beto''s');
+select "is"((select count(*)::int from public.assignment_steps), 1, 'Ana sees her own numbers only');
 update public.program_steps set load_kg = 200;
 select "is"(
-  (select max(load_kg) from public.program_steps), 50::numeric(6, 2), 'Ana''s attempt to change her kilos changes nothing'
+  (select max(load_kg) from public.program_steps), 40::numeric(6, 2), 'Ana''s attempt to change the routine changes nothing'
+);
+update public.assignment_steps set load_kg = 200;
+select "is"(
+  (select max(load_kg) from public.assignment_steps), 50::numeric(6, 2), 'Ana''s attempt to change her kilos changes nothing'
+);
+select throws_ok(
+  $$ insert into public.program_assignments (program_id, client_id, trainer_id)
+       values ('e1000000-0000-0000-0000-000000000000', 'd1000000-0000-0000-0000-000000000000', 'b1000000-0000-0000-0000-000000000000') $$,
+  '42501', null, 'Ana cannot assign routines'
 );
 select throws_ok(
   $$ insert into public.programs (trainer_id, name) values ('c1000000-0000-0000-0000-000000000000', 'Mi rutina') $$,
@@ -213,7 +225,7 @@ select throws_ok(
 select lives_ok(
   $$
     insert into public.workout_sessions (id, client_id, program_id, day_id)
-      select '5e000000-0000-0000-0000-000000000000', p.client_id, p.id, d.id
+      select '5e000000-0000-0000-0000-000000000000', 'd1000000-0000-0000-0000-000000000000', p.id, d.id
       from public.programs p join public.program_days d on d.program_id = p.id;
     insert into public.workout_sets (id, session_id, exercise_id, set_index, kg, reps)
       values ('5e100000-0000-0000-0000-000000000000', '5e000000-0000-0000-0000-000000000000', 'sentadilla-barra', 0, 50, 8);
@@ -286,8 +298,99 @@ select lives_ok(
   'the superadmin resolves the request'
 );
 
+/* ---- The routine builder (save_program) ---- */
+
+select tests.login('b1000000-0000-0000-0000-000000000000');
+select lives_ok(
+  $$ select public.save_program($j${
+       "id": "e2000000-0000-0000-0000-000000000000", "name": "Bloque C",
+       "days": [{ "id": "f2000000-0000-0000-0000-000000000000", "name": "Día 1",
+                  "steps": [{ "id": "53000000-0000-0000-0000-000000000000", "exercise_ids": ["sentadilla-barra"], "sets": 3, "reps": "8", "load_kg": 40 },
+                            { "id": "54000000-0000-0000-0000-000000000000", "vuelta": "pelota" }] }] }$j$::jsonb) $$,
+  'trainer 1 saves a new routine with the builder'
+);
+select lives_ok(
+  $$ select public.save_program($j${
+       "id": "e2000000-0000-0000-0000-000000000000", "name": "Bloque C",
+       "days": [{ "id": "f2000000-0000-0000-0000-000000000000", "name": "Día 1",
+                  "steps": [{ "id": "55000000-0000-0000-0000-000000000000", "exercise_ids": ["peso-muerto"] },
+                            { "id": "53000000-0000-0000-0000-000000000000", "exercise_ids": ["sentadilla-barra"], "sets": 4, "reps": "8", "load_kg": 45 }] }] }$j$::jsonb) $$,
+  'trainer 1 saves it again: one step added, one removed, one moved and changed'
+);
+select "is"(
+  (select array_agg(id::text || ':' || position || ':' || coalesce(sets, 0) order by position)
+     from public.program_steps where day_id = 'f2000000-0000-0000-0000-000000000000'),
+  array['55000000-0000-0000-0000-000000000000:0:0', '53000000-0000-0000-0000-000000000000:1:4'],
+  'the routine has exactly the new steps, the kept one with its id, new place and new sets'
+);
+
+-- Editing a routine reaches everyone who has it; their own numbers stay.
+select lives_ok(
+  $$ select public.save_program($j${
+       "id": "e1000000-0000-0000-0000-000000000000", "name": "Bloque A",
+       "days": [{ "id": "f1000000-0000-0000-0000-000000000000", "name": "Día 1",
+                  "steps": [{ "id": "51000000-0000-0000-0000-000000000000", "exercise_ids": ["sentadilla-barra"], "sets": 5, "reps": "5", "load_kg": 60 },
+                            { "id": "52000000-0000-0000-0000-000000000000", "vuelta": "pelota" },
+                            { "id": "56000000-0000-0000-0000-000000000000", "exercise_ids": ["peso-muerto"], "sets": 3 }] }] }$j$::jsonb) $$,
+  'trainer 1 edits the assigned routine: new numbers and a new step'
+);
+
+select tests.login('c1000000-0000-0000-0000-000000000000');
+select "is"(
+  (select array[s.sets::numeric, o.sets, o.load_kg] from public.program_steps s
+     join public.assignment_steps o on o.step_id = s.id
+   where s.id = '51000000-0000-0000-0000-000000000000'),
+  array[5, 4, 50]::numeric[], 'Ana sees the edited routine and still has her own sets and kilos'
+);
+select "is"((select count(*)::int from public.program_steps), 3, 'Ana sees the new step');
+select throws_ok(
+  $$ select public.save_program(jsonb_build_object(
+       'id', 'e1000000-0000-0000-0000-000000000000', 'name', 'Mía', 'days', '[]'::jsonb)) $$,
+  '42501', null, 'Ana cannot edit her routine with the builder'
+);
+select throws_ok(
+  $$ insert into public.workout_sessions (id, client_id, program_id)
+       values (gen_random_uuid(), 'd1000000-0000-0000-0000-000000000000', 'e2000000-0000-0000-0000-000000000000') $$,
+  '42501', null, 'Ana cannot log a routine that was not given to her'
+);
+
+select tests.login('b1000000-0000-0000-0000-000000000000');
+select lives_ok(
+  $$ select public.save_program($j${
+       "id": "e1000000-0000-0000-0000-000000000000", "name": "Bloque A",
+       "days": [{ "id": "f1000000-0000-0000-0000-000000000000", "name": "Día 1",
+                  "steps": [{ "id": "56000000-0000-0000-0000-000000000000", "exercise_ids": ["peso-muerto"], "sets": 3 }] }] }$j$::jsonb) $$,
+  'trainer 1 removes the squat from the routine'
+);
+select "is"((select count(*)::int from public.assignment_steps), 0, 'Ana''s numbers for the removed step go with it');
+select lives_ok(
+  $$ select public.assign_program(
+       'e1000000-0000-0000-0000-000000000000', '{d1000000-0000-0000-0000-000000000000}',
+       '{"d1000000-0000-0000-0000-000000000000": {"56000000-0000-0000-0000-000000000000": {"load_kg": 70}}}') $$,
+  'trainer 1 changes Ana''s numbers on the routine she already has'
+);
+select "is"(
+  (select array_agg(o.load_kg) from public.assignment_steps o),
+  array[70]::numeric[], 'Ana has her new kilos, and still one assignment'
+);
+select lives_ok(
+  $$ update public.program_assignments set archived_at = now()
+       where client_id = 'd1000000-0000-0000-0000-000000000000' $$,
+  'trainer 1 takes the routine away from Ana'
+);
+
+select tests.login('c1000000-0000-0000-0000-000000000000');
+select "is"((select count(*)::int from public.programs), 0, 'Ana no longer sees the routine taken away');
+
+select tests.login('b2000000-0000-0000-0000-000000000000');
+select throws_ok(
+  $$ select public.save_program($j${ "id": "e2000000-0000-0000-0000-000000000000", "name": "Robada", "days": [] }$j$::jsonb) $$,
+  '42501', null, 'trainer 2 cannot overwrite trainer 1''s routine'
+);
+
 /* ---- Disabling and logged-out access ---- */
 
+select tests.login('a0000000-0000-0000-0000-000000000000');
 select public.admin_update_profile('b1000000-0000-0000-0000-000000000000', p_disabled => true);
 select tests.login('b1000000-0000-0000-0000-000000000000');
 select "is"((select count(*)::int from public.clients), 0, 'a disabled trainer sees nothing');
@@ -297,6 +400,10 @@ set local role anon;
 select throws_ok(
   $$ select * from public.programs $$,
   '42501', null, 'logged-out visitors cannot read routines'
+);
+select throws_ok(
+  $$ select * from public.program_assignments $$,
+  '42501', null, 'logged-out visitors cannot read assignments'
 );
 
 reset role;

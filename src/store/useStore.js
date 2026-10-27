@@ -43,6 +43,17 @@ export function useRemoteStatus() {
 export const CATALOG_ROUTINES = ROUTINES.filter((r) => !r.programId);
 const catalogRoutine = (id) => CATALOG_ROUTINES.find((r) => r.id === id);
 
+/*
+ * Is the signed-in person a trainer (or the superadmin, who can work as
+ * one)? Decides whether Clientes and the coach's routines show up. The database
+ * enforces the real permissions; this only shapes the menu.
+ */
+export function useIsTrainer() {
+  const data = usePersonalData();
+  const role = data.profile?.role;
+  return role === "trainer" || role === "superadmin";
+}
+
 // The routines assigned to you, oldest first: [{ id, name, focus, days, ... }].
 export function useAssignedPrograms() {
   const data = usePersonalData();

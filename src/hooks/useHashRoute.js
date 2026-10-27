@@ -16,6 +16,16 @@
  *   #/rutina/<id>/entrenar -> log weights while doing a routine
  *   #/invitacion/<token>   -> a trainer's invitation link
  *
+ * Trainer pages (their own routines are listed in #/rutinas):
+ *   #/clientes          -> your clients
+ *   #/cliente/<id>      -> one client: routines, history, invitation
+ *   #/nueva-rutina      -> build a new routine (?cliente=<id>: and give it
+ *                          to that client; ?desde=<id>: start as a copy)
+ *   #/editar-rutina/<id> -> edit one of your routines
+ *   #/asignar/<id>      -> give a routine to clients, or change their numbers
+ *                          (?cliente=<id> ticks one)
+ * The old #/plantillas pages lead to #/rutinas.
+ *
  * The hook returns { name, id, query } for the current page and re-renders
  * the component whenever the hash changes (a tapped link, the back button...).
  */
@@ -41,6 +51,13 @@ function parsePath(path) {
   // A routine with several days: its page with one lane per day
   if (first === "programa" && second) return { name: "program", id: second };
   if (first === "rutinas") return { name: "routines" };
+  // The trainer's pages
+  if (first === "clientes") return { name: "clients" };
+  if (first === "cliente" && second) return { name: "client", id: second };
+  if (first === "nueva-rutina") return { name: "routine-new" };
+  if (first === "editar-rutina" && second) return { name: "routine-edit", id: second };
+  if (first === "plantillas" || first === "plantilla") return { name: "routines" };
+  if (first === "asignar" && second) return { name: "assign", id: second };
   if (first === "buscar") return { name: "search" };
   return { name: "home" };
 }

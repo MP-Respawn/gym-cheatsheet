@@ -2492,8 +2492,79 @@ body:has(.action-bar) .notices {
 
 /* ---------- 7f. Routine assistant (AssistantPanel.jsx) ---------- */
 
+/* "Armar con asistente": a full accent button with sparkles */
 .assistant-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
   margin-bottom: 16px;
+}
+
+/* The assistant's questions, one at a time */
+.assistant-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.assistant-question {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.assistant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assistant-options .chip {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+/* The microphone, red while listening */
+.dictate {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.dictate.listening {
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: dictate-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes dictate-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Rutinas: "Armar con asistente" and "+ Nueva rutina a mano", side by side */
+.new-routine-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* "Armar con asistente" on the first step of a new routine */
+.assistant-invite {
+  margin-bottom: 20px;
+  border-color: var(--accent-line);
+}
+
+.assistant-invite .primary-button {
+  margin-top: 12px;
 }
 
 .assistant-head {

@@ -11,11 +11,14 @@
  * The model proposes through the propose_routine tool, which has the shape
  * of the app's routine builder draft; the app fills the draft with it and
  * the coach reviews and saves as usual. This function never writes a routine.
+ * To find out what it needs, the model uses ask_questions: the app shows
+ * them one at a time with quick answers and sends the answers back.
  *
  * Stateless: the app sends the conversation so far (the messages this
- * function returned, untouched), the new message and the builder's current
- * draft; it gets back the messages to append, the reply text and the
- * proposal, if any. Every proposal is checked against the catalog: unknown
+ * function returned, untouched), the new message (or the answers to the
+ * last questions) and the builder's current draft; it gets back the
+ * messages to append, the reply text, and the proposal or the questions,
+ * if any. Every proposal is checked against the catalog: unknown
  * ids go back to the model as an error to fix (at most twice per message).
  *
  * Only coaches (and the superadmin), with a daily message limit per mode;
@@ -158,21 +161,63 @@ async function addUsage(coachId: string, mode: Mode, before: Record<string, numb
 
 /* ---- The conversation ---- */
 
-// The new user turn: answers to a proposal still pending from the last
-// reply (the model's tool call needs its result), the builder's draft, and
-// what the coach wrote.
-function userTurn(history: Message[], message: string, draft: unknown): Message {
+// The questions tool: the app shows them one at a time, with the options
+// as quick answers, and sends the answers back as this tool's result.
+const ASK_TOOL: Anthropic.Beta.BetaTool = {
+  name: "ask_questions",
+  description:
+    "Le hace al coach las preguntas que faltan para armar la rutina. La app las muestra de a una, con las opciones como respuestas rápidas (el coach también puede escribir o dictar otra cosa).",
+  strict: true,
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["questions"],
+    properties: {
+      questions: {
+        type: "array",
+        description: "De 1 a 5 preguntas, una por tema.",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["question", "options"],
+          properties: {
+            question: { type: "string", description: "Una sola pregunta, corta." },
+            options: {
+              type: "array",
+              items: { type: "string" },
+              description: "2 a 5 respuestas rápidas probables (\"3 días\", \"4 días\"), o vacío si la respuesta es libre.",
+            },
+          },
+        },
+      },
+    },
+  } as Anthropic.Beta.BetaTool.InputSchema,
+};
+
+type Question = { question: string; options: string[] };
+
+// The new user turn: results for the tools of the last reply (each tool
+// call needs one: the coach's answers to its questions, or a note that the
+// proposal reached the builder), the builder's draft, and what the coach wrote.
+function userTurn(history: Message[], message: string, draft: unknown, answers: string[]): Message {
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
   const last = history.at(-1);
   if (last?.role === "assistant" && Array.isArray(last.content)) {
     for (const block of last.content) {
-      if (block.type === "tool_use") {
+      if (block.type !== "tool_use") continue;
+      if (block.name === "ask_questions") {
+        const questions = (block.input as { questions?: Question[] }).questions ?? [];
+        const text = questions
+          .map((q, i) => `${q.question}\n→ ${answers[i]?.trim() || "(sin respuesta)"}`)
+          .join("\n\n");
+        content.push({ type: "tool_result", tool_use_id: block.id, content: text || "(sin respuestas)" });
+      } else {
         content.push({ type: "tool_result", tool_use_id: block.id, content: "El coach vio la propuesta en el constructor." });
       }
     }
   }
   if (draft) content.push({ type: "text", text: `<borrador>\n${JSON.stringify(draft)}\n</borrador>` });
-  content.push({ type: "text", text: message });
+  if (message) content.push({ type: "text", text: message });
   return { role: "user", content };
 }
 
@@ -193,7 +238,9 @@ Deno.serve(async (req) => {
   const mode: Mode = body?.mode === "catalog" ? "catalog" : "coach";
   const message = typeof body?.message === "string" ? body.message.trim().slice(0, 4000) : "";
   const history: Message[] = Array.isArray(body?.history) ? body.history : [];
-  if (!message) return json({ error: "Escribí un mensaje." }, 400);
+  // Answers to the questions of the last reply, in order (ask_questions).
+  const answers: string[] = Array.isArray(body?.answers) ? body.answers.map((a: unknown) => String(a ?? "").slice(0, 1000)) : [];
+  if (!message && answers.length === 0) return json({ error: "Escribí un mensaje." }, 400);
 
   const config = MODES[mode];
   const before = await usedToday(auth.user.id, mode);
@@ -201,9 +248,10 @@ Deno.serve(async (req) => {
     return json({ error: `Llegaste al límite de hoy (${config.dailyLimit} mensajes en este modo). Mañana se renueva.` }, 429);
   }
 
-  const turn: Message[] = [userTurn(history, message, body?.draft ?? null)];
+  const turn: Message[] = [userTurn(history, message, body?.draft ?? null, answers)];
   const usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   let proposal: Proposal | null = null;
+  let questions: Question[] | null = null;
   let notice = "";
 
   try {
@@ -221,7 +269,7 @@ Deno.serve(async (req) => {
             cache_control: { type: "ephemeral" },
           },
         ],
-        tools: [proposeTool(mode)],
+        tools: [ASK_TOOL, proposeTool(mode)],
         messages: [...history, ...turn],
         // Sonnet: if its safety check declines a harmless request by mistake,
         // the same call continues on another model instead of failing.
@@ -242,9 +290,15 @@ Deno.serve(async (req) => {
         notice = "La respuesta quedó cortada. Pedile una rutina más corta o por partes.";
         break;
       }
-      const call = response.content.find(
-        (b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use" && b.name === "propose_routine",
-      );
+      const calls = response.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
+      const ask = calls.find((b) => b.name === "ask_questions");
+      if (ask) {
+        questions = ((ask.input as { questions?: Question[] }).questions ?? [])
+          .filter((q) => q.question?.trim())
+          .slice(0, 5)
+          .map((q) => ({ question: q.question.trim(), options: (q.options ?? []).filter(Boolean).slice(0, 5) }));
+      }
+      const call = calls.find((b) => b.name === "propose_routine");
       if (!call) break;
 
       const found = problems(call.input as Proposal, mode);
@@ -256,9 +310,16 @@ Deno.serve(async (req) => {
         notice = "El asistente no logró una propuesta válida con el catálogo. Pedile que lo intente de nuevo.";
         break;
       }
+      // Every tool call of the reply needs a result: the errors for the
+      // proposal, and a "later" for questions asked alongside it.
+      questions = null;
       turn.push({
         role: "user",
-        content: [{ type: "tool_result", tool_use_id: call.id, is_error: true, content: found.join("\n") }],
+        content: calls.map((b) =>
+          b.id === call.id
+            ? { type: "tool_result", tool_use_id: b.id, is_error: true, content: found.join("\n") }
+            : { type: "tool_result", tool_use_id: b.id, content: "Primero corregí la propuesta." },
+        ),
       });
     }
   } catch (e) {
@@ -284,6 +345,7 @@ Deno.serve(async (req) => {
     messages: turn,
     text: [text, notice].filter(Boolean).join("\n\n"),
     proposal,
+    questions: questions?.length ? questions : null,
     remainingToday: config.dailyLimit - before.messages - 1,
   });
 });

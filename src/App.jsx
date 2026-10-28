@@ -50,8 +50,15 @@ function trainerScreen(route, openMenu) {
   if (route.name === "requests") return <ExerciseRequests onMenuClick={openMenu} startName={route.query.nombre ?? ""} />;
   if (route.name === "client") return <TrainerClient key={route.id} id={route.id} />;
   if (route.name === "routine-new") {
-    const { cliente = null, desde = null } = route.query;
-    return <ProgramEditor key={`new:${cliente}:${desde}`} clientId={cliente} copyOf={desde} />;
+    const { cliente = null, desde = null, asistente = null } = route.query;
+    return (
+      <ProgramEditor
+        key={`new:${cliente}:${desde}:${asistente}`}
+        clientId={cliente}
+        copyOf={desde}
+        withAssistant={asistente === "1"}
+      />
+    );
   }
   if (route.name === "routine-edit") return <ProgramEditor key={route.id} id={route.id} />;
   return <AssignProgram key={`${route.id}:${route.query.cliente}`} id={route.id} preselected={route.query.cliente} />;

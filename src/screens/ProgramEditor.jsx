@@ -1,6 +1,7 @@
 /*
  * ProgramEditor.jsx: the coach's routine builder
  *   #/nueva-rutina              -> a new routine
+ *   #/nueva-rutina?asistente=1  -> a new routine, straight into the assistant
  *   #/nueva-rutina?cliente=<id> -> a new routine, given to that client on save
  *   #/nueva-rutina?desde=<id>   -> a new routine that starts as a copy of
  *                                  another (for a client who needs other
@@ -136,7 +137,7 @@ function copyDraft(draft) {
   };
 }
 
-export default function ProgramEditor({ id = null, clientId = null, copyOf = null }) {
+export default function ProgramEditor({ id = null, clientId = null, copyOf = null, withAssistant = false }) {
   // The routine to load: the one being edited, or the one being duplicated.
   const source = id ?? copyOf;
   const { data: row, error: loadError } = useQuery(source ? `program:${source}` : null, source ? fetchProgram(source) : null);
@@ -167,11 +168,12 @@ export default function ProgramEditor({ id = null, clientId = null, copyOf = nul
       clientId={clientId}
       clientName={client?.full_name}
       holders={(assignments ?? []).filter((a) => !a.archived_at).length}
+      withAssistant={withAssistant}
     />
   );
 }
 
-function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
+function Builder({ start, isNew, backTo, clientId, clientName, holders, withAssistant }) {
   const [draft, setDraft] = useState(
     () => start ?? { id: newId(), name: "", focus: "", discipline: "gym", days: [blankDay()] },
   );
@@ -181,11 +183,13 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
   const [choosingVuelta, setChoosingVuelta] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  // New blank routine: first ask the name and how many days.
-  const [setup, setSetup] = useState(!start);
+  // New blank routine: first ask the name and how many days (unless it
+  // starts with the assistant).
+  const [setup, setSetup] = useState(!start && !withAssistant);
   const [dayCount, setDayCount] = useState(3);
-  // Opened from the first step's "Armar con el asistente": the panel starts open.
-  const [assistantFirst, setAssistantFirst] = useState(false);
+  // Started with the assistant (#/nueva-rutina?asistente=1, or the first
+  // step's card): its panel opens right away.
+  const [assistantFirst, setAssistantFirst] = useState(withAssistant);
 
   const dirty = JSON.stringify(draft) !== initial;
   const several = draft.days.length > 1;
@@ -194,6 +198,11 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
   function startDays() {
     setDraft((d) => ({ ...d, days: Array.from({ length: dayCount }, blankDay) }));
     setCurrent(0);
+    setSetup(false);
+  }
+
+  function openAssistant() {
+    setAssistantFirst(true);
     setSetup(false);
   }
 
@@ -403,14 +412,23 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
         </div>
         <div className="content">
           {reach && <p className="hint">{reach}</p>}
+
+          {/* The assistant, first and in plain sight */}
+          <section className="panel assistant-invite">
+            <h2 className="block-title">¿Preferís armarla conversando?</h2>
+            <p className="hint">Contale al asistente para quién es (podés dictarle) y te propone la rutina.</p>
+            <button type="button" className="primary-button" onClick={openAssistant}>
+              Armar con asistente
+            </button>
+          </section>
+
           <label className="field">
-            <span className="field-label">Nombre de la rutina</span>
+            <span className="field-label">O armala a mano: nombre de la rutina</span>
             <input
               className="input"
               value={draft.name}
               placeholder="Ej: Bloque C"
               maxLength={60}
-              autoFocus
               onChange={(e) => update({ name: e.target.value })}
             />
           </label>
@@ -434,16 +452,6 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
         <div className="action-bar">
           <button type="button" className="primary-button" onClick={startDays}>
             {dayCount === 1 ? "Armar la rutina" : `Armar los ${dayCount} días`}
-          </button>
-          <button
-            type="button"
-            className="text-button setup-assistant"
-            onClick={() => {
-              setAssistantFirst(true);
-              setSetup(false);
-            }}
-          >
-            O armala con el asistente
           </button>
         </div>
       </div>

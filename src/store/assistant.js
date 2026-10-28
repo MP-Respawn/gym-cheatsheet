@@ -37,14 +37,22 @@ export function saveMode(mode) {
 }
 
 /*
- * One message to the assistant. `draft` is the builder's routine (null when
- * it is still empty). Returns { messages, text, proposal, remainingToday };
- * throws an Error with a message to show.
+ * One turn with the assistant: a `message`, or the `answers` to the
+ * questions of its last reply (in order). `draft` is the builder's routine
+ * (null when it is still empty). Returns { messages, text, proposal,
+ * questions, remainingToday }; throws an Error with a message to show.
  */
-export async function askAssistant({ mode, history, message, draft }) {
-  const { data, error } = await supabase.functions.invoke("routine-assistant", {
-    body: { mode, history, message, draft },
-  });
+export async function askAssistant({ mode, history, message = "", answers = [], draft }) {
+  const call = () =>
+    supabase.functions.invoke("routine-assistant", { body: { mode, history, message, answers, draft } });
+  let { data, error } = await call();
+  // 401: the sign-in token expired (they last an hour) and was not renewed
+  // in time. Renew it and try once more; if that fails, say so plainly.
+  if (error?.context?.status === 401) {
+    const { error: renewError } = await supabase.auth.refreshSession();
+    if (renewError) throw new Error("Tu sesión venció. Cerrá sesión y volvé a entrar.");
+    ({ data, error } = await call());
+  }
   if (error) {
     // The function answers errors as { error: "..." } with a status code.
     let text = "No se pudo consultar al asistente. Probá de nuevo.";

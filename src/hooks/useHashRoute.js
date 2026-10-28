@@ -20,7 +20,8 @@
  *   #/clientes          -> your clients
  *   #/cliente/<id>      -> one client: routines, history, invitation
  *   #/nueva-rutina      -> build a new routine (?cliente=<id>: and give it
- *                          to that client; ?desde=<id>: start as a copy)
+ *                          to that client; ?desde=<id>: start as a copy;
+ *                          ?asistente=1: straight into the assistant)
  *   #/editar-rutina/<id> -> edit one of your routines
  *   #/asignar/<id>      -> give a routine to clients, or change their numbers
  *                          (?cliente=<id> ticks one)

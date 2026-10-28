@@ -6,7 +6,9 @@
  * three actions: "Editar" opens the builder (ProgramEditor.jsx; everyone who
  * has it sees the change), "Asignar" gives it to clients with their own
  * numbers (AssignProgram.jsx), and "Duplicar" starts a new routine as a copy
- * (for a client who needs other exercises). "+ Nueva rutina" starts a blank one.
+ * (for a client who needs other exercises). Two ways to start a new one:
+ * "Armar con asistente" (the builder, straight into the assistant's chat)
+ * and "+ Nueva rutina a mano".
  */
 import { fetchRoutines, holders, useQuery } from "../store/trainer.js";
 import { programSize } from "../utils/trainerText.js";
@@ -24,9 +26,14 @@ export default function TrainerRoutines() {
   return (
     <section className="list-section">
       <h2 className="section-title">Tus rutinas</h2>
-      <a className="add-button" href="#/nueva-rutina">
-        + Nueva rutina
-      </a>
+      <div className="new-routine-actions">
+        <a className="primary-button" href="#/nueva-rutina?asistente=1">
+          Armar con asistente
+        </a>
+        <a className="add-button" href="#/nueva-rutina">
+          + Nueva rutina a mano
+        </a>
+      </div>
       {error && <p className="hint warning">{error}</p>}
       {!routines && loading && <p className="empty list-empty">Cargando tus rutinas...</p>}
       {routines?.length === 0 && (

@@ -108,8 +108,18 @@ Arranque limpio (antes de que entre INCA, el primer coach real):
 - Se borraron de la base los datos de prueba: rutinas (Bloque A y B), asignaciones, clientes de prueba y sus links, pedidos de prueba y entrenamientos. Quedan las cuentas y la invitación de coach de INCA.
 - Las únicas rutinas del código son las 4 vueltas de abdomen, en Rutinas como **"Recomendadas por INCA"** para todos. Se sacaron del código Bloque A/B, el cierre de yoga, el Flow básico y el calentamiento de Jiu Jitsu (sus ejercicios siguen en el catálogo). Todo lo demás lo arman los coaches en la app.
 
+Asistente para armar rutinas (prueba con INCA):
+- En el constructor, **"Armar con asistente"** abre un chat. El asistente propone una rutina con la herramienta `propose_routine`, que tiene la forma del borrador; **"Usar esta propuesta"** llena el constructor y el coach ajusta y guarda como siempre. El modelo nunca escribe en la base.
+- Dos modos, con un selector, para comparar antes de curar una base de conocimiento:
+  - **Coach experto**: Claude Sonnet 5.5 con un "skill" de preparador físico (`supabase/functions/routine-assistant/prompts.ts`). Conoce solo los nombres de nuestros ejercicios y puede sugerir uno nuevo: en la rutina va el más parecido de los nuestros con la nota "Pendiente", y "Pedir" lo manda a Pedidos.
+  - **Catálogo**: Claude Haiku 5.5 con el catálogo completo (descripciones, prescripciones, alternativas, vueltas de INCA). Solo nuestros ejercicios. Cuesta alrededor de un décimo.
+- La función `routine-assistant` comprueba que sea un coach, valida cada id contra el catálogo (los inválidos vuelven al modelo para que corrija), cachea instrucciones y catálogo, y cuenta mensajes y tokens por coach, día y modo en `assistant_usage` (con un límite diario: 60 en Coach experto, 150 en Catálogo).
+- El catálogo del asistente sale de `src/data` con `npm run kb`; `check-data` avisa si quedó viejo. Después de cambiar ejercicios: `npm run kb` y volver a desplegar la función.
+- Costo estimado por rutina (~10 mensajes): Catálogo ~US$0,02, Coach experto ~US$0,30. El real: `select mode, sum(messages), sum(input_tokens), sum(output_tokens), sum(cache_read_tokens) from assistant_usage group by mode`.
+
 Pendiente:
 - Gráficos de progreso por ejercicio.
+- Elegir un modo del asistente (o curar una guía) según cómo le resulte a INCA.
 - Que un coach pueda fijar el tema de sus clientes (hoy cada uno lo elige).
 
 ## Operación

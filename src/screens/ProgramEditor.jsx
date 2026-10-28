@@ -13,6 +13,10 @@
  * "Guardar". Leaving with unsaved changes asks first. Saving sends the whole
  * routine at once (save_program in the database: all or nothing).
  *
+ * "Armar con asistente" (AssistantPanel.jsx) chats with the routine
+ * assistant; a proposal it makes fills this draft (applyProposal), which
+ * the coach adjusts and saves as usual.
+ *
  * A routine has days (a new one starts by asking its name and how many),
  * each day a list of steps. A step is 1 exercise, or 2 or 3 done together
  * (superset / circuit), or a whole vuelta from the catalog. Each step has
@@ -39,6 +43,7 @@ import {
 } from "../store/trainer.js";
 import BackButton from "../components/BackButton.jsx";
 import ExercisePicker from "../components/ExercisePicker.jsx";
+import AssistantPanel from "../components/AssistantPanel.jsx";
 
 const MAX_PER_STEP = 3;
 
@@ -179,6 +184,8 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
   // New blank routine: first ask the name and how many days.
   const [setup, setSetup] = useState(!start);
   const [dayCount, setDayCount] = useState(3);
+  // Opened from the first step's "Armar con el asistente": the panel starts open.
+  const [assistantFirst, setAssistantFirst] = useState(false);
 
   const dirty = JSON.stringify(draft) !== initial;
   const several = draft.days.length > 1;
@@ -188,6 +195,48 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
     setDraft((d) => ({ ...d, days: Array.from({ length: dayCount }, blankDay) }));
     setCurrent(0);
     setSetup(false);
+  }
+
+  /*
+   * A proposal from the assistant becomes the draft. Days and steps keep
+   * their ids where the same exercise stays in the same place, so on a
+   * routine that clients already have, their own sets and kilos (tied to
+   * the step) survive. A suggested exercise we don't have yet goes in as the
+   * closest one of ours, with a "Pendiente" note.
+   */
+  function applyProposal(p) {
+    setDraft((d) => ({
+      ...d,
+      name: p.name || d.name,
+      focus: p.focus ?? d.focus,
+      days: p.days.map((pd, i) => {
+        const old = d.days[i];
+        return {
+          id: old?.id ?? newId(),
+          name: pd.name ?? "",
+          focus: pd.focus ?? "",
+          steps: pd.steps.map((s, j) => {
+            const exerciseIds = s.vuelta ? [] : s.new_exercise_name ? [s.closest_id] : s.exercise_ids;
+            const vuelta = s.vuelta || null;
+            const before = old?.steps[j];
+            const same = before && before.vuelta === vuelta && before.exerciseIds.join() === exerciseIds.join();
+            return blankStep({
+              ...(same ? { id: before.id } : {}),
+              exerciseIds,
+              vuelta,
+              note: [s.new_exercise_name && `Pendiente: ${s.new_exercise_name} (ejercicio nuevo)`, s.note].filter(Boolean).join(". "),
+              sets: s.sets ? String(s.sets) : "",
+              reps: s.reps ?? "",
+              loadKg: s.load_kg ? asText(s.load_kg) : "",
+              restSec: s.rest_sec ? String(s.rest_sec) : "",
+              text: s.text ?? "",
+            });
+          }),
+        };
+      }),
+    }));
+    setCurrent(0);
+    setError("");
   }
 
   /* ---- Changes to the draft ---- */
@@ -386,6 +435,16 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
           <button type="button" className="primary-button" onClick={startDays}>
             {dayCount === 1 ? "Armar la rutina" : `Armar los ${dayCount} días`}
           </button>
+          <button
+            type="button"
+            className="text-button setup-assistant"
+            onClick={() => {
+              setAssistantFirst(true);
+              setSetup(false);
+            }}
+          >
+            O armala con el asistente
+          </button>
         </div>
       </div>
     );
@@ -400,6 +459,9 @@ function Builder({ start, isNew, backTo, clientId, clientName, holders }) {
 
       <div className="content">
         {reach && <p className="hint">{reach}</p>}
+
+        {/* Chat with the assistant; its proposals fill this draft */}
+        <AssistantPanel draft={draft} onApply={applyProposal} startOpen={assistantFirst} />
 
         <label className="field">
           <span className="field-label">Nombre de la rutina</span>

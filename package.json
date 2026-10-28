@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:db": "node scripts/test-db.mjs",
-    "icons": "pwa-assets-generator"
+    "icons": "pwa-assets-generator",
+    "kb": "node scripts/build-assistant-kb.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

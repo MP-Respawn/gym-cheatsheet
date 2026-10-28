@@ -26,6 +26,7 @@
  *   7c. Trainer panel: clients, routines, builder, assign
  *   7d. Superadmin and exercise requests
  *   7e. App notices and install hint
+ *   7f. Routine assistant
  *   8. Bottom tab bar
  *   9. Responsive: tablet and desktop
  */
@@ -2487,6 +2488,89 @@ body:has(.action-bar) .notices {
   position: absolute;
   top: 8px;
   right: 8px;
+}
+
+/* ---------- 7f. Routine assistant (AssistantPanel.jsx) ---------- */
+
+.assistant-open {
+  margin-bottom: 16px;
+}
+
+.assistant-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assistant-modes {
+  margin: 8px 0 6px;
+}
+
+.assistant-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 55vh;
+  margin: 12px 0;
+  overflow-y: auto;
+}
+
+/* The assistant's messages on the left, the coach's on the right */
+.assistant-msg {
+  align-self: flex-start;
+  max-width: 92%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.assistant-msg.from-coach {
+  align-self: flex-end;
+  border-color: transparent;
+  background: var(--accent-soft);
+}
+
+.assistant-proposal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  white-space: normal;
+}
+
+.assistant-new {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assistant-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.assistant-input .input {
+  flex: 1;
+  min-height: 48px;
+}
+
+.assistant-input .primary-button {
+  width: auto;
+}
+
+/* "O armala con el asistente", under the first step's main button */
+.setup-assistant {
+  display: block;
+  margin: 6px auto 0;
 }
 
 /* ---------- 8. Bottom tab bar ---------- */

@@ -22,7 +22,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(70);
+select plan(74);
 
 /* ---- Test helpers (rolled back with everything else) ---- */
 
@@ -417,9 +417,26 @@ select throws_ok(
   '42501', null, 'trainer 2 cannot overwrite trainer 1''s routine'
 );
 
+/* ---- The routine assistant's usage (written only by its function) ---- */
+
+reset role;
+insert into public.assistant_usage (coach_id, mode, messages) values
+  ('b1000000-0000-0000-0000-000000000000', 'coach', 3),
+  ('b2000000-0000-0000-0000-000000000000', 'catalog', 5);
+
+select tests.login('b1000000-0000-0000-0000-000000000000');
+select "is"((select sum(messages)::int from public.assistant_usage), 3, 'a coach sees only their own assistant usage');
+select throws_ok(
+  $$ insert into public.assistant_usage (coach_id, mode, messages) values ('b1000000-0000-0000-0000-000000000000', 'coach', 1) $$,
+  '42501', null, 'a coach cannot write assistant usage'
+);
+select tests.login('c1000000-0000-0000-0000-000000000000');
+select "is"((select count(*)::int from public.assistant_usage), 0, 'a client sees no assistant usage');
+
 /* ---- Disabling and logged-out access ---- */
 
 select tests.login('a0000000-0000-0000-0000-000000000000');
+select "is"((select count(*)::int from public.assistant_usage), 2, 'the superadmin sees everyone''s assistant usage');
 select public.admin_update_profile('b1000000-0000-0000-0000-000000000000', p_disabled => true);
 select tests.login('b1000000-0000-0000-0000-000000000000');
 select "is"((select count(*)::int from public.clients), 0, 'a disabled trainer sees nothing');

@@ -25,8 +25,10 @@
  *   - "Estirá después" (stretches) and routineLink point at real items
  *   - every animation compiles, loops back to its start pose, and never
  *     pushes a joint through the floor or out of the drawing
+ *   - the routine assistant's copy of the catalog is up to date (npm run kb)
  */
 
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -195,6 +197,10 @@ for (const ex of EXERCISES) {
 for (const file of animFiles) {
   if (!usedFiles.has(file)) errors.push(`animación sin usar: src/animations/exercises/${file}.js`);
 }
+
+/* ---- The routine assistant's copy of the catalog is up to date ---- */
+const kb = spawnSync(process.execPath, [join(root, "scripts", "build-assistant-kb.mjs"), "--check"], { encoding: "utf8" });
+if (kb.status !== 0) errors.push(`asistente: ${kb.stderr.trim() || "no se pudo comprobar su catálogo"}`);
 
 /* ---- Report ---- */
 if (errors.length > 0) {

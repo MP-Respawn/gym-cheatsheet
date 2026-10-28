@@ -393,6 +393,10 @@ deno_version = 2
 [functions.exercise-request-email]
 verify_jwt = false
 
+# The routine assistant: same reason, it checks the session itself.
+[functions.routine-assistant]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

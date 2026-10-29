@@ -3,7 +3,8 @@
  *
  * The trainer sends this link (by WhatsApp, say), or you send a coach's
  * (?rol=entrenador, only changes the wording). Opening it:
- *   - signed out: the sign-in screen, allowed to create the account
+ *   - signed out: the sign-in screen in invitation mode: a new email signs
+ *     in right away, no code (an email with an account gets a code)
  *   - signed in (right after that, or already before): accepts the
  *     invitation, which links this account to the trainer, and opens
  *     Rutinas. If the link was used, revoked or expired, says so.
@@ -32,7 +33,7 @@ export default function Invitation({ token, coach = false }) {
   if (auth.status === "signed-out") {
     return (
       <SignIn
-        newAccount
+        invitationToken={token}
         title={coach ? "Te sumaron como coach" : "Te invitaron a entrenar"}
         intro={
           coach

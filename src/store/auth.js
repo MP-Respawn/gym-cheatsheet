@@ -4,9 +4,11 @@
  * Who is signed in, and the sign-in itself. People never have a password:
  *   1. sendCode(email)       Supabase emails a one-time code
  *   2. verifyCode(email, c)  the code typed in the app signs them in
- * Only someone a trainer invited can create an account: the invitation page
- * calls sendCode with { newAccount: true }; the normal sign-in does not, so
- * an unknown email gets a clear "ask your trainer for the link" instead.
+ * Only someone a trainer invited can create an account. The first time, the
+ * invitation link signs a new email in with no code (enterWithInvitation);
+ * an email that already has an account still gets a code. The normal
+ * sign-in never creates accounts, so an unknown email gets a clear "ask your
+ * trainer for the link" instead.
  *
  * When the person changes (sign-in, sign-out, a login restored on open),
  * storage switches to their box and remote.js downloads their data.
@@ -128,6 +130,39 @@ export async function verifyCode(email, code) {
     return error ? friendly(error) : null;
   } catch (error) {
     return friendly(error);
+  }
+}
+
+/*
+ * The first sign-in from an invitation link, with no code: the
+ * invite-sign-in function creates the account and returns a one-use sign-in
+ * token, which opens the session right here. Returns:
+ *   { signedIn: true }        the session is open (Invitation.jsx then
+ *                             accepts the invitation, as with a code)
+ *   { existing: true }        that email already has an account: a code was
+ *                             emailed instead, to check it is theirs
+ *   { problem: "..." }        a message to show
+ */
+export async function enterWithInvitation(token, email) {
+  try {
+    const { data, error } = await supabase.functions.invoke("invite-sign-in", { body: { token, email: email.trim() } });
+    if (error) {
+      let problem = "Algo salió mal. Probá de nuevo en un rato.";
+      try {
+        problem = (await error.context?.json())?.error ?? problem;
+      } catch {
+        problem = friendly(error);
+      }
+      return { problem };
+    }
+    if (data?.existing) {
+      const problem = await sendCode(email, { newAccount: true });
+      return problem ? { problem } : { existing: true };
+    }
+    const { error: openError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "email" });
+    return openError ? { problem: friendly(openError) } : { signedIn: true };
+  } catch (error) {
+    return { problem: friendly(error) };
   }
 }
 

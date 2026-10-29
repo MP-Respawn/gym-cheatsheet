@@ -1,6 +1,6 @@
 # Machete de gimnasio
 
-Exercise cheatsheet and workout log for the phone, where trainers assign routines to their clients. React + Vite on Vercel, Supabase (Postgres + email-code login) behind it. Everything needs an account; clients get in through their trainer's invitation link. The plan is in `docs/arquitectura.md`.
+Exercise cheatsheet and workout log for the phone, where trainers assign routines to their clients. React + Vite on Vercel, Supabase (Postgres + email-code login) behind it. Everything needs an account; clients get in through their trainer's invitation link (the first time, a new email signs in straight from the link; after that, and for emails that already have an account, with an email code). The plan is in `docs/arquitectura.md`.
 
 ## Run
 
@@ -53,7 +53,13 @@ npx supabase secrets set RESEND_API_KEY=<your key>
 npx supabase functions deploy exercise-request-email --use-api
 ```
 
-7. The routine assistant ("Armar con asistente" in the builder; two modes, Claude Sonnet 5.5 as a coach or Claude Haiku 5.5 on our catalog): save an Anthropic API key, then deploy it (again after `npm run kb`):
+7. The first sign-in from an invitation link (no code for a new email): deploy its function once.
+
+```bash
+npx supabase functions deploy invite-sign-in --use-api
+```
+
+8. The routine assistant ("Armar con asistente" in the builder; two modes, Claude Sonnet 5.5 as a coach or Claude Haiku 5.5 on our catalog): save an Anthropic API key, then deploy it (again after `npm run kb`):
 
 ```bash
 npx supabase secrets set ANTHROPIC_API_KEY=<your key>

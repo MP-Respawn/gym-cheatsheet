@@ -62,7 +62,11 @@ Funciones que llama la app (`supabase.rpc`): `create_client_invitation`, `create
 ## Flujos
 
 - **Alta de entrenador**: SuperAdmin genera link → el entrenador lo abre, entra con su email, `accept_invitation` lo vuelve entrenador.
-- **Alta de cliente**: el entrenador crea el cliente, (opcional) le asigna rutina, genera link y lo manda por WhatsApp → el cliente entra con su email y queda vinculado.
+- **Alta de cliente**: el entrenador crea el cliente, (opcional) le asigna rutina, genera link y lo manda por WhatsApp → el cliente lo abre, escribe su email, toca "Entrar" y queda adentro y vinculado, **sin código la primera vez**.
+  - El link es la llave: la función `invite-sign-in` verifica que la invitación siga abierta (`open_invitation`, solo para el servidor), crea la cuenta y devuelve un token de inicio de sesión de un uso.
+  - **Solo para emails sin cuenta**: si el email ya tiene una, se pide el código, porque si no cualquiera con un link podría entrar a la cuenta de otro escribiendo su email.
+  - La primera vez no se comprueba que el email sea suyo; la pantalla pide revisarlo, porque es el que va a usar para entrar desde otro teléfono (ahí sí con código).
+  - Lo mismo para el link de coach.
 - **Asignar**: rutina → elegir clientes → ajustar series/reps/kg por cliente → `assign_program`. Después se ajustan los números de un cliente con la misma pantalla.
 - **Entrenar**: el cliente abre el día, registra series (pantalla actual de `WorkoutLog.jsx`), se guarda local y se sincroniza. El entrenador ve progreso.
 - **Solicitar ejercicio**: el coach pide en Pedidos → email a vos (función + Resend) → lo agregan en código y se publica → en Pedidos, "Ya está" con el ejercicio → email al coach.

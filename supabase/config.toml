@@ -397,6 +397,11 @@ verify_jwt = false
 [functions.routine-assistant]
 verify_jwt = false
 
+# The first sign-in from an invitation link: the person has no session yet
+# (the link's token is what it checks).
+[functions.invite-sign-in]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

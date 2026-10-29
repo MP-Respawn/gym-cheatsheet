@@ -5,7 +5,8 @@
  * account), "Invitación pendiente" (link sent, until when), "Link vencido"
  * or "Sin invitar". Tapping one opens their page (TrainerClient.jsx).
  *
- * "+ Nuevo cliente" opens a small form (name, optional email). Creating
+ * "+ Nuevo cliente" opens a small form: name and email, both required (the
+ * email is how the client gets in from the link, so its form is checked). Creating
  * the client also creates their invitation link, shown right there to copy
  * or send by WhatsApp. Archived clients are hidden behind "Ver archivados".
  */
@@ -15,15 +16,24 @@ import InviteLink from "../components/InviteLink.jsx";
 import { createClient, errorText, fetchClients, inviteStatus, useQuery } from "../store/trainer.js";
 import { statusText } from "../utils/trainerText.js";
 
+// name@domain.tld, the same check the invite-sign-in function makes.
+const looksLikeEmail = (text) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim());
+
 function NewClientForm({ onDone }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false); // complain only after they leave the field
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(null); // { id, link, name }
+  const emailOk = looksLikeEmail(email);
 
   async function submit(event) {
     event.preventDefault();
+    if (!emailOk) {
+      setEmailTouched(true);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -60,24 +70,34 @@ function NewClientForm({ onDone }) {
         <input className="input" required autoFocus maxLength={60} value={fullName} onChange={(e) => setFullName(e.target.value)} />
       </label>
       <label className="field">
-        <span className="field-label">Email (opcional)</span>
+        <span className="field-label">Email</span>
         <input
           className="input"
           type="email"
           inputMode="email"
+          autoComplete="off"
           autoCapitalize="none"
+          spellCheck={false}
+          required
+          aria-invalid={emailTouched && !emailOk}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => setEmailTouched(true)}
         />
       </label>
-      <p className="hint">Con el link que te damos, tu cliente entra con su email y ve las rutinas que le asignes.</p>
+      {emailTouched && !emailOk && (
+        <p className="auth-error" role="alert">
+          {email.trim() ? "Revisá el email: tiene que ser como nombre@ejemplo.com." : "Falta el email."}
+        </p>
+      )}
+      <p className="hint">Con el link que te damos, tu cliente entra con este email y ve las rutinas que le asignes.</p>
       {error && (
         <p className="auth-error" role="alert">
           {error}
         </p>
       )}
       <div className="panel-actions">
-        <button type="submit" className="primary-button" disabled={busy || !fullName.trim()}>
+        <button type="submit" className="primary-button" disabled={busy || !fullName.trim() || !emailOk}>
           {busy ? "Creando..." : "Crear y generar link"}
         </button>
         <button type="button" className="text-button" onClick={onDone}>

@@ -22,12 +22,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(74);
+select plan(77);
 
 /* ---- Test helpers (rolled back with everything else) ---- */
 
 create schema tests;
-grant usage on schema tests to authenticated;
+grant usage on schema tests to authenticated, service_role;
 
 -- Act as this user from now on, as the Supabase API would with their JWT.
 create function tests.login(p_user uuid) returns void
@@ -41,7 +41,7 @@ grant execute on function tests.login(uuid) to authenticated;
 
 -- Invitation links handed from one user to the next.
 create table tests.tokens (name text primary key, token text not null);
-grant all on tests.tokens to authenticated;
+grant all on tests.tokens to authenticated, service_role;
 
 /* ---- Six logins (the trigger gives each a "client" profile) ---- */
 
@@ -171,11 +171,29 @@ select throws_ok(
 
 select tests.login('b1000000-0000-0000-0000-000000000000');
 insert into tests.tokens select 'ana', public.create_client_invitation('d1000000-0000-0000-0000-000000000000');
+select throws_ok(
+  $$ select * from public.open_invitation((select token from tests.tokens where name = 'ana')) $$,
+  '42501', null, 'a signed-in user cannot look invitations up by token'
+);
+
+-- The invite-sign-in function (service role) sees an open link.
+reset role;
+set local role service_role;
+select "is"(
+  (select client_id::text from public.open_invitation((select token from tests.tokens where name = 'ana'))),
+  'd1000000-0000-0000-0000-000000000000', 'the server finds an open invitation by its token'
+);
 
 select tests.login('c1000000-0000-0000-0000-000000000000');
 select "is"(
   public.accept_invitation((select token from tests.tokens where name = 'ana')) ->> 'client_id',
   'd1000000-0000-0000-0000-000000000000', 'Ana accepts her link'
+);
+reset role;
+set local role service_role;
+select "is"(
+  (select count(*)::int from public.open_invitation((select token from tests.tokens where name = 'ana'))),
+  0, 'a used invitation is no longer open'
 );
 
 select tests.login('c2000000-0000-0000-0000-000000000000');

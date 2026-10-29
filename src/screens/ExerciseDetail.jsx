@@ -27,11 +27,19 @@ const SOURCE_LABELS = {
 };
 
 // The best set ever logged, or null: the heaviest one (more reps breaks a
-// tie); for core work without kg, the most reps or the longest hold.
+// tie); without kg, the most reps, the longest hold or the longest cardio.
 function bestSet(history) {
   const sets = history.flatMap((entry) => entry.sets);
   const score = (s) =>
-    s.kg != null ? [3, s.kg, s.reps ?? 0] : s.secs != null ? [2, s.secs, 0] : s.reps != null ? [1, s.reps, 0] : null;
+    s.kg != null
+      ? [3, s.kg, s.reps ?? 0]
+      : s.mins != null
+        ? [2, s.mins, 0]
+        : s.secs != null
+          ? [2, s.secs, 0]
+          : s.reps != null
+            ? [1, s.reps, 0]
+            : null;
   let best = null;
   let bestScore = null;
   for (const set of sets) {

@@ -13,8 +13,11 @@
  * sequence such as a vuelta). planned = the trainer's { sets, reps, loadKg }
  * when the workout started, so history stays true if the routine changes.
  *
- * A set holds kg and reps, except for exercises with a `measure` (core
- * work, see exercises.js): those log only { reps } or only { secs }.
+ * A set holds kg and reps, except for exercises with a `measure` (see
+ * exercises.js): those log only { reps }, only { secs } or, for continuous
+ * cardio, only { mins }. The database has no minutes column: setToRow() and
+ * setFromRow() below turn minutes into secs (× 60) on the way up and back
+ * into minutes on the way down, so no screen ever converts.
  *
  * While you train, the session is "active" (finishedAt is null) and every
  * change is saved on the phone right away, so closing the app mid-workout
@@ -32,17 +35,43 @@ import { newId, now, readData, updateData } from "./storage.js";
 /* ---- What a set holds ---- */
 
 // The boxes the log shows for an exercise, in order: ["kg", "reps"] by
-// default, ["reps"] or ["secs"] for exercises with a measure.
+// default, ["reps"], ["secs"] or ["mins"] for exercises with a measure.
 export function setFields(exerciseId) {
   const measure = getExercise(exerciseId)?.measure;
   if (measure === "reps") return ["reps"];
   if (measure === "secs") return ["secs"];
+  if (measure === "mins") return ["mins"];
   return ["kg", "reps"];
 }
 
 // An empty set row for an exercise: { kg: "", reps: "" }, { secs: "" }...
 export function emptySet(exerciseId) {
   return Object.fromEntries(setFields(exerciseId).map((field) => [field, ""]));
+}
+
+/*
+ * A set as the workout_sets table stores it ({ kg, reps, secs }), and back.
+ * Minutes exist only on the phone: they go up as secs = mins × 60 and come
+ * back as minutes for exercises whose measure is "mins". These two are the
+ * only places that convert; remote.js and the coach's screens use them.
+ */
+export function setToRow(set) {
+  return {
+    kg: set.kg ?? null,
+    reps: set.reps ?? null,
+    secs: set.mins != null ? Math.round(set.mins * 60) : (set.secs ?? null),
+  };
+}
+
+export function setFromRow(exerciseId, row) {
+  const values = {};
+  if (row.kg != null) values.kg = Number(row.kg);
+  if (row.reps != null) values.reps = row.reps;
+  if (row.secs != null) {
+    if (getExercise(exerciseId)?.measure === "mins") values.mins = row.secs / 60;
+    else values.secs = row.secs;
+  }
+  return values;
 }
 
 /* ---- Reading ---- */
@@ -239,12 +268,14 @@ export function formatNumber(n) {
   return n == null ? "" : String(n).replace(".", ",");
 }
 
-// One set as text: "40x8", "x12" (bodyweight), "40 kg", "10 s" (a hold).
-export function formatSet({ kg, reps, secs }) {
+// One set as text: "40x8", "x12" (bodyweight), "40 kg", "10 s" (a hold),
+// "25 min" (cardio).
+export function formatSet({ kg, reps, secs, mins }) {
   const k = formatNumber(kg);
   const r = formatNumber(reps);
   if (k !== "" && r !== "") return `${k}x${r}`;
   if (r !== "") return `x${r}`;
+  if (mins != null) return `${formatNumber(mins)} min`;
   if (secs != null) return `${formatNumber(secs)} s`;
   return `${k} kg`;
 }

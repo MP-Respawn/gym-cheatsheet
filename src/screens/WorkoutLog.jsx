@@ -45,6 +45,7 @@ const FIELD = {
   kg: { unit: "kg", inputMode: "decimal", label: "kilos" },
   reps: { unit: "reps", inputMode: "numeric", label: "repeticiones" },
   secs: { unit: "seg", inputMode: "numeric", label: "segundos" },
+  mins: { unit: "min", inputMode: "numeric", label: "minutos" },
 };
 
 // Leaves the log and goes back to the routine page.

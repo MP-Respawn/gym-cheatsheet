@@ -20,6 +20,7 @@
  */
 import { supabase } from "./supabase.js";
 import { currentId, readData, updateData } from "./storage.js";
+import { setFromRow, setToRow } from "./workouts.js";
 
 /* ---- Status, for the screens ---- */
 
@@ -154,9 +155,7 @@ function sessionPayload(session) {
         set_index: setIndex,
         exercise_id: entry.exerciseId,
         step_id: entry.stepId ?? null,
-        kg: set.kg ?? null,
-        reps: set.reps ?? null,
-        secs: set.secs ?? null,
+        ...setToRow(set),
         planned_sets: entry.planned?.sets ?? null,
         planned_reps: entry.planned?.reps ?? null,
         planned_load_kg: entry.planned?.loadKg ?? null,
@@ -220,11 +219,7 @@ function fromRemote(row) {
   const entries = [];
   for (const set of [...row.workout_sets].sort((a, b) => a.entry_index - b.entry_index || a.set_index - b.set_index)) {
     const entry = (entries[set.entry_index] ??= { exerciseId: currentId(set.exercise_id), stepId: set.step_id, sets: [] });
-    const values = {};
-    if (set.kg != null) values.kg = Number(set.kg);
-    if (set.reps != null) values.reps = set.reps;
-    if (set.secs != null) values.secs = set.secs;
-    entry.sets.push(values);
+    entry.sets.push(setFromRow(entry.exerciseId, set));
   }
   const name =
     row.program_name && row.day_name && row.program_name !== row.day_name

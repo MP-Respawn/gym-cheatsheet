@@ -18,7 +18,7 @@
  */
 import { useState } from "react";
 import { getExercise } from "../data/exercises.js";
-import { formatNumber, formatSet } from "../store/workouts.js";
+import { formatNumber, formatSet, setFromRow } from "../store/workouts.js";
 import {
   errorText,
   fetchClient,
@@ -66,9 +66,7 @@ function Workout({ session }) {
         <ul className="workout-lines">
           {entries.filter(Boolean).map((entry, i) => {
             const plan = planText(entry.sets[0]);
-            const done = entry.sets.map((s) =>
-              formatSet({ kg: s.kg == null ? null : Number(s.kg), reps: s.reps, secs: s.secs }),
-            );
+            const done = entry.sets.map((s) => formatSet(setFromRow(entry.exerciseId, s)));
             return (
               <li key={i}>
                 <span className="workout-exercise">{getExercise(entry.exerciseId)?.name ?? entry.exerciseId}</span>{" "}

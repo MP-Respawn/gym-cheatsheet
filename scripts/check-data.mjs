@@ -15,7 +15,8 @@
  *   - every id inside an "alternatives" array exists
  *   - every trainer exercise has at least 2 alternatives
  *   - every id used in routines.js exists
- *   - core vueltas: every `vuelta` and `measure` value is valid, each step is
+ *   - every `measure` is "reps", "secs" or "mins"
+ *   - core vueltas: every `vuelta` value is valid, each step is
  *     either exercises or a vuelta, and each vuelta routine lists exactly the
  *     exercises tagged with that vuelta
  *   - no data file still uses an old id from renamedIds.js
@@ -47,6 +48,7 @@ const errors = [];
 const groupKeys = new Set(GROUPS.map((g) => g.key));
 const disciplineKeys = new Set(DISCIPLINES.map((d) => d.key));
 const SOURCES = ["trainer", "added", "research"];
+const MEASURES = ["reps", "secs", "mins"];
 const exerciseIds = new Set();
 const kebab = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -70,8 +72,8 @@ for (const ex of EXERCISES) {
   if (ex.vuelta !== undefined && !VUELTAS.some((v) => v.key === ex.vuelta)) {
     errors.push(`${ex.id}: vuelta inexistente "${ex.vuelta}"`);
   }
-  if (ex.measure !== undefined && ex.measure !== "reps" && ex.measure !== "secs") {
-    errors.push(`${ex.id}: measure debe ser "reps" o "secs"`);
+  if (ex.measure !== undefined && !MEASURES.includes(ex.measure)) {
+    errors.push(`${ex.id}: measure debe ser uno de ${MEASURES.map((m) => `"${m}"`).join(", ")}`);
   }
   if (RENAMED_IDS[ex.id]) errors.push(`${ex.id}: este id figura como viejo en renamedIds.js`);
 }
